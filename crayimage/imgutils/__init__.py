@@ -6,6 +6,7 @@ from utils import ndcount
 
 from utils import slice_rgb, slice_raw
 from utils import slice
+from utils import squeeze
 
 from raw import read_raw
 from jpg import read_jpg

@@ -79,13 +79,5 @@ class BayesianUtilsTest(unittest.TestCase):
 
     print np.sum(np.argmax(cats, axis=1) != y)
 
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
   unittest.main()

@@ -94,6 +94,15 @@ class Run(object):
   def images(self):
     return self._imgs
 
+  @property
+  def abs_paths(self):
+    import os.path as osp
+
+    return np.array([
+      osp.abspath(osp.join(self.data_root, path))
+      for path in self.paths
+    ])
+
   def __getitem__(self, item):
     if self._image_index is not None:
       indx = self._image_index[item]

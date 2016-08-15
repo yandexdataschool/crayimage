@@ -2,7 +2,7 @@ import os
 import os.path as osp
 import numpy as np
 
-from crayimage import Run
+from run import Run
 
 def walk(root):
   for item in os.listdir(root):

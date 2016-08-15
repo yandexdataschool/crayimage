@@ -7,7 +7,7 @@ CRAYimage - a toolkit for processing images from a mobile phones' cameras
 
 from __future__ import print_function, absolute_import, division
 
-from .run import Run
+from .runutils import Run
 
 from . import hotornot
 from . import imgutils

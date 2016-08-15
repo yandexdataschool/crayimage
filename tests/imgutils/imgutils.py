@@ -53,3 +53,6 @@ class BayesianUtilsTest(unittest.TestCase):
     end = time.time()
 
     print('slice_rgb: %.3e sec per image' % ((end - start) / iters / n_images))
+
+if __name__ == '__main__':
+  unittest.main()
