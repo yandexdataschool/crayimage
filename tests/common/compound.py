@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import scipy.stats as stats
 
-from crayimage.common import compound_distribution
+from crayimage.statutils import compound_distribution
 
 class CompoundTest(unittest.TestCase):
   def test_pmf_discrete(self):

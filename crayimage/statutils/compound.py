@@ -71,7 +71,7 @@ class compound_distribution(object):
 
     return table
 
-class SyntheticDataGenerator(object):
+class CompoundMC(object):
   def __init__(self, category_priors, compounds, n_pixels, n_frames):
     self.category_priors = np.array(category_priors) / float(np.sum(category_priors))
     self.compounds = compounds

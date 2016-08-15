@@ -5,7 +5,7 @@ import scipy.stats as stats
 
 from crayimage.imgutils import ndcount
 from crayimage.hotornot import one_class_em
-from crayimage.common import сompound_distribution, compound_rvs, accuracy
+from crayimage.statutils import сompound_distribution, compound_rvs, accuracy
 from sklearn.metrics import roc_auc_score
 
 class EMTest(unittest.TestCase):

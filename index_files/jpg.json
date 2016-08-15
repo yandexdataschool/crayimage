@@ -3,6 +3,7 @@
     "path": "hackercam/75c3cf41eebb5ba/still_t*_s1.jpg",
     "source": "Some",
     "timestamp": "_t(\\d+)_s1.jpg",
+    "type" : "jpg",
 
     "info": {
     }
@@ -12,6 +13,7 @@
     "path": "hackercam/75c3cf41eebb5ba/still_t*_s0.jpg",
     "source": "none",
     "timestamp": "_t(\\d+)_s0.jpg",
+    "type" : "jpg",
 
     "info": {
     }
@@ -21,6 +23,7 @@
     "path": "hackercam/75c3cf41eebb5ba/settings_t*.dat",
     "source": "none",
     "timestamp": "_t(\\d+).dat",
+    "type" : "info",
 
     "info": {
     }

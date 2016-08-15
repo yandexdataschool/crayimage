@@ -1,17 +1,21 @@
-import pyximport; pyximport.install()
+from utils import COUNT_T, RGB_T, RAW_T
 
-from imgutils import ndcount, ndpmf
-from imgutils import ndcount2D, ndpmf2D
+from utils import ndcount_rgb, ndcount_raw
+from utils import ndcount2D_rgb, ndcount2D_raw
+from utils import ndcount
 
-import numpy as np
+from utils import slice_rgb, slice_raw
+from utils import slice
 
-def ndcount_iter(imgs, max_value):
-  out = None
-  for img in imgs:
-    if out is None:
-      out = np.zeros(shape=img.shape + (max_value, ), dtype='uint8')
-    imgutils.ndcount2D(img.reshape((1, ) + img.shape), out)
+from raw import read_raw
+from jpg import read_jpg
 
-  return out
+_type_reader_mapping = {
+  'jpg' : read_jpg,
+  'raw' : read_raw
+}
+
+def get_reader(type):
+  return _type_reader_mapping[type]
 
 

@@ -23,6 +23,8 @@ def read_raw(path, tmp=None):
   if tmp is None:
     shutil.rmtree(tmp_)
 
+  img = img.reshape((1, ) + img.shape)
+
   return img
 
 

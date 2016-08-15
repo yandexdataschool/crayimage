@@ -4,7 +4,7 @@ import numpy as np
 import scipy.stats as stats
 
 from crayimage.hotornot.bayesian import *
-from crayimage.common import *
+from crayimage.statutils import *
 
 class BayesianUtilsTest(unittest.TestCase):
   def test_posterior(self):
@@ -61,7 +61,7 @@ class BayesianUtilsTest(unittest.TestCase):
 
     prior1, prior2 = 0.5, 0.5
 
-    gen = SyntheticDataGenerator(
+    gen = CompoundMC(
       category_priors=[prior1, prior2],
       compounds=[comp1, comp2],
       n_pixels=100, n_frames=frames

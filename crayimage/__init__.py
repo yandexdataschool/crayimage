@@ -1,36 +1,19 @@
-### Is a collection of images
-class Run(object):
-  def __init__(self, timestamps, paths, source ='none', meta_info = None):
-    super(Run, self).__init__()
+"""
+CRAYimage - a toolkit for processing images from a mobile phones' cameras
+  exposed to a radiocative source.
 
-    self._timestamps = timestamps
-    self._paths = paths
-    self._source = source
-    self._meta_info = dict() if meta_info is None else meta_info
+  Developed primarily as a toolkit for data analysis in CRAYFIS experiment.
+"""
 
+from __future__ import print_function, absolute_import, division
 
-  @property
-  def timestamps(self):
-    return self._timestamps
+from .run import Run
 
-  @property
-  def paths(self):
-    return self._paths
+from . import hotornot
+from . import imgutils
+from . import nn
+from . import runutils
+from . import statutils
 
-  @property
-  def source(self):
-    return self._source
-
-  @property
-  def meta_info(self):
-    return self._meta_info
-
-  def __getitem__(self, item):
-    return Run(self._timestamps[item], self._paths[item], self._source, self._meta_info)
-
-  def __str__(self):
-    pattern = 'Run(timestamps = %s, paths = %s, source = %s, meta_info = %s)'
-    return pattern % (str(self._timestamps), str(self._paths), str(self._source), str(self._meta_info))
-
-  def __len__(self):
-    return self._paths.shape[0]
+__version__ = '0.1.0'
+__author__ = 'CRAYFIS collaboration, Yandex School of Data Analysis and contributors.'
