@@ -103,7 +103,7 @@ def slice_raw(imgs, window=40, step=20, out=None):
 
   return _slice_raw_fast(imgs, window=window, step=step, out=out)
 
-def squeeze(patches):
+def flatten(patches):
   return patches.reshape(
     (np.prod(patches.shape[:3]), ) + patches.shape[3:]
   )

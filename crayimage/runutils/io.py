@@ -4,6 +4,33 @@ import numpy as np
 
 from run import Run
 
+def get_index_file(path, data_root):
+  import json
+
+  try:
+    with open(path) as f:
+      spec = json.load(f)
+
+  except Exception as e:
+    try:
+      root_relative_path = osp.join(data_root, path)
+
+      with open(root_relative_path) as f:
+        spec = json.load(f)
+    except:
+      try:
+        import crayimage
+        package_root = osp.dirname(crayimage.__file__)
+        predefined_path = osp.join(package_root, 'index_files', path)
+
+        with open(predefined_path) as f:
+          spec = json.load(f)
+      except:
+        print('Tried %s, %s and %s: no file found.' % (path, root_relative_path, predefined_path))
+        raise e
+
+  return spec
+
 def walk(root):
   for item in os.listdir(root):
     full_path = osp.join(root, item)
@@ -29,9 +56,21 @@ def extract_from_paths(paths, expr, cast=str):
   return np.array([ cast(r.findall(path)[-1]) for path in paths ])
 
 def load_index(index_file, root):
-  import json
-  with open(index_file) as f:
-    spec = json.load(f)
+  """
+  Loads runs defined bu the provided index file.
+  Index file is a definition of runs.
+
+  :param index_file: path to the index file.
+    It can be:
+      1. a path on your local filesystem,
+      2. a path relative to the data root,
+      3. a name of predefined index file.
+
+    The file is searched in the described above order.
+  :param root: path to the data root
+  :return: list of Run objects defined by the index file.
+  """
+  spec = get_index_file(index_file, root)
 
   runs = dict()
   for run in spec:

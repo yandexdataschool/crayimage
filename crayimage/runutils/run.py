@@ -95,6 +95,10 @@ class Run(object):
     return self._imgs
 
   @property
+  def is_cached(self):
+    return self._imgs is not None
+
+  @property
   def abs_paths(self):
     import os.path as osp
 
@@ -164,7 +168,7 @@ class Run(object):
     for i in xrange(len(self)):
       yield self.get_img(i)
 
-  def read_run(self):
+  def cached(self):
     if self.type is 'info':
       return self
 
