@@ -4,10 +4,13 @@ from joblib import Parallel, delayed
 
 from crayimage.imgutils import slice, flatten, get_reader
 
-def read_image(path, image_type):
+def read_image(path, image_type): 
   return np.ascontiguousarray(get_reader(image_type)(path))
 
 def read_apply(f, function_kwargs, path, img_type):
+  """
+  Reads image from `path` as `img_type`, then applies `f(img, **function_kwargs)`.
+  """
   return f(read_image(path, img_type), **function_kwargs)
 
 def slice_apply(f, function_kwargs, img, window=40, step=20, flat=False):
@@ -31,6 +34,10 @@ def slice_apply(f, function_kwargs, img, window=40, step=20, flat=False):
   return f(patches, **function_kwargs)
 
 def read_slice_apply(f, function_kwargs, path, img_type, window, step, flat=False):
+  """
+  Combination of `read_apply` and `slice_apply`:
+    read, slice, flatten (of `flat` flag is set to `True`), apply f.
+  """
   img = read_image(path, img_type)
   return slice_apply(f, function_kwargs, img, window=window, step=step, flat=flat)
 

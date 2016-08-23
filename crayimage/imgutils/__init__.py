@@ -1,10 +1,8 @@
 from utils import COUNT_T, RGB_T, RAW_T
 
-from utils import ndcount_rgb, ndcount_raw
-from utils import ndcount2D_rgb, ndcount2D_raw
+from utils import ndcount1D, ndcount2D
 from utils import ndcount
 
-from utils import slice_rgb, slice_raw
 from utils import slice
 from utils import flatten
 

@@ -8,6 +8,7 @@ CRAYimage - a toolkit for processing images from a mobile phones' cameras
 from setuptools import setup, find_packages, Extension
 from codecs import open
 import os.path as osp
+import numpy as np
 
 from Cython.Build import cythonize
 
@@ -89,7 +90,9 @@ setup(
     ]
 
     for module in cythonize(target)
-  ]
+  ],
+
+  include_dirs = [np.get_include()]
 )
 
 
