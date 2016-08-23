@@ -26,6 +26,7 @@ if __name__ == '__main__':
   from sys import argv, exit
   import crayimage
   from crayimage.runutils import *
+  from crayimage.imgutils import plot_grid
 
   try:
     data_root = argv[1]
@@ -35,13 +36,16 @@ if __name__ == '__main__':
 
   runs = load_index('clean.json', data_root)
 
-  Ra_run = runs['Ra'].random_subset(50)
+  Ra_run = runs['Ra'].random_subset(5)
 
-  noise, tracks = read_slice_filter_run(
+  noise, tracks = slice_filter_run(
     Ra_run,
     predicates=[sure_noise, sure_track],
     fractions=[1000, 1.0]
   )
+
+  plot_grid(noise, plot_title='Noise samples').show()
+  plot_grid(tracks, plot_title='Track samples').show()
 
   print(noise.shape)
   print(tracks.shape)

@@ -1,10 +1,9 @@
 import unittest
 
 import numpy as np
-from theano.tensor.blas import res_is_a
 
 from crayimage.runutils import load_index
-from crayimage.runutils import read_slice_filter_run
+from crayimage.runutils import slice_filter_run
 
 
 def noise(patches):
@@ -22,7 +21,7 @@ class TestRunUtils(unittest.TestCase):
     runs = load_index('clean.json', '../../../../data')
     co_run = runs['Co'].random_subset(10)
 
-    results = read_slice_filter_run(
+    results = slice_filter_run(
       co_run,
       predicates=[noise, hit],
       fractions = [0.01, 1.0],

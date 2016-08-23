@@ -9,6 +9,8 @@ from utils import flatten
 from raw import read_raw
 from jpg import read_jpg
 
+from plot import plot_grid
+
 _type_reader_mapping = {
   'jpg' : read_jpg,
   'raw' : read_raw

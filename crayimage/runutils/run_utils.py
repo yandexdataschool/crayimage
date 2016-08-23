@@ -63,13 +63,13 @@ def map_run(run, f, function_args={}, n_jobs=-1):
     )
   else:
     results = Parallel(n_jobs=n_jobs)(
-      delayed(read_apply)(f, function_args, path, run.type)
+      delayed(read_apply)(f, function_args, path, run.image_type)
       for path in run.abs_paths
     )
 
   return format_parallel_results(results)
 
-def map_slice_run(run, f, function_args={}, window=40, step=20, flat=False, n_jobs=-1):
+def slice_map_run(run, f, function_args={}, window=40, step=20, flat=False, n_jobs=-1):
   if run.is_cached:
     results = Parallel(n_jobs=n_jobs)(
       delayed(slice_apply)(f, function_args, img, window, step, flat)
@@ -77,7 +77,7 @@ def map_slice_run(run, f, function_args={}, window=40, step=20, flat=False, n_jo
     )
   else:
     results = Parallel(n_jobs=n_jobs)(
-      delayed(read_slice_apply)(f, function_args, path, run.type, window=window, step=step, flat=flat)
+      delayed(read_slice_apply)(f, function_args, path, run.image_type, window=window, step=step, flat=flat)
       for path in run.abs_paths
     )
 
@@ -105,7 +105,33 @@ def filter_patches(patches, predicates, fractions):
 
   return results
 
-def read_slice_filter_run(run, predicates, fractions, window = 40, step = 20, n_jobs=-1):
+def fmap_patches(patches, functions, fractions):
+  results = []
+
+  for f, fraction in zip(functions, fractions):
+    result = f(patches)
+
+    n_selected = result.shape[0]
+
+    if type(fraction) is float:
+      if fraction < 1.0:
+        to_select = int(np.ceil(fraction * n_selected))
+        selected_indx = np.random.choice(n_selected, size=to_select, replace=False)
+      else:
+        selected_indx = np.random.permutation(np.arange(n_selected))
+
+      results.append(result[selected_indx])
+    elif type(fraction) is int or type(fraction) is long:
+      if fraction < n_selected:
+        selected_indx = np.random.choice(n_selected, size=fraction, replace=False)
+      else:
+        selected_indx = np.random.permutation(np.arange(n_selected))
+
+      results.append(result[selected_indx])
+
+  return results
+
+def slice_filter_run(run, predicates, fractions, window = 40, step = 20, n_jobs=-1):
   n_images = run.abs_paths.shape[0]
 
   scaled_fractions = [
@@ -113,10 +139,31 @@ def read_slice_filter_run(run, predicates, fractions, window = 40, step = 20, n_
     for f in fractions
   ]
 
-  return map_slice_run(
+  return slice_map_run(
     run, filter_patches,
     function_args={
       'predicates' : predicates,
+      'fractions' : scaled_fractions,
+    },
+    n_jobs=n_jobs,
+    window=window, step=step, flat=True
+  )
+
+def slice_fmap_run(run, functions, fractions = None, window = 40, step = 20, n_jobs=-1):
+  n_images = run.abs_paths.shape[0]
+
+  if fractions is None:
+    fractions = [1.0] * len(functions)
+
+  scaled_fractions = [
+    (long(np.ceil(float(f) / n_images)) if type(f) is long or type(f) is int else f)
+    for f in fractions
+  ]
+
+  return slice_map_run(
+    run, fmap_patches,
+    function_args={
+      'functions' : functions,
       'fractions' : scaled_fractions,
     },
     n_jobs=n_jobs,
@@ -129,8 +176,8 @@ def select_patches(patches, selection_p):
 
   return patches[selection]
 
-def read_slice_select_run(run, selection_p, window=40, step=20, n_jobs=-1):
-  return map_slice_run(
+def slice_select_run(run, selection_p, window=40, step=20, n_jobs=-1):
+  return slice_map_run(
     run, select_patches,
     function_args={
       'selection_p' : selection_p

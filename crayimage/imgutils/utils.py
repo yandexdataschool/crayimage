@@ -1,7 +1,4 @@
 import pyximport
-
-import numpy as np
-
 pyximport.install()
 
 import numpy as np

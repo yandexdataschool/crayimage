@@ -26,7 +26,7 @@ def get_index_file(path, data_root):
         with open(predefined_path) as f:
           spec = json.load(f)
       except:
-        print('Tried %s, %s and %s: no file found.' % (path, root_relative_path, predefined_path))
+        print('Tried %s, %s and %s: file not found.' % (path, root_relative_path, predefined_path))
         raise e
 
   return spec
@@ -49,11 +49,25 @@ def get_run_paths(root, filter_expr):
     for item in fnmatch.filter(walk(root), filter_expr)
   ])
 
-def extract_from_paths(paths, expr, cast=str):
-  import re
-  r = re.compile(expr)
+def extract_from_paths(paths, expr_or_list, cast=str):
+  if type(expr_or_list) is str or type(expr_or_list) is unicode:
+    import re
+    r = re.compile(expr_or_list)
 
-  return np.array([ cast(r.findall(path)[-1]) for path in paths ])
+    return np.array([
+      cast(r.findall(path)[-1])
+      for path in paths
+    ])
+  elif type(expr_or_list) is list:
+    return np.array([
+      cast(item)
+      for item in expr_or_list
+    ])
+  else:
+    raise Exception(
+      '`expr_or_list` should be either list of values or regular expression, got %s' % type(expr_or_list)
+    )
+
 
 def load_index(index_file, root):
   """
@@ -94,7 +108,7 @@ def load_index(index_file, root):
       paths=paths[sorting_index],
       timestamps=timestamps[sorting_index],
       source=spec[run]['source'],
-      type=spec[run]['type'],
+      image_type=spec[run]['type'],
       meta_info=info,
       run_info=spec[run].get('run_info', None),
       index_info=spec[run],
