@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-from theano.tensor.blas import res_is_a
 
 from crayimage.runutils import load_index
 from crayimage.runutils import slice_filter_run
@@ -19,7 +18,7 @@ class TestRunUtils(unittest.TestCase):
 
     print(os.getcwd())
 
-    runs = load_index('../../index_files/clean.json', '../../../../data')
+    runs = load_index('clean.json', '../../../../data')
     co_run = runs['Co'].random_subset(10)
 
     results = slice_filter_run(

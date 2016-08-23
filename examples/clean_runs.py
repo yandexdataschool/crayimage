@@ -10,9 +10,13 @@ if __name__ == '__main__':
   from crayimage.runutils import *
   import numpy as np
 
-  data_root = argv[1]
+  try:
+    data_root = argv[1]
+  except:
+    print('Usage: %s <path to the data root>' % argv[0])
+    exit()
 
-  runs = load_index('./index_files/jpg.json', data_root)
+  runs = load_index('jpg.json', data_root)
 
   runs = split_by_time(runs['radioactive'], info_run = runs['settings'])
 
@@ -34,9 +38,9 @@ if __name__ == '__main__':
   runs[1].source = 'Co60'
 
 
-  save_runs('./index_files/clean.json', runs)
+  save_runs('clean.json', runs)
 
-  rs = load_index('./index_files/clean.json', '/home/mborisyak/data/')
+  rs = load_index('clean.json', '/home/mborisyak/data/')
 
   assert len(rs) == 2
 

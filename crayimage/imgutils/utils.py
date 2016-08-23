@@ -1,4 +1,5 @@
-import pyximport; pyximport.install()
+import pyximport
+pyximport.install()
 
 import numpy as np
 
@@ -10,7 +11,22 @@ from special import ndcount_raw as _ndcount_raw_fast
 from special import slice_rgb as _slice_rbg_fast
 from special import slice_raw as _slice_raw_fast
 
-def ndcount_rgb(imgs, bins = None, out=None):
+def wrong_dtype_exception(dtype):
+  return Exception(
+    'Image type (%s) does not understood. '
+    'For RAW images use ndarrays of %s type, for RGB model use ndarrays of %s type' % \
+    (dtype, RAW_T, RGB_T)
+  )
+
+def wrong_shape_exception(shape):
+  return Exception(
+    "Tensor shape (%s) does not correspond to any possible cases. "
+    "Tensor should be in either <number of images> x <number of channels> x <number of pixels> or "
+    " <number of images> x <number of channels> x <image's width> x <image's height> formats." % \
+    shape
+  )
+
+def ndcount1D(imgs, bins = None, out=None):
   if out is None:
     n_channels = imgs.shape[1]
     m = imgs.shape[2]
@@ -20,9 +36,15 @@ def ndcount_rgb(imgs, bins = None, out=None):
 
     out = np.zeros(shape=(n_channels, m, bins), dtype=COUNT_T)
 
-  return _ndcount_rgb_fast(imgs, out)
+  if imgs.dtype == RGB_T:
+    return _ndcount_rgb_fast(imgs, out)
+  elif imgs.dtype == RAW_T:
+    return _ndcount_raw_fast(imgs, out)
+  else:
+    raise wrong_dtype_exception(imgs.dtype)
 
-def ndcount2D_rgb(imgs, bins = None, out=None):
+
+def ndcount2D(imgs, bins = None, out=None):
   n_images = imgs.shape[0]
   n_channels = imgs.shape[1]
   w = imgs.shape[2]
@@ -31,52 +53,23 @@ def ndcount2D_rgb(imgs, bins = None, out=None):
   if out is not None:
     out = out.reshape(n_channels, w * h, -1)
 
-  out = ndcount_rgb(imgs.reshape(n_images, n_channels, -1), bins=bins, out=out)
+  out = ndcount(imgs.reshape(n_images, n_channels, -1), bins=bins, out=out)
 
   return out.reshape(n_channels, w, h, -1)
 
-def ndcount_raw(imgs, bins = None, out=None):
-  if out is None:
-    m = imgs.shape[1]
-
-    if bins is None:
-      bins = np.max(imgs) + 1
-
-    out = np.zeros(shape=(m, bins), dtype=COUNT_T)
-
-  return _ndcount_raw_fast(imgs, out)
-
-def ndcount2D_raw(imgs, bins = None, out=None):
-  n_images = imgs.shape[0]
-  w = imgs.shape[2]
-  h = imgs.shape[3]
-
-  if out is not None:
-    out = out.reshape(w * h, -1)
-
-  out = ndcount_raw(imgs.reshape(n_images, -1), out=out, bins=bins)
-
-  return out.reshape(w, h, -1)
-
 def ndcount(imgs, bins=None, out=None):
-  if imgs.dtype == RAW_T:
-    if len(imgs.shape) == 2:
-      return ndcount_raw(imgs, bins, out)
-    elif len(imgs.shape) == 3:
-      return ndcount2D_raw(imgs, bins, out)
-    else:
-      raise Exception('Image tensor does not understood.')
-  elif imgs.dtype == RGB_T:
-    if len(imgs.shape) == 3:
-      return ndcount_rgb(imgs, bins, out)
-    elif len(imgs.shape) == 4:
-      return ndcount2D_rgb(imgs, bins, out)
-    else:
-      raise Exception('Image tensor does not understood.')
+  if len(imgs.shape) == 3:
+    return ndcount1D(imgs, bins=bins, out=out)
+  elif len(imgs.shape) == 4:
+    return ndcount2D(imgs, bins=bins, out=out)
   else:
-    raise Exception('Image tensor does not understood.')
+    raise wrong_shape_exception(imgs.shape)
 
-def slice_rgb(imgs, window=40, step=20, out=None):
+def slice(imgs, window=40, step=20, out=None):
+  if len(imgs.shape) == 3:
+    ### single image
+    imgs = imgs.reshape((1, ) + imgs.shape)
+
   if out is None:
     n_images = imgs.shape[0]
     n_channels = imgs.shape[1]
@@ -88,30 +81,14 @@ def slice_rgb(imgs, window=40, step=20, out=None):
 
     out = np.ndarray(shape=(n_images, nx, ny, n_channels, window, window), dtype=imgs.dtype)
 
-  return _slice_rbg_fast(imgs, window=window, step=step, out=out)
+  if imgs.dtype == RGB_T:
+    return _slice_rbg_fast(imgs, window=window, step=step, out=out)
+  elif imgs.dtype == RAW_T:
+    return _slice_raw_fast(imgs, window=window, step=step, out=out)
+  else:
+    raise wrong_dtype_exception(imgs.dtype)
 
-def slice_raw(imgs, window=40, step=20, out=None):
-  if out is None:
-    n_images = imgs.shape[0]
-
-    w, h = imgs.shape[1], imgs.shape[2]
-
-    nx = (w - window) / step + 1
-    ny = (h - window) / step + 1
-
-    out = np.ndarray(shape=(n_images, nx, ny, window, window), dtype=imgs.dtype)
-
-  return _slice_raw_fast(imgs, window=window, step=step, out=out)
-
-def squeeze(patches):
+def flatten(patches):
   return patches.reshape(
     (np.prod(patches.shape[:3]), ) + patches.shape[3:]
   )
-
-def slice(imgs, window=40, step=20, out=None):
-  if imgs.dtype == RGB_T:
-    return slice_rgb(imgs, window=window, step=step, out=out)
-  elif imgs.dtype == RAW_T:
-    return slice_raw(imgs, window=window, step=step, out=out)
-  else:
-    raise Exception('Image tensor does not understood.')

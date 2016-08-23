@@ -2,6 +2,7 @@ import numpy as np
 
 import theano
 import theano.tensor as T
+from keras import objectives
 
 from lasagne import layers
 from lasagne import updates
@@ -31,20 +32,26 @@ class NN(object):
     if self.labels is None:
       raise Exception('You must set `self.labels` variable in the `define` method!')
 
-    if self.loss is None:
-      raise Exception('You must set `self.loss` variable in the `define` method!')
-
-    if self.pure_loss is None:
-      self.pure_loss = self.loss
+    if self.net is None:
+      raise Exception('You must set `self.net` variable in the `define` method!')
 
     self.predictions = layers.get_output(self.net)
 
     self.build_predictor()
 
-    if kwargs.has_key('updates'):
-      self.build_optimizer(optimizer=kwargs['updates'])
-    else:
-      self.build_optimizer()
+    if self.loss is None:
+      if self.labels.ndim == 1:
+        self.loss = objectives.binary_crossentropy(self.labels, self.predictions).mean()
+      else:
+        self.loss = objectives.categorical_crossentropy(self.labels, self.predictions).mean()
+
+    if self.pure_loss is None:
+      self.pure_loss = self.loss
+
+    self.build_optimizer()
+
+  def optimizer(self, params, learning_rate):
+    return updates.adadelta(self.loss, params, learning_rate=learning_rate)
 
   def define(self, *args, **kwargs):
     raise Exception('Must be overridden!')
@@ -52,22 +59,16 @@ class NN(object):
   def build_predictor(self):
     self.predict = theano.function([self.input], self.predictions)
 
-  def build_optimizer(self, optimizer = updates.adadelta):
+  def build_optimizer(self):
     params = layers.get_all_params(self.net, trainable=True)
     self.learning_rate = T.fscalar('learning rate')
 
-    upd = optimizer(self.loss, params, learning_rate = self.learning_rate)
+    upd = self.optimizer(params, learning_rate = self.learning_rate)
 
-    if self.pure_loss is None:
-      self.train_batch = theano.function(
-        [self.input, self.labels, self.learning_rate],
-        self.loss, updates=upd
-      )
-    else:
-      self.train_batch = theano.function(
-        [self.input, self.labels, self.learning_rate],
-        self.pure_loss, updates=upd
-      )
+    self.train_batch = theano.function(
+      [self.input, self.labels, self.learning_rate],
+      self.pure_loss, updates=upd
+    )
 
   @property
   def weights(self):
@@ -140,7 +141,8 @@ class NN(object):
     train_stream = self.train_stream(
       X, y, learning_rate=learning_rate,
       batch_stream_factory=batch_stream_factory, n_epochs=n_epochs,
-      dump_each=dump_each, dump_dir=dump_dir)
+      dump_each=dump_each, dump_dir=dump_dir
+    )
 
     n_batches_per_epoch = X.shape[0] / batch_size
     losses = np.ndarray(shape=(n_epochs * n_batches_per_epoch), dtype='float32')

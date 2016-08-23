@@ -8,7 +8,7 @@ __all__ = [
 ### Is a collection of images
 class Run(object):
   def __init__(self, timestamps, paths,
-               source ='none', type = 'info',
+               source ='none', image_type ='info',
                meta_info = None, run_info = None,
                index_info = None,
                images = None, image_index = None,
@@ -20,7 +20,7 @@ class Run(object):
     self._source = source
     self._meta_info = dict() if meta_info is None else meta_info
     self._run_info = dict() if run_info is None else run_info
-    self._type = type
+    self._image_type = image_type
 
     self._index_info = index_info
 
@@ -28,7 +28,7 @@ class Run(object):
 
     self._name = name
 
-    if type != 'info':
+    if image_type != 'info':
       self._imgs = images
 
       if image_index is None and self._imgs is not None:
@@ -85,14 +85,17 @@ class Run(object):
   def name(self, value):
     self._name = value
 
-
   @property
-  def type(self):
-    return self._type
+  def image_type(self):
+    return self._image_type
 
   @property
   def images(self):
     return self._imgs
+
+  @property
+  def is_cached(self):
+    return self._imgs is not None
 
   @property
   def abs_paths(self):
@@ -117,7 +120,7 @@ class Run(object):
       timestamps=self._timestamps[item],
       paths=self._paths[item],
       source=self._source,
-      type=self._type,
+      image_type=self._image_type,
       meta_info=meta_info,
       run_info=self.run_info,
       index_info=self._index_info,
@@ -131,12 +134,80 @@ class Run(object):
     pattern = 'Run(%s)(source = %s, type = %s, run_info = %s, meta_info = %s, timestamps = %s, paths = %s)'
 
     return pattern % (
-      self._name, str(self._source), str(self._type), str(self._run_info),
+      self._name, str(self._source), str(self._image_type), str(self._run_info),
       str(self._meta_info), str(self._timestamps), str(self._paths)
     )
 
   def __len__(self):
     return self._paths.shape[0]
+
+  def merge(self, other):
+    def merge_infos(a, b, prefix_a, prefix_b):
+      c = dict()
+      keys = set(a.keys()) | set(b.keys())
+
+      for k in keys:
+        if a.has_key(k) and b.has_key(k) and a[k] == b[k]:
+          c[k] = a[k]
+        else:
+          a_k = '%s_%s' % (prefix_a, k)
+          b_k = '%s_%s' % (prefix_b, k)
+
+          if self.run_info.has_key(k):
+            c[a_k] = a[k]
+
+          if other.run_info.has_key(k):
+            c[b_k] = b[k]
+
+      return c
+
+    def merge_meta_infos(a, b):
+      c = dict()
+      keys = set(a.keys()) & set(b.keys())
+
+      for k in keys:
+        c[k] = a[k] + b[k]
+
+      return c
+
+    if self.image_type != other.image_type:
+      raise Exception(
+        'Can not combine runs with different image types [%s and %s]' % (self.image_type, other.image_type)
+      )
+
+    if self.data_root != other.data_root:
+      raise Exception(
+        'Can not combine runs with different data roots [%s and %s]' % (self.data_root, other.data_root)
+      )
+
+    source = self.source if self.source == other.source else "%s and %s" % (self.source, other.source)
+
+    if self.images is not None or other.images is not None:
+      import warnings
+      warnings.warn(
+        'Trying to merge runs with at least one of them cached '
+        'will result in dropping cache of the merged run.'
+      )
+
+    return Run(
+      timestamps=np.hstack([self.timestamps, other.timestamps]),
+      paths=np.hstack([self.paths, other.paths]),
+      source=source,
+      image_type=self.image_type,
+      meta_info=merge_meta_infos(self.meta_info, other.meta_info),
+      run_info=merge_infos(self.run_info, other.run_info, self.name, other.name),
+      index_info=None,
+      images=None,
+      image_index=None,
+      name='%s and %s' % (self.name, other.name),
+      data_root=self._data_root
+    )
+
+  def __and__(self, other):
+    return self.merge(other)
+
+  def __add__(self, other):
+    return self.merge(other)
 
   def random_subset(self, limit):
     limit = min(limit, len(self))
@@ -147,7 +218,7 @@ class Run(object):
 
   def _read_image(self, index):
     from crayimage.imgutils import get_reader
-    reader = get_reader(self.type)
+    reader = get_reader(self.image_type)
 
     return reader(osp.join(self.data_root, self._paths[index]))
 
@@ -164,8 +235,8 @@ class Run(object):
     for i in xrange(len(self)):
       yield self.get_img(i)
 
-  def read_run(self):
-    if self.type is 'info':
+  def cached(self):
+    if self.image_type is 'info':
       return self
 
     if self._imgs is None:
@@ -181,7 +252,7 @@ class Run(object):
         timestamps=self._timestamps,
         paths=self._paths,
         source=self._source,
-        type=self._type,
+        image_type=self._image_type,
         meta_info=self._meta_info,
         run_info=self.run_info,
         index_info=self._index_info,
@@ -196,9 +267,9 @@ class Run(object):
     return {
       "path": [ path for path in self.paths ],
       "source" : self.source,
-      "timestamp": self._index_info['timestamp'],
-      "type": self.type,
+      "timestamp": self._index_info['timestamp'] if self._index_info is not None else self.timestamps.tolist(),
+      "type": self.image_type,
 
-      "info": self._index_info['info'],
+      "info": self._index_info['info'] if self._index_info is not None else self.meta_info,
       'run_info' : self.run_info
     }

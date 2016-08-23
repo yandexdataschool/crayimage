@@ -21,14 +21,14 @@ class BayesianUtilsTest(unittest.TestCase):
 
     start = time.time()
     for _ in xrange(iters):
-      ndcount_rgb(imgs, out=out)
+      ndcount(imgs, out=out)
     end = time.time()
 
     print('ndcount_rgb: %.3e sec per image' % ((end - start) / iters / n_images))
 
     start = time.time()
     for _ in xrange(iters):
-      ndcount2D_rgb(imgs2D, out=out2d)
+      ndcount(imgs2D, out=out2d)
     end = time.time()
 
     print('ndcount2D_rgb: %.3e sec per image' % ((end - start) / iters / n_images))
@@ -49,7 +49,7 @@ class BayesianUtilsTest(unittest.TestCase):
 
     start = time.time()
     for _ in range(iters):
-      r = slice_rgb(imgs2D, window=20, step=10)
+      r = slice(imgs2D, window=20, step=10)
     end = time.time()
 
     print('slice_rgb: %.3e sec per image' % ((end - start) / iters / n_images))
