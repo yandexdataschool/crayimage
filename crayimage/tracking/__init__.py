@@ -1,1 +1,1 @@
-from max_pool import MaxPoolTracker
+from max_pool import MaxPoolTracker, max_pool

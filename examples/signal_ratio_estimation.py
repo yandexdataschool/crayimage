@@ -4,12 +4,11 @@ def sure_noise(patches):
   return np.max(patches, axis=(1, 2, 3)) <= 4
 
 def sure_track(patches):
-  return np.max(patches, axis=(1, 2, 3)) > 50
+  return np.max(patches[:, 1], axis=(1, 2)) > 15
 
 if __name__ == '__main__':
   from sys import argv, exit
   from crayimage.runutils import *
-  from crayimage.imgutils import plot_grid
 
   try:
     data_root = argv[1]
@@ -19,22 +18,18 @@ if __name__ == '__main__':
 
   runs = load_index('clean.json', data_root)
 
-  Ra_run = runs['Ra'].random_subset(50)
+  Ra_run = runs['Ra'].random_subset(20)
 
   noise, tracks = slice_filter_run(
     Ra_run,
     predicates=[sure_noise, sure_track],
     fractions=[1000, 1.0],
-    window = 40,
-    step = 20
+    window = 20,
+    step = 10
   )
 
   print(noise.shape)
   print(tracks.shape)
-
-  plot_grid(noise, plot_title='Noise samples').show()
-  plot_grid(tracks[:, 1], plot_title='Track samples').show()
-
 
   import matplotlib.pyplot as plt
   import scipy.stats as stats

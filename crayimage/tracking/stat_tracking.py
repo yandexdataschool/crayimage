@@ -35,10 +35,3 @@ def quantile_features(img, quantiles=5, normalize=True, noise=True):
     stats[i, :, -2] = np.std(patches, axis=(1, 2))
 
   return stats.reshape((n_patches, -1))
-
-class StatTracking(object):
-  """
-  The first order approximation to the tracking trick:
-
-  """
-  def __init__(self, calibration_run, signal_run):

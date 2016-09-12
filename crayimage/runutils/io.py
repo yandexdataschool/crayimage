@@ -49,23 +49,41 @@ def get_run_paths(root, filter_expr):
     for item in fnmatch.filter(walk(root), filter_expr)
   ])
 
+def is_const(x, cast=str):
+  try:
+    return cast(x) == x
+  except:
+    return False
+
 def extract_from_paths(paths, expr_or_list, cast=str):
   if type(expr_or_list) is str or type(expr_or_list) is unicode:
-    import re
-    r = re.compile(expr_or_list)
+    try:
+      import re
+      r = re.compile(expr_or_list)
 
-    return np.array([
-      cast(r.findall(path)[-1])
-      for path in paths
-    ])
+      return np.array([
+        cast(r.findall(path)[-1])
+        for path in paths
+      ])
+    except IndexError:
+      if is_const(expr_or_list, cast):
+        return np.array([
+          cast(expr_or_list)
+          for _ in paths
+        ])
   elif type(expr_or_list) is list:
     return np.array([
       cast(item)
       for item in expr_or_list
     ])
+  elif is_const(expr_or_list, cast):
+      return np.array([
+        cast(expr_or_list)
+        for _ in paths
+      ])
   else:
     raise Exception(
-      '`expr_or_list` should be either list of values or regular expression, got %s' % type(expr_or_list)
+      '`expr_or_list` should be either constant value, list of values or regular expression, got %s' % type(expr_or_list)
     )
 
 

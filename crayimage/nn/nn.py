@@ -2,10 +2,10 @@ import numpy as np
 
 import theano
 import theano.tensor as T
-from keras import objectives
 
 from lasagne import layers
 from lasagne import updates
+from lasagne import objectives
 
 class NN(object):
   def __init__(self, *args, **kwargs):
@@ -27,13 +27,13 @@ class NN(object):
     self.define(*args, **kwargs)
 
     if self.input is None:
-      raise Exception('You must set `self.input` variable in the `define` method!')
+      raise NotImplementedError('You must set `self.input` variable in the `define` method!')
 
     if self.labels is None:
-      raise Exception('You must set `self.labels` variable in the `define` method!')
+      raise NotImplementedError('You must set `self.labels` variable in the `define` method!')
 
     if self.net is None:
-      raise Exception('You must set `self.net` variable in the `define` method!')
+      raise NotImplementedError('You must set `self.net` variable in the `define` method!')
 
     self.predictions = layers.get_output(self.net)
 
@@ -41,14 +41,26 @@ class NN(object):
 
     if self.loss is None:
       if self.labels.ndim == 1:
-        self.loss = objectives.binary_crossentropy(self.labels, self.predictions).mean()
+        self.loss = objectives.binary_crossentropy(self.predictions, self.labels).mean()
+        print('Using binary cross-entropy.')
       else:
-        self.loss = objectives.categorical_crossentropy(self.labels, self.predictions).mean()
+        self.loss = objectives.categorical_crossentropy(self.predictions, self.labels).mean()
+        print('Using categorical cross-entropy.')
 
     if self.pure_loss is None:
       self.pure_loss = self.loss
 
     self.build_optimizer()
+
+  def __str__(self):
+    return "%s(%s, %s)" % (
+      str(self.__class__),
+      ', '.join([str(arg) for arg in self._args]),
+      ', '.join(['%s = %s' % (k, v) for k, v in self._kwargs.items()])
+    )
+
+  def __repr__(self):
+    return str(self)
 
   def optimizer(self, params, learning_rate):
     return updates.adadelta(self.loss, params, learning_rate=learning_rate)
@@ -138,6 +150,7 @@ class NN(object):
 
   def train(self, X, y, learning_rate = 1.0, n_epochs = 3, batch_size=128, dump_each=1024, dump_dir=None):
     batch_stream_factory = lambda: self.random_batch_stream(X.shape[0], batch_size=batch_size)
+
     train_stream = self.train_stream(
       X, y, learning_rate=learning_rate,
       batch_stream_factory=batch_stream_factory, n_epochs=n_epochs,
@@ -153,10 +166,23 @@ class NN(object):
     return losses
 
   def traverse(self, X, batch_size=1024):
+    if X.ndim == 2:
+      return self._traverse_flat(X, batch_size=batch_size)
+    else:
+      return self._traverse(X, batch_size=batch_size)
+
+  def _traverse_flat(self, X, batch_size=1024):
     return np.vstack([
       self.predict(X[indx])
       for indx in self.seq_batch_stream(X.shape[0], batch_size=batch_size)
     ])
+
+  def _traverse(self, X, batch_size=1024):
+    original_shape = X.shape[:-1]
+    feature_shape = X.shape[-1]
+    X_ = X.reshape((-1, feature_shape))
+    r = self._traverse_flat(X_, batch_size=batch_size)
+    return r.reshape(original_shape + r.shape[1:])
 
   @staticmethod
   def random_batch_stream(n_samples, batch_size=128,
@@ -207,14 +233,16 @@ class NN(object):
   def load(cls, path):
     import os.path as osp
     import cPickle as pickle
+    try:
+      with open(osp.join(path, 'args.pickled'), 'r') as f:
+        args, kwargs = pickle.load(f)
 
-    with open(osp.join(path, 'args.pickled'), 'r') as f:
-      args, kwargs = pickle.load(f)
+      with open(osp.join(path, 'weights.pickled'), 'r') as f:
+        params = pickle.load(f)
 
-    with open(osp.join(path, 'weights.pickled'), 'r') as f:
-      params = pickle.load(f)
+      net = cls(*args, **kwargs)
+      net.weights = params
 
-    net = cls(*args, **kwargs)
-    net.weights = params
-
-    return net
+      return net
+    except:
+      return None
