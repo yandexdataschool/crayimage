@@ -3,13 +3,12 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 
-def sure_noise_green(patches):
-  indx = np.max(patches[:, 1, :, :], axis=(1, 2)) <= 4
+def sure_track_green(patches):
+  indx = np.sum(patches[:, 1] > 15, axis=(1, 2)) > 7
   return patches[indx, 1]
 
-def sure_track_green(patches):
-  indx = np.max(patches[:, 1, :, :], axis=(1, 2)) > 15
-  return patches[indx, 1]
+def get_green(patches):
+  return patches[:, 1]
 
 if __name__ == '__main__':
   from sys import argv, exit
@@ -27,26 +26,57 @@ if __name__ == '__main__':
 
   Ra_run = runs['Ra'].random_subset(15)
 
-  noise, tracks = slice_fmap_run(
+  tracks = slice_fmap_run(
     Ra_run,
-    functions=[sure_noise_green, sure_track_green],
-    fractions=[1000, 1.0]
-  )
+    functions=[sure_track_green],
+    fractions=[1.0],
+    window=32,
+    step=16
+  )[0]
+
+  n_noise = int(1.0e+3)
+
+  noise = slice_fmap_run(
+    Ra_run,
+    functions=[get_green],
+    fractions=[n_noise],
+    window=512,
+    step=128
+  )[0]
+
+  signal_level = 5
+
+  noise[noise > (signal_level - 1)] = signal_level - 1
 
   ### cut noise
   tracks = select_tracks(tracks, 15)
+  tracks[tracks > signal_level] = signal_level
 
-  plot_grid(noise, plot_title='Noise samples').savefig('noise_sample.png')
-  plot_grid(tracks, plot_title='Track samples').savefig('track_sample.png')
+  plot_grid(tracks, plot_title='Track samples').show()
 
   print(noise.shape)
+  print(noise.dtype)
+
   print(tracks.shape)
+  print(tracks.dtype)
 
-  area_distr = get_area_distribution(tracks, fit=True)
+  generator = LowBrightnessGeneratorModel(
+    signal_level=signal_level,
+    track_rate=10,
+    pseudo_tracks_rate=10,
+    pseudo_track_sparseness=1.7,
+    pseudo_track_width=5,
+  ).fit(noise, tracks)
 
-  pseudo_tracks = np.stack([
-    pseudo_track(area_distribution=area_distr, sparseness=2.0)
-    for _ in range(20)
-  ])
+  data, mask = generator.generate(10)
 
-  plot_grid(pseudo_tracks, plot_title='Pseudo tracks').show()
+  for i in xrange(10):
+    plt.figure(figsize=(18, 16))
+    plt.imshow(mask[i], interpolation='None', cmap=plt.cm.Reds)
+    plt.colorbar()
+    plt.show()
+
+    plt.figure(figsize=(18, 16))
+    plt.imshow(data[i], interpolation='None', cmap=plt.cm.Reds)
+    plt.colorbar()
+    plt.show()

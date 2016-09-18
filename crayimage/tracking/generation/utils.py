@@ -47,12 +47,11 @@ def gen8(patch, out=None):
 
   return out
 
-def gen_symmetry_random(patch, out=None):
-  if out is None:
-    out = np.ndarray(shape=patch.shape, dtype=patch.dtype)
-
+def gen_symmetry_random(patch):
   if np.random.randint(2) == 1:
     out = np.fliplr(patch)
+  else:
+    out = patch
 
   out = np.rot90(out, k=np.random.randint(4))
 
@@ -137,6 +136,21 @@ def pseudo_track(area_distribution, signal_distribution=None,
 
   return track
 
+def impose(sample, background, x, y, level=None):
+  p = x + sample.shape[0]
+  q = y + sample.shape[1]
 
+  if level is None:
+    background[x:p, y:q] = np.maximum(sample, background[x:p, y:q])
+  else:
+    background[x:p, y:q] = np.where(sample > 0, level, background[x:p, y:q])
 
+  return background
+
+def random_samples_stream(track_samples):
+  while True:
+    i = np.random.randint(track_samples.shape[0])
+    track = track_samples[i]
+
+    yield gen_symmetry_random(track)
 

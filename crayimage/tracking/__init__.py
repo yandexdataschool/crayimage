@@ -1,1 +1,2 @@
-from max_pool import MaxPoolTracker, max_pool
+from max_pool import MaxPoolTracking, max_pool
+from max_pool import StatMaxPoolTracker, StatMaxPoolTracking

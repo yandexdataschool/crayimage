@@ -6,4 +6,6 @@ from run_utils import read_image, read_apply, slice_apply, read_slice_apply
 from run_utils import filter_patches, fmap_patches, select_patches
 from run_utils import map_run, slice_map_run, slice_fmap_run, slice_filter_run, slice_select_run
 
+from stream import BatchStreams
+
 from run import Run

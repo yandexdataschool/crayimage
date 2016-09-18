@@ -1,7 +1,6 @@
 import numpy as np
 
-from crayimage.tracking import MaxPoolTracker, max_pool
-from crayimage.imgutils import plot_diversify
+from crayimage.tracking import StatMaxPoolTracking
 from crayimage.runutils import *
 
 if __name__ == '__main__':
@@ -16,75 +15,27 @@ if __name__ == '__main__':
 
   runs = load_index('clean.json', data_root)
 
-  Ra_run = runs['Ra']
-  Co_run = runs['Co']
+  Ra_run = runs['Ra'].random_subset(25)
+  Co_run = runs['Co'].random_subset(25)
 
-  Ra_max_pool = slice_map_run(
-    Ra_run,
-    max_pool,
-    flat=True
-  )
+  tracking = StatMaxPoolTracking(window=40, step=20, channel=1 , n_jobs=-1)
+  tracker = tracking.fit(Ra_run, Co_run)
 
-  Co_max_pool = slice_map_run(
-    Co_run,
-    max_pool,
-    flat=True
-  )
-
-  # for channel in range(3):
-  #   plt.figure()
-  #   plt.title('Max signal distribution (channel %d)' % channel)
-  #   plt.hist([
-  #       Ra_max_pool[:, channel],
-  #       Co_max_pool[:, channel]
-  #     ], label=['Ra', 'Co'], bins=50,
-  #     lw=0, log=True)
-  #
-  #   plt.legend()
-  #   plt.show()
-
-  X = np.vstack([Ra_max_pool, Co_max_pool])
-  y = np.zeros(shape=(X.shape[0], 2), dtype='float32')
-
-  y[:Ra_max_pool.shape[0], 1] = 1
-  y[Ra_max_pool.shape[0]:, 0] = 1
-
-  tracker = MaxPoolTracker.load('./max_pool_tracker')
-
-  if tracker is None:
-    tracker = MaxPoolTracker(n_channels = 3, n_units = 10)
-
-    losses = tracker.train(X, y, n_epochs=1, batch_size=1024, learning_rate=1.0e-2)
-    losses = tracker.train(X, y, n_epochs=2, batch_size=1024, learning_rate=1.0e-3)
-    losses = tracker.train(X, y, n_epochs=2, batch_size=1024, learning_rate=1.0e-4)
-    losses = tracker.train(X, y, n_epochs=2, batch_size=1024, learning_rate=1.0e-5)
-
-    tracker.save('./max_pool_tracker')
-
-  print(tracker)
-
-  ### should be normally split into train/test
-  scores = tracker.traverse(X, batch_size=1024)
-
-  from sklearn.metrics import roc_curve, auc
-  fpr, tpr, _ = roc_curve(y[:, 1], scores[:, 1])
-  auc_score = auc(fpr, tpr, reorder=True)
+  print(tracker.relative_freq_table)
 
   plt.figure()
-  plt.plot([0, 0], [1, 1], '--', color='black')
-  plt.plot(fpr, tpr, label='Ra vs Co, ROC AUC: %.5f' % auc_score)
 
-  plt.legend(loc='lower right')
+  plt.bar(
+    np.arange(tracker.relative_freq_table.shape[0]),
+    tracker.relative_freq_table,
+    width=1.0,
+    lw=0
+  )
+
+  plt.plot(
+    np.arange(tracker.probability_table.shape[0]),
+    tracker.probability_table,
+    color='red'
+  )
+
   plt.show()
-
-  plt.figure()
-  plt.plot([0, 0], [1, 1], '--', color='black')
-  plt.plot(fpr, tpr, label='Ra vs Co, ROC AUC: %.5f' % auc_score)
-
-  plt.legend(loc='lower right')
-  plt.ylim([0, 0.01])
-  plt.xlim([0, 0.01])
-  plt.show()
-
-
-
