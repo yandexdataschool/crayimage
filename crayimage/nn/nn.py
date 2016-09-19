@@ -2,10 +2,12 @@ import numpy as np
 
 import theano
 import theano.tensor as T
-from keras import objectives
 
 from lasagne import layers
 from lasagne import updates
+from lasagne import objectives
+
+from crayimage.runutils import BatchStreams
 
 class NN(object):
   def __init__(self, *args, **kwargs):
@@ -13,11 +15,13 @@ class NN(object):
     self._kwargs = kwargs
 
     self.input = None
+    self.sample_weights = None
     self.labels = None
 
     self.net = None
     self.loss = None
     self.pure_loss = None
+    self.regularization = None
 
     self.predict = None
 
@@ -27,13 +31,13 @@ class NN(object):
     self.define(*args, **kwargs)
 
     if self.input is None:
-      raise Exception('You must set `self.input` variable in the `define` method!')
+      raise NotImplementedError('You must set `self.input` variable in the `define` method!')
 
     if self.labels is None:
-      raise Exception('You must set `self.labels` variable in the `define` method!')
+      raise NotImplementedError('You must set `self.labels` variable in the `define` method!')
 
     if self.net is None:
-      raise Exception('You must set `self.net` variable in the `define` method!')
+      raise NotImplementedError('You must set `self.net` variable in the `define` method!')
 
     self.predictions = layers.get_output(self.net)
 
@@ -41,14 +45,32 @@ class NN(object):
 
     if self.loss is None:
       if self.labels.ndim == 1:
-        self.loss = objectives.binary_crossentropy(self.labels, self.predictions).mean()
+        L = objectives.binary_crossentropy(self.predictions[:, 0], self.labels)
       else:
-        self.loss = objectives.categorical_crossentropy(self.labels, self.predictions).mean()
+        L = objectives.categorical_crossentropy(self.predictions, self.labels)
+
+      if self.sample_weights is None:
+        self.loss = L.mean()
+      else:
+        self.loss = T.sum(L * self.sample_weights) / T.sum(self.sample_weights)
 
     if self.pure_loss is None:
       self.pure_loss = self.loss
 
+    if self.regularization is not None:
+      self.loss += self.regularization
+
     self.build_optimizer()
+
+  def __str__(self):
+    return "%s(%s, %s)" % (
+      str(self.__class__),
+      ', '.join([str(arg) for arg in self._args]),
+      ', '.join(['%s = %s' % (k, v) for k, v in self._kwargs.items()])
+    )
+
+  def __repr__(self):
+    return str(self)
 
   def optimizer(self, params, learning_rate):
     return updates.adadelta(self.loss, params, learning_rate=learning_rate)
@@ -65,10 +87,16 @@ class NN(object):
 
     upd = self.optimizer(params, learning_rate = self.learning_rate)
 
-    self.train_batch = theano.function(
-      [self.input, self.labels, self.learning_rate],
-      self.pure_loss, updates=upd
-    )
+    if self.weights is None:
+      self.train_batch = theano.function(
+        [self.input, self.labels, self.learning_rate],
+        self.pure_loss, updates=upd
+      )
+    else:
+      self.train_batch = theano.function(
+        [self.input, self.labels, self.sample_weights, self.learning_rate],
+        self.pure_loss, updates=upd
+      )
 
   @property
   def weights(self):
@@ -109,7 +137,7 @@ class NN(object):
 
     return cls.load(osp.join(dump_dir, path))
 
-  def train_stream(self, X, y, batch_stream_factory, learning_rate = 1.0, n_epochs=3, dump_each=1024, dump_dir=None):
+  def train_stream(self, X, y, batch_stream_factory, sample_weights=None, learning_rate = 1.0, n_epochs=3, dump_each=1024, dump_dir=None):
     learning_rate = np.array(learning_rate, dtype='float32')
 
     global_batch_count = 0
@@ -124,7 +152,11 @@ class NN(object):
       batch_stream = batch_stream_factory()
 
       for batch_i, indx in enumerate(batch_stream):
-        yield self.train_batch(X[indx], y[indx], learning_rate)
+        if sample_weights is None:
+          yield self.train_batch(X[indx], y[indx], learning_rate)
+        else:
+          yield self.train_batch(X[indx], y[indx], sample_weights[indx], learning_rate)
+
         global_batch_count += 1
 
         if (dump_dir is not None) and (global_batch_count % dump_each == 0):
@@ -136,10 +168,12 @@ class NN(object):
           self.save(nn_dir)
           snapshot_count += 1
 
-  def train(self, X, y, learning_rate = 1.0, n_epochs = 3, batch_size=128, dump_each=1024, dump_dir=None):
-    batch_stream_factory = lambda: self.random_batch_stream(X.shape[0], batch_size=batch_size)
+  def train(self, X, y, sample_weights = None, learning_rate = 1.0, n_epochs = 3, batch_size=128, dump_each=1024, dump_dir=None):
+    batch_stream_factory = lambda: BatchStreams.random_batch_stream(X.shape[0], batch_size=batch_size)
+
     train_stream = self.train_stream(
-      X, y, learning_rate=learning_rate,
+      X, y, sample_weights=sample_weights,
+      learning_rate=learning_rate,
       batch_stream_factory=batch_stream_factory, n_epochs=n_epochs,
       dump_each=dump_each, dump_dir=dump_dir
     )
@@ -151,44 +185,6 @@ class NN(object):
       losses[i] = x
 
     return losses
-
-  def traverse(self, X, batch_size=1024):
-    return np.vstack([
-      self.predict(X[indx])
-      for indx in self.seq_batch_stream(X.shape[0], batch_size=batch_size)
-    ])
-
-  @staticmethod
-  def random_batch_stream(n_samples, batch_size=128,
-                          n_batches=None, replace=True,
-                          priors=None):
-    if n_batches is None:
-      n_batches = n_samples / batch_size
-
-    for i in xrange(n_batches):
-      yield np.random.choice(n_samples, size=batch_size, replace=replace, p=priors)
-
-  @staticmethod
-  def seq_batch_stream(n_samples, batch_size=128):
-    indx = np.arange(n_samples)
-
-    n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
-
-    for i in xrange(n_batches):
-      i_from = i * batch_size
-      i_to = i_from + batch_size
-      yield indx[i_from:i_to]
-
-  @staticmethod
-  def random_seq_batch_stream(n_samples, batch_size=128):
-    indx = np.random.permutation(n_samples)
-
-    n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
-
-    for i in xrange(n_batches):
-      i_from = i * batch_size
-      i_to = i_from + batch_size
-      yield indx[i_from:i_to]
 
   def save(self, path):
     import os.path as osp
@@ -207,14 +203,19 @@ class NN(object):
   def load(cls, path):
     import os.path as osp
     import cPickle as pickle
+    try:
+      with open(osp.join(path, 'args.pickled'), 'r') as f:
+        args, kwargs = pickle.load(f)
 
-    with open(osp.join(path, 'args.pickled'), 'r') as f:
-      args, kwargs = pickle.load(f)
+      with open(osp.join(path, 'weights.pickled'), 'r') as f:
+        params = pickle.load(f)
 
-    with open(osp.join(path, 'weights.pickled'), 'r') as f:
-      params = pickle.load(f)
+      net = cls(*args, **kwargs)
+      net.weights = params
 
-    net = cls(*args, **kwargs)
-    net.weights = params
+      return net
+    except:
+      return None
 
-    return net
+  def traverse(self, X, batch_size=128):
+    return BatchStreams.traverse(self.predict, X, batch_size=batch_size)

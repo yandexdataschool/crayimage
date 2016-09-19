@@ -1,0 +1,12 @@
+{
+  "geant" : {
+    "path": "geant/geant-sim-Co-5M-right/*.npy",
+    "source": "Co",
+    "timestamp": 0,
+    "type" : "numpy",
+
+    "info": {
+      "depth" : "depth_([\\d.]+).root.npy"
+    }
+  }
+}
