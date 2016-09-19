@@ -79,7 +79,7 @@ class LowBrightnessGenerator(Generator):
     track_max_y = self._background_samples.shape[2] - self._track_samples.shape[2]
 
     for i in xrange(N):
-      n_tracks = n_tracks_distr.rvs(size=1)
+      n_tracks = int(n_tracks_distr.rvs(size=1))
 
       for _ in xrange(n_tracks):
         track = track_stream.next()
@@ -89,7 +89,7 @@ class LowBrightnessGenerator(Generator):
 
         impose(track, mask[i], x, y, level=1)
 
-      n_ptracks = n_ptracks_distr.rvs(size=1)
+      n_ptracks = int(n_ptracks_distr.rvs(size=1))
 
       for _ in xrange(n_ptracks):
         ptrack = pseudo_track(

@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import numpy as np
-
 def sure_track_green(patches):
   indx = np.sum(patches[:, 1] > 15, axis=(1, 2)) > 7
   return patches[indx, 1]
@@ -64,6 +62,7 @@ if __name__ == '__main__':
     signal_level=signal_level,
     track_rate=10,
     pseudo_tracks_rate=10,
+    white_noise_maximum=0.1,
     pseudo_track_sparseness=1.7,
     pseudo_track_width=5,
   ).fit(noise, tracks)
