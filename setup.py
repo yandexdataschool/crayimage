@@ -68,7 +68,7 @@ setup(
     'theano',
     'lasagne',
     'cython',
-    'rawpy',
+    'Wand',
     'scikit-learn'
   ],
 
