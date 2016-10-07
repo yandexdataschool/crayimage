@@ -15,8 +15,8 @@ if __name__ == '__main__':
 
   runs = load_index('clean.json', data_root)
 
-  Ra_run = runs['Ra'].random_subset(25)
-  Co_run = runs['Co'].random_subset(25)
+  Ra_run = runs['Ra'].random_subset(5)
+  Co_run = runs['Co'].random_subset(5)
 
   tracking = StatMaxPoolTracking(window=40, step=20, channel=1 , n_jobs=-1)
   tracker = tracking.fit(Ra_run, Co_run)

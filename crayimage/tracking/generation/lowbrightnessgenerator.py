@@ -37,7 +37,7 @@ class LowBrightnessGenerator(Generator):
     s = data.shape[1]
 
     for i in xrange(data.shape[0]):
-      n_white_noise = int(np.maximum(s * noise_area_distr.rvs(size=1), self._white_noise_maximum))
+      n_white_noise = int(np.minimum(noise_area_distr.rvs(size=1), self._white_noise_maximum) * s)
       indx = np.random.choice(s, size=n_white_noise, replace=False)
       data[i, indx] = self._signal_level
 

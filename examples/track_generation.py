@@ -62,7 +62,8 @@ if __name__ == '__main__':
     signal_level=signal_level,
     track_rate=10,
     pseudo_tracks_rate=10,
-    white_noise_maximum=0.1,
+    white_noise_rate=0.025,
+    white_noise_maximum=0.05,
     pseudo_track_sparseness=1.7,
     pseudo_track_width=5,
   ).fit(noise, tracks)
@@ -79,3 +80,5 @@ if __name__ == '__main__':
     plt.imshow(data[i], interpolation='None', cmap=plt.cm.Reds)
     plt.colorbar()
     plt.show()
+
+    print np.mean(data[i] == 5)
