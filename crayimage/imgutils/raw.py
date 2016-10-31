@@ -1,4 +1,4 @@
-import wand
+import rawpy
 import tempfile
 import shutil
 import gzip
