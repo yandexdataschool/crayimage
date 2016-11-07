@@ -128,7 +128,7 @@ def slice_rgb(np.ndarray[RGB_t, ndim=4] imgs,
 def slice_raw(np.ndarray[RAW_t, ndim=4] imgs,
               unsigned int window,
               unsigned int step,
-              np.ndarray[RAW_t, ndim=6] out_imgs):
+              np.ndarray[RAW_t, ndim=6] out):
   """
   Slices a collection of RAW images into patches of size `window` x `window` with offset.
   :param imgs: a tensor of size N x C x W x H, a collection of images,
@@ -136,7 +136,7 @@ def slice_raw(np.ndarray[RAW_t, ndim=4] imgs,
     W and H - sizes of images.
   :param window: size of produced patches, `window` by `window`
   :param step: the offset for the window
-  :param out_imgs: output tensor of size N x Nx x Ny x C x `window` x `window`,
+  :param out: output tensor of size N x Nx x Ny x C x `window` x `window`,
     where N - number of images, Nx, Ny - number of patches by x- and y-axis, C - number of channels.
   :return:
   """
@@ -163,6 +163,6 @@ def slice_raw(np.ndarray[RAW_t, ndim=4] imgs,
       pos_y_from = yi * step
       pos_y_to = pos_y_from + window
 
-      out_imgs[:, xi, yi] = imgs[:, :, pos_x_from:pos_x_to, pos_y_from:pos_y_to]
+      out[:, xi, yi] = imgs[:, :, pos_x_from:pos_x_to, pos_y_from:pos_y_to]
 
-  return out_imgs
+  return out

@@ -8,3 +8,16 @@ def read_npz(path):
 
 def save_as_numpy(img, path):
   np.savez_compressed(path, img=img)
+
+def read_sparse(path):
+  data = np.load(path)
+  xs, ys, vals, image_number = [ data[k] for k in ['xs', 'ys', 'vals', 'image_number'] ]
+
+  n_images = np.max(image_number)
+  width = np.max(xs) + 1
+  height = np.max(ys) + 1
+
+  imgs = np.zeros(shape=(n_images, width, height), dtype='float32')
+  imgs[image_number, xs, ys] = vals
+
+  return imgs

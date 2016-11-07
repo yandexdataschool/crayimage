@@ -9,6 +9,99 @@ from lasagne import objectives
 
 from crayimage.runutils import BatchStreams
 
+class Expression(object):
+  def __init__(self, input, net):
+    self.input = input
+    self.net = net
+    self._args = ()
+    self._kwargs = {}
+
+  def __str__(self):
+    return "%s(%s, %s)" % (
+      str(self.__class__),
+      ', '.join([str(arg) for arg in self._args]),
+      ', '.join(['%s = %s' % (k, v) for k, v in self._kwargs.items()])
+    )
+
+  def description(self):
+    return '%s\n%s' % (
+      str(self),
+      '\n'.join([str(l) for l in layers.get_all_layers(self.net)])
+    )
+
+  def __repr__(self):
+    return str(self)
+
+  @property
+  def weights(self):
+    return layers.get_all_param_values(self.net)
+
+  @weights.setter
+  def weights(self, weights):
+    layers.set_all_param_values(self.net, weights)
+
+  @staticmethod
+  def get_all_snapshots(dump_dir):
+    import os
+    import os.path as osp
+    import re
+
+    snapshot = re.compile(r"""snapshot_(\d+)""")
+
+    def get_count(path):
+      matches = snapshot.findall(path)
+      if len(matches) == 1:
+        return int(matches[0])
+      else:
+        return None
+
+    return [
+      (get_count(item), item)
+      for item in os.listdir(dump_dir)
+      if get_count(item) is not None
+      if osp.isdir(osp.join(dump_dir, item))
+    ]
+
+  @classmethod
+  def load_snapshot(cls, dump_dir, index=-1):
+    import os.path as osp
+    snapshots = cls.get_all_snapshots(dump_dir)
+
+    count, path = sorted(snapshots, key=lambda x: x[0])[index]
+
+    return cls.load(osp.join(dump_dir, path))
+
+  def save(self, path):
+    import os.path as osp
+    import cPickle as pickle
+
+    with open(osp.join(path, 'args.pickled'), 'w') as f:
+      pickle.dump((self._args, self._kwargs), f)
+
+    with open(osp.join(path, 'weights.pickled'), 'w') as f:
+      pickle.dump(
+        layers.get_all_param_values(self.net),
+        f
+      )
+
+  @classmethod
+  def load(cls, path):
+    import os.path as osp
+    import cPickle as pickle
+    try:
+      with open(osp.join(path, 'args.pickled'), 'r') as f:
+        args, kwargs = pickle.load(f)
+
+      with open(osp.join(path, 'weights.pickled'), 'r') as f:
+        params = pickle.load(f)
+
+      net = cls(*args, **kwargs)
+      net.weights = params
+
+      return net
+    except:
+      return None
+
 class NN(object):
   def __init__(self, *args, **kwargs):
     self._args = args
