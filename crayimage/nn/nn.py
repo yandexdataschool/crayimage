@@ -24,9 +24,18 @@ class Expression(object):
     )
 
   def description(self):
+    def get_number_of_params(l):
+      return np.sum([
+        np.prod(param.get_value().shape)
+        for param in l.get_params()
+      ])
+
+    def describe_layer(l):
+      return '%s\n  output shape:%s\n  number of params: %s' % (l, l.output_shape, get_number_of_params(l))
+
     return '%s\n%s' % (
       str(self),
-      '\n'.join([str(l) for l in layers.get_all_layers(self.net)])
+      '\n'.join([describe_layer(l) for l in layers.get_all_layers(self.net)])
     )
 
   def __repr__(self):
