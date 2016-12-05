@@ -2,7 +2,7 @@
 Cython implementation of performance-crucial methods.
 
 The methods are not intended to be used directly.
-Use, wrappers from crayimage.imgutils.utils instead.
+Use wrappers from crayimage.imgutils.utils instead.
 """
 
 import numpy as np

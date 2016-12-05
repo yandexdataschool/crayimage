@@ -1,4 +1,2 @@
-from em import one_class_em
-from em import one_class_em_areas
-
+from em import *
 from bayesian import bayesian

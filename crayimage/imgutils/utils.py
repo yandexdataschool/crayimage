@@ -23,7 +23,7 @@ def wrong_shape_exception(shape):
     "Tensor shape (%s) does not correspond to any possible cases. "
     "Tensor should be in either <number of images> x <number of channels> x <number of pixels> or "
     " <number of images> x <number of channels> x <image's width> x <image's height> formats." % \
-    shape
+    (shape, )
   )
 
 def ndcount1D(imgs, bins = None, out=None):
