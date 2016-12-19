@@ -141,7 +141,7 @@ def Hellinger_distance(expected, observed):
   :return: Hellinger distance from observed to each of expected distributions.
   """
   sqrt_2 = T.sqrt(2.0)
-  diff = T.sqrt(observed) - T.sqrt(expected)[None, :]
+  diff = (T.sqrt(observed) - T.sqrt(expected)[None, :]) ** 2
   return sqrt_2 * T.sqrt(T.sum(diff, axis=1))
 
 BC_coefficient = _1_minus_sqrt(Hellinger_distance())
