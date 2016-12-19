@@ -56,7 +56,7 @@ def naive_kernel(distance):
 
 @kernel
 def _1_minus_sqrt(distance):
-  return 1 - T.sqrt(distance)
+  return T.sqrt(1 - distance)
 
 @distance
 def euclidean_distance(expected, observed):
@@ -140,7 +140,7 @@ def Hellinger_distance(expected, observed):
     the second one represents probabilities of empirical distribution.
   :return: Hellinger distance from observed to each of expected distributions.
   """
-  sqrt_2 = T.sqrt(2.0)
+  sqrt_2 = 1 / T.sqrt(2.0)
   diff = (T.sqrt(observed) - T.sqrt(expected)[None, :]) ** 2
   return sqrt_2 * T.sqrt(T.sum(diff, axis=1))
 

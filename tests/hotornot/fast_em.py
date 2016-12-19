@@ -23,7 +23,7 @@ def timed(block, repeat=1):
 
 class EMTest(unittest.TestCase):
   def setUp(self):
-    kernel = gaussian_kernel(KS_distance(mode='D'), gamma=0.2)
+    kernel = BC_coefficient
     self.em = OneClassEm(kernel=kernel, max_iter=15, max_diff=1.0e-3)
 
   def gen(self, normal_mu_range, anomaly_mu_range):
