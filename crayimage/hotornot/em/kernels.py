@@ -140,7 +140,7 @@ def Hellinger_distance(expected, observed):
     the second one represents probabilities of empirical distribution.
   :return: Hellinger distance from observed to each of expected distributions.
   """
-  sqrt_2 = np.sqrt(2.0)
+  sqrt_2 = T.sqrt(2.0)
   diff = T.sqrt(observed) - T.sqrt(expected)[None, :]
   return sqrt_2 * T.sqrt(T.sum(diff, axis=1))
 
