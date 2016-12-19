@@ -11,7 +11,9 @@ __all__ = [
   'D_distance',
   'KL_distance',
   'KS_distance',
-  'total_variation_distance'
+  'total_variation_distance',
+  'Hellinger_distance',
+  'BC_coefficient'
 ]
 
 def kernel(k):
@@ -51,6 +53,10 @@ def laplacian_kernel(distance, alpha=1.0):
 @kernel
 def naive_kernel(distance):
     return T.maximum(1 - distance, 0.0)
+
+@kernel
+def _1_minus_sqrt(distance):
+  return 1 - T.sqrt(distance)
 
 @distance
 def euclidean_distance(expected, observed):
@@ -124,3 +130,18 @@ def KL_distance(expected, observed):
     """
   kl = observed * (T.log(observed) - T.log(expected)[None, :])
   return T.sum(kl, axis=1)
+
+@distance
+def Hellinger_distance(expected, observed):
+  """
+  Hellinger distance from observed to expected.
+  :param expected: 1D tensor, expectation or canonical distribution.
+  :param observed: 2D tensor, first dimension is spatial,
+    the second one represents probabilities of empirical distribution.
+  :return: Hellinger distance from observed to each of expected distributions.
+  """
+  sqrt_2 = np.sqrt(2.0)
+  diff = T.sqrt(observed) - T.sqrt(expected)[None, :]
+  return sqrt_2 * T.sqrt(T.sum(diff, axis=1))
+
+BC_coefficient = _1_minus_sqrt(Hellinger_distance())
