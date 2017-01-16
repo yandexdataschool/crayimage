@@ -58,6 +58,10 @@ def naive_kernel(distance):
 def _1_minus_sqrt(distance):
   return T.sqrt(1 - distance)
 
+@kernel
+def sigmoid(distance, w = 7.0, b = 0.5):
+  return T.nnet.sigmoid(-w * (distance - b))
+
 @distance
 def euclidean_distance(expected, observed):
   return T.sum((observed - expected[None, :]) ** 2, axis=2)

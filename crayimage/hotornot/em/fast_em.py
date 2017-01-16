@@ -96,7 +96,7 @@ class OneClassEm(object):
     window_x = window_x or width
     window_y = window_y or height
 
-    mask = mask or np.zeros(shape=counts.shape[:-1], dtype='float32')
+    mask = mask or np.ones(shape=counts.shape[:-1], dtype='float32')
 
     samples = np.sum(counts[0, 0, 0, :])
 
