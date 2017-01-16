@@ -192,7 +192,7 @@ def binning_raw(np.ndarray[RAW_t, ndim=2] img,
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
-def binning_rbg(np.ndarray[RGB_t, ndim=2] img,
+def binning_rgb(np.ndarray[RGB_t, ndim=2] img,
                 np.ndarray[BIN_t, ndim=1] mapping,
                 np.ndarray[COUNT_t, ndim=3] out):
     cdef unsigned int n_channels = img.shape[0]

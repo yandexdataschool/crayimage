@@ -1,10 +1,8 @@
-from utils import COUNT_T, RGB_T, RAW_T
+from utils import *
 
-from utils import ndcount1D, ndcount2D
-from utils import ndcount
+import binning
+from binning import *
 
-from utils import slice
-from utils import flatten
 
 from raw import read_raw
 from jpg import read_jpg

@@ -1,12 +1,19 @@
 import pyximport
 pyximport.install()
 
+__all__ = [
+  'binnig_update',
+  'binning',
+  'uniform_mapping',
+  'greedy_max_entropy_mapping'
+]
+
 import numpy as np
 
 from special import COUNT_T, RGB_T, RAW_T, BIN_T
 
-from special import binning_raw
 from special import binning_rgb
+from special import binning_raw
 
 from utils import wrong_dtype_exception
 
