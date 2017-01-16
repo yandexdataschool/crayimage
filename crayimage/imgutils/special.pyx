@@ -12,13 +12,17 @@ cimport cython
 ctypedef np.uint16_t RAW_t
 ctypedef np.uint8_t RGB_t
 
-COUNT_T = np.uint16
-
 RAW_T = np.uint16
 RGB_T = np.uint8
 
+ctypedef np.uint16_t BIN_t
+BIN_T = np.uint16
+
 ctypedef np.uint16_t COUNT_t
+COUNT_T = np.uint16
+
 ctypedef np.float32_t IMG_FLOAT_t
+IMG_FLOAT_T = np.float32
 
 cdef inline int raw_min(np.uint16_t a, np.uint16_t b): return a if a <= b else b
 cdef inline int rgb_min(np.uint8_t a, np.uint8_t b): return a if a <= b else b
@@ -166,3 +170,41 @@ def slice_raw(np.ndarray[RAW_t, ndim=4] imgs,
       out[:, xi, yi] = imgs[:, :, pos_x_from:pos_x_to, pos_y_from:pos_y_to]
 
   return out
+
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def binning_raw(np.ndarray[RAW_t, ndim=2] img,
+                np.ndarray[BIN_t, ndim=1] mapping,
+                np.ndarray[COUNT_t, ndim=3] out):
+    cdef unsigned int n_channels = img.shape[0]
+    cdef unsigned int n_pixels = img.shape[1]
+
+    cdef unsigned int i, j
+    cdef RAW_t value
+    cdef RAW_t max_value = out.shape[2]
+
+    for i in range(n_channels):
+        for j in range(n_pixels):
+            value = mapping[img[i, j]]
+            out[i, j, value] += 1
+
+    return out
+
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def binning_rbg(np.ndarray[RGB_t, ndim=2] img,
+                np.ndarray[BIN_t, ndim=1] mapping,
+                np.ndarray[COUNT_t, ndim=3] out):
+    cdef unsigned int n_channels = img.shape[0]
+    cdef unsigned int n_pixels = img.shape[1]
+
+    cdef unsigned int i, j
+    cdef RAW_t value
+    cdef RAW_t max_value = out.shape[2]
+
+    for i in range(n_channels):
+        for j in range(n_pixels):
+            value = mapping[img[i, j]]
+            out[i, j, value] += 1
+
+    return out

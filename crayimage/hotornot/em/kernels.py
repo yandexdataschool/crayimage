@@ -21,16 +21,16 @@ def kernel(k):
   This wrapper turns a kernel function
   distance -> similarity measure
   into
-  positively defined kernel -> negatively defined kernel
+  negatively defined kernel -> positively defined kernel
   :param k: function to wrap
   :return:
   """
   def distance_to_kernel(distance_function, *args, **kwargs):
-    def nkernel(expected, observed):
+    def pkernel(expected, observed):
       d = distance_function(expected, observed)
       return k(d, *args, **kwargs)
 
-    return nkernel
+    return pkernel
 
   return distance_to_kernel
 

@@ -3,13 +3,16 @@ pyximport.install()
 
 import numpy as np
 
-from special import COUNT_T, RGB_T, RAW_T
+from special import COUNT_T, RGB_T, RAW_T, BIN_T
 
 from special import ndcount_rgb as _ndcount_rgb_fast
 from special import ndcount_raw as _ndcount_raw_fast
 
 from special import slice_rgb as _slice_rbg_fast
 from special import slice_raw as _slice_raw_fast
+
+from special import binning_raw as _binning_raw_fast
+from special import binning_rbg as _binning_rgb_fast
 
 def wrong_dtype_exception(dtype):
   return Exception(

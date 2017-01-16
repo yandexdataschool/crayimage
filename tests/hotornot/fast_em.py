@@ -24,7 +24,7 @@ def timed(block, repeat=1):
 class EMTest(unittest.TestCase):
   def setUp(self):
     kernel = BC_coefficient
-    self.em = OneClassEm(kernel=kernel, max_iter=15, max_diff=1.0e-3)
+    self.em = OneClassEm(kernel=kernel, max_iter=15, max_diff=None)
 
   def gen(self, normal_mu_range, anomaly_mu_range):
     self.gens = [
