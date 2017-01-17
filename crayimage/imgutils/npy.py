@@ -4,7 +4,11 @@ def read_array(path):
   return np.load(path)
 
 def read_npz(path):
-  return np.load(path)['img']
+  f = np.load(path)
+  if 'img' in f.keys():
+    return f['img']
+  else:
+    return f['arr_0']
 
 def save_as_numpy(img, path):
   np.savez_compressed(path, img=img)
