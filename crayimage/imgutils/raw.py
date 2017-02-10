@@ -1,4 +1,3 @@
-import rawpy
 import tempfile
 import shutil
 import gzip
@@ -7,6 +6,7 @@ import os
 import os.path as osp
 
 def read_raw(path, tmp=None):
+  import rawpy
   tmp_ = tmp or tempfile.mkdtemp(suffix='tmp', prefix='crayimage')
 
   _, filename = osp.split(path)

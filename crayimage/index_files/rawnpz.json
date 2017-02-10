@@ -1,0 +1,53 @@
+{
+  "Co60" : {
+    "path": "Co60/*.dng.gz.npz",
+    "source": "Co60",
+    "timestamp": "RAW_(\\d+)_",
+
+    "type" : "npz",
+
+    "info": {
+      "exposure": "_e(\\d+)_",
+      "gain": "_g(\\d+)_"
+    }
+  },
+
+  "Ra226" : {
+    "path": "Ra226/*.dng.gz.npz",
+    "source": "Ra226",
+    "timestamp": "RAW_(\\d+)_.*",
+
+    "type" : "npz",
+
+    "info": {
+      "exposure": "_e(\\d+)_",
+      "gain": "_g(\\d+)_"
+    }
+  },
+
+  "Cs137" : {
+    "path": "Cs137/*.dng.gz.npz",
+    "source": "Cs137",
+    "timestamp": "RAW_(\\d+)_.*",
+
+    "type" : "npz",
+
+    "info": {
+      "exposure": "_e(\\d+)_",
+      "gain": "_g(\\d+)_"
+    }
+  },
+
+  "cal" : {
+    "path": "cal/*/*.dng.gz.npz",
+    "source": "none",
+    "timestamp": "RAW_(\\d+)_.*",
+
+    "type" : "npz",
+
+    "info": {
+      "exposure": "_e(\\d+)_",
+      "gain": "_g(\\d+)_"
+    }
+  }
+}

@@ -2,7 +2,7 @@
 Cython implementation of performance-crucial methods.
 
 The methods are not intended to be used directly.
-Use, wrappers from crayimage.imgutils.utils instead.
+Use wrappers from crayimage.imgutils.utils instead.
 """
 
 import numpy as np
@@ -12,13 +12,17 @@ cimport cython
 ctypedef np.uint16_t RAW_t
 ctypedef np.uint8_t RGB_t
 
-COUNT_T = np.uint16
-
 RAW_T = np.uint16
 RGB_T = np.uint8
 
+ctypedef np.uint16_t BIN_t
+BIN_T = np.uint16
+
 ctypedef np.uint16_t COUNT_t
+COUNT_T = np.uint16
+
 ctypedef np.float32_t IMG_FLOAT_t
+IMG_FLOAT_T = np.float32
 
 cdef inline int raw_min(np.uint16_t a, np.uint16_t b): return a if a <= b else b
 cdef inline int rgb_min(np.uint8_t a, np.uint8_t b): return a if a <= b else b
@@ -128,7 +132,7 @@ def slice_rgb(np.ndarray[RGB_t, ndim=4] imgs,
 def slice_raw(np.ndarray[RAW_t, ndim=4] imgs,
               unsigned int window,
               unsigned int step,
-              np.ndarray[RAW_t, ndim=6] out_imgs):
+              np.ndarray[RAW_t, ndim=6] out):
   """
   Slices a collection of RAW images into patches of size `window` x `window` with offset.
   :param imgs: a tensor of size N x C x W x H, a collection of images,
@@ -136,7 +140,7 @@ def slice_raw(np.ndarray[RAW_t, ndim=4] imgs,
     W and H - sizes of images.
   :param window: size of produced patches, `window` by `window`
   :param step: the offset for the window
-  :param out_imgs: output tensor of size N x Nx x Ny x C x `window` x `window`,
+  :param out: output tensor of size N x Nx x Ny x C x `window` x `window`,
     where N - number of images, Nx, Ny - number of patches by x- and y-axis, C - number of channels.
   :return:
   """
@@ -163,6 +167,44 @@ def slice_raw(np.ndarray[RAW_t, ndim=4] imgs,
       pos_y_from = yi * step
       pos_y_to = pos_y_from + window
 
-      out_imgs[:, xi, yi] = imgs[:, :, pos_x_from:pos_x_to, pos_y_from:pos_y_to]
+      out[:, xi, yi] = imgs[:, :, pos_x_from:pos_x_to, pos_y_from:pos_y_to]
 
-  return out_imgs
+  return out
+
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def binning_raw(np.ndarray[RAW_t, ndim=2] img,
+                np.ndarray[BIN_t, ndim=1] mapping,
+                np.ndarray[COUNT_t, ndim=3] out):
+    cdef unsigned int n_channels = img.shape[0]
+    cdef unsigned int n_pixels = img.shape[1]
+
+    cdef unsigned int i, j
+    cdef RAW_t value
+    cdef RAW_t max_value = out.shape[2]
+
+    for i in range(n_channels):
+        for j in range(n_pixels):
+            value = mapping[img[i, j]]
+            out[i, j, value] += 1
+
+    return out
+
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def binning_rgb(np.ndarray[RGB_t, ndim=2] img,
+                np.ndarray[BIN_t, ndim=1] mapping,
+                np.ndarray[COUNT_t, ndim=3] out):
+    cdef unsigned int n_channels = img.shape[0]
+    cdef unsigned int n_pixels = img.shape[1]
+
+    cdef unsigned int i, j
+    cdef RAW_t value
+    cdef RAW_t max_value = out.shape[2]
+
+    for i in range(n_channels):
+        for j in range(n_pixels):
+            value = mapping[img[i, j]]
+            out[i, j, value] += 1
+
+    return out

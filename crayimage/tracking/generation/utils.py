@@ -137,13 +137,16 @@ def pseudo_track(area_distribution, signal_distribution=None,
   return track
 
 def impose(sample, background, x, y, level=None):
-  p = x + sample.shape[0]
-  q = y + sample.shape[1]
+  p = np.min([x + sample.shape[0], background.shape[0] - 1])
+  q = np.min([y + sample.shape[1], background.shape[1] - 1])
+
+  w = p - x
+  h = q - y
 
   if level is None:
-    background[x:p, y:q] = np.maximum(sample, background[x:p, y:q])
+    background[x:p, y:q] = np.maximum(sample[:h, :w], background[x:p, y:q])
   else:
-    background[x:p, y:q] = np.where(sample > 0, level, background[x:p, y:q])
+    background[x:p, y:q] = np.where(sample[:h, :w] > 0, level, background[x:p, y:q])
 
   return background
 

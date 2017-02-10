@@ -47,13 +47,13 @@ class BayesianUtilsTest(unittest.TestCase):
     comp1 = compound_distribution(
       parameter_distribution=stats.uniform(0.0, 0.25),
       signal_family=lambda p: stats.binom(bins - 1, p),
-      discretize_signal=False, bins = bins
+      binarize_signal=False, bins = bins
     )
 
     comp2 = compound_distribution(
       parameter_distribution=stats.uniform(0.5, 1.0),
       signal_family=lambda p: stats.binom(bins - 1, p),
-      discretize_signal=False, bins=bins
+      binarize_signal=False, bins=bins
     )
 
     grid1 = np.linspace(0.0, 0.25, num=200)

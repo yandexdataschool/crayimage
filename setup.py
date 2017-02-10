@@ -62,13 +62,13 @@ setup(
   },
 
   install_requires=[
+    'tqdm',
     'numpy',
     'scipy',
     'matplotlib',
     'theano',
     'lasagne',
     'cython',
-    'rawpy',
     'scikit-learn'
   ],
 
@@ -86,7 +86,8 @@ setup(
     for target in [
       'crayimage/imgutils/*.pyx',
       'crayimage/hotornot/bayesian/*.pyx',
-      'crayimage/hotornot/em/*.pyx'
+      'crayimage/hotornot/em/*.pyx',
+      'crayimage/tracking/generation/*.pyx'
     ]
 
     for module in cythonize(target)

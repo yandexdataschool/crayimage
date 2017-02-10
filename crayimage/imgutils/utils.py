@@ -1,9 +1,15 @@
 import pyximport
 pyximport.install()
 
+__all__ = [
+  'COUNT_T', 'RGB_T', 'RAW_T',
+  'ndcount1D', 'ndcount2D', 'ndcount',
+  'slice', 'flatten'
+]
+
 import numpy as np
 
-from special import COUNT_T, RGB_T, RAW_T
+from special import COUNT_T, RGB_T, RAW_T, BIN_T
 
 from special import ndcount_rgb as _ndcount_rgb_fast
 from special import ndcount_raw as _ndcount_raw_fast
@@ -23,7 +29,7 @@ def wrong_shape_exception(shape):
     "Tensor shape (%s) does not correspond to any possible cases. "
     "Tensor should be in either <number of images> x <number of channels> x <number of pixels> or "
     " <number of images> x <number of channels> x <image's width> x <image's height> formats." % \
-    shape
+    (shape, )
   )
 
 def ndcount1D(imgs, bins = None, out=None):

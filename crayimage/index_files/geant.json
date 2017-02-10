@@ -1,9 +1,9 @@
 {
-  "geant" : {
-    "path": "geant/geant-sim-Co-5M-right/*.npy",
+  "Co" : {
+    "path": "sim-Co/events_depth=*_energy=*_particle=gamma_seed0=*_seed1=*.root",
     "source": "Co",
     "timestamp": 0,
-    "type" : "numpy",
+    "type" : "root",
 
     "info": {
       "depth" : "depth_([\\d.]+).root.npy"

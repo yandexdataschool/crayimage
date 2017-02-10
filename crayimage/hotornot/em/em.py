@@ -1,5 +1,6 @@
 from em_utils import ks_distance, expectation
 from crayimage.imgutils import *
+import numpy as np
 
 def one_class_em(counts, kernel='ks', max_iter=10):
   n = np.sum(counts[0, :])
