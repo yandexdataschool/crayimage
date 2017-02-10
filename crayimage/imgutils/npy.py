@@ -18,8 +18,13 @@ def read_sparse(path):
   xs, ys, vals, image_number = [ data[k] for k in ['xs', 'ys', 'vals', 'image_number'] ]
 
   n_images = np.max(image_number)
-  width = np.max(xs) + 1
-  height = np.max(ys) + 1
+
+  try:
+    width = int(data['image_width'])
+    height = int(data['image_height'])
+  except Exception as e:
+    width = np.max(xs) + 1
+    height = np.max(ys) + 1
 
   imgs = np.zeros(shape=(n_images, width, height), dtype='float32')
   imgs[image_number, xs, ys] = vals

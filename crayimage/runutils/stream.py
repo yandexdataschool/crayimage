@@ -209,6 +209,3 @@ class SuperStream(object):
 
   def next(self):
     return np.vstack(self.grand_stream.next())
-
-
-

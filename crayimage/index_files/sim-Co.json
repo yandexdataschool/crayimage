@@ -1,0 +1,13 @@
+{
+    "sim-Co" : {
+        "path": "sim-Co/events_depth=*_energy=*_particle=gamma_seed0=*_seed1=*.root.root.npz",
+        "source": "Co60",
+        "timestamp": 0,
+        "type" : "sparse.npz",
+
+        "info": {
+            "energy" : "energy=([\\d.]+)_",
+            "depth" : "depth=([\\d.]+)_"
+        }
+    }
+}
