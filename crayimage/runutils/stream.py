@@ -176,6 +176,18 @@ def disk_stream(path, output_queue, loading_pool, stream_id=0, batch_size=8, cac
     else:
       _, current_arr = loading_pool.outqs[stream_id].get(block=True)
 
+def queue_stream(queue):
+  while True:
+    yield queue.get(block=True)
+
+def queues_stream(queues):
+  it = itertools.izip(*[
+    queue_stream(queue) for queue in queues
+  ])
+
+  for xs in it:
+    yield np.vstack(xs)
+
 class SuperStream(object):
   def __init__(self, root_path, batch_size=8, n_loading_threads=2, cache_size_per_bin=0, queue_limit=64):
     self.bin_paths = [
@@ -195,10 +207,6 @@ class SuperStream(object):
       )
       substream.deamon = True
       substream.start()
-
-    def queue_stream(queue):
-      while True:
-        yield queue.get(block=True)
 
     self.grand_stream = itertools.izip(*[
       queue_stream(queue) for queue in self.sub_queues

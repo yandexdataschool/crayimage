@@ -87,7 +87,8 @@ setup(
       'crayimage/imgutils/*.pyx',
       'crayimage/hotornot/bayesian/*.pyx',
       'crayimage/hotornot/em/*.pyx',
-      'crayimage/tracking/generation/*.pyx'
+      'crayimage/tracking/generation/*.pyx',
+      'crayimage/simulation/particle/*.pyx'
     ]
 
     for module in cythonize(target)
