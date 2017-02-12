@@ -3,7 +3,7 @@ pyximport.install()
 
 import numpy as np
 from Queue import Queue
-from crayimage.runutils import queue_stream, queues_stream
+from crayimage.runutils import queue_stream
 
 import threading
 

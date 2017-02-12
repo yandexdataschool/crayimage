@@ -65,6 +65,7 @@ setup(
     'tqdm',
     'numpy',
     'scipy',
+    'joblib',
     'matplotlib',
     'theano',
     'lasagne',
