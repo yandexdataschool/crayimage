@@ -52,10 +52,10 @@ class NNWatcher(object):
     for d, line, mean_line in zip(data, self.lines, self.mean_lines):
       trend = np.mean(d, axis=1)
 
-      mean_line.set_xdata(np.arange(d.shape[0]))
+      mean_line.set_xdata(np.arange(d.shape[0]) + 0.5)
       mean_line.set_ydata(trend)
 
-      xs = np.linspace(0, d.shape[0] - 1, num=int(np.prod(d.shape)))
+      xs = np.linspace(0, d.shape[0], num=int(np.prod(d.shape)))
       line.set_xdata(xs)
       line.set_ydata(d)
 

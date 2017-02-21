@@ -114,7 +114,8 @@ def loading_worker(in_queue, out_queues):
   while True:
     path, out_index = in_queue.get()
     arr = np.load(path)
-    out_queues[out_index].put((path, arr), block=False)
+    k = arr.keys()[0]
+    out_queues[out_index].put((path, arr[k]), block=False)
 
 class LoadingPool(object):
   def __init__(self, n_workers=1, n_consumers=1):

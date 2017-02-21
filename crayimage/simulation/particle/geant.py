@@ -11,7 +11,7 @@ from generation import simulation_samples
 from input import read_sparse, max_track_len, read_sparse_run
 
 __all__ = [
-  'simulation_samples', 'simulate',
+  'simulation_samples', 'simulate', 'SimulationStream',
   'read_sparse', 'read_sparse_run', 'max_track_len'
 ]
 
