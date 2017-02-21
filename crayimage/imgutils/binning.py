@@ -44,7 +44,7 @@ def uniform_mapping(max_value=None, run=None, bins=32):
   assert max_value is not None or run is not None, 'You must specify either `max_value` or `run` parameters!'
 
   max_value = max_value or (2 ** 10 - 1 if run.image_type == 'raw' else 2 ** 8 - 1)
-  per_bin = max_value / bins
+  per_bin = (max_value + 1) / bins
 
   return (np.arange(max_value + 1) / per_bin).astype(BIN_T)
 

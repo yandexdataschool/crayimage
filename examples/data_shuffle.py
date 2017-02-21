@@ -27,8 +27,10 @@ if __name__ == '__main__':
   patches_max = np.max(patches, axis=(1, 2, 3))
   patches_max_bincount = np.bincount(patches_max)
 
-  from crayimage.imgutils import greedy_max_entropy_mapping
-  mapping = greedy_max_entropy_mapping(patches_max_bincount, bins=BINS)
+  from crayimage.imgutils import uniform_mapping
+  mapping = uniform_mapping(patches_max_bincount.shape[0], bins=BINS)
+  print('Using mapping:')
+  print(mapping)
 
   def read_samples(path, mapping, select_category, window=WINDOW, step=STEP):
     from crayimage.imgutils import read_npz
