@@ -13,7 +13,7 @@ if __name__ == '__main__':
   STEP = WINDOW / 2
   BINS = 16
   BATCH_SIZE = 2048 * 4
-  MIN_BATCH_SIZE = 64
+  MIN_BATCH_SIZE = 512
 
   import numpy as np
 
@@ -27,10 +27,14 @@ if __name__ == '__main__':
   patches_max = np.max(patches, axis=(1, 2, 3))
   patches_max_bincount = np.bincount(patches_max)
 
-  from crayimage.imgutils import uniform_mapping
-  mapping = uniform_mapping(patches_max_bincount.shape[0], bins=BINS)
+  from crayimage.imgutils import almost_uniform_mapping
+  mapping = almost_uniform_mapping(patches_max_bincount.shape[0], minimal_bin_range=1024 / (2 * BINS), bin_minimal=MIN_BATCH_SIZE)
   print('Using mapping:')
-  print(mapping)
+  for i in range(BINS):
+    indx = np.where(mapping == i)[0]
+    from_i, to_i = np.min(indx), np.max(indx)
+    fraction = float(np.sum(patches_max_bincount[indx])) / np.sum(patches_max_bincount)
+    print('Bin %d: [%d, %d] (%.2e)' % (i, from_i, to_i, fraction))
 
   def read_samples(path, mapping, select_category, window=WINDOW, step=STEP):
     from crayimage.imgutils import read_npz

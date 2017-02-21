@@ -5,7 +5,8 @@ __all__ = [
   'binnig_update',
   'binning',
   'uniform_mapping',
-  'greedy_max_entropy_mapping'
+  'greedy_max_entropy_mapping',
+  'almost_uniform_mapping'
 ]
 
 import numpy as np
@@ -47,6 +48,33 @@ def uniform_mapping(max_value=None, run=None, bins=32):
   per_bin = (max_value + 1) / bins
 
   return (np.arange(max_value + 1) / per_bin).astype(BIN_T)
+
+def almost_uniform_mapping(bincount, minimal_bin_range=16, bin_minimal=(1.0 / 32)):
+  if type(bin_minimal) in [int, long]:
+    bin_minimal = float(bin_minimal) / np.sum(bincount)
+
+  fractions = bincount.astype('float64') / np.sum(bincount)
+  mapping = np.ndarray(shape=bincount.shape, dtype=BIN_T)
+
+  current_i = 0
+  current_bin = 0
+
+  while current_i < bincount.shape[0]:
+    bin_prob = np.cumsum(fractions[current_i:])
+    try:
+      if bin_prob[minimal_bin_range - 1] < bin_minimal:
+        i_range = np.min(np.where(bin_prob >= bin_minimal)[0]) + 1
+      else:
+        i_range = minimal_bin_range
+
+      mapping[current_i:(current_i + i_range)] = current_bin
+      current_i += i_range
+      current_bin += 1
+    except:
+      mapping[current_i:] = current_bin - 1
+      current_i = bincount.shape[0]
+
+  return mapping
 
 def greedy_max_entropy_mapping(bincount=None, run=None, bins=32, max_value=None):
   def get_bin(bc, bins):
