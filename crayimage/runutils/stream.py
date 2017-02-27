@@ -6,9 +6,6 @@ import itertools
 
 import threading
 from Queue import Queue
-from tqdm import tqdm
-import random
-
 
 from crayimage.imgutils import slice
 
@@ -44,6 +41,18 @@ class BatchStreams(object):
       i_from = i * batch_size
       i_to = i_from + batch_size
       yield indx[i_from:i_to]
+
+  @staticmethod
+  def inf_random_seq_batch_stream(n_samples, batch_size=128, allow_smaller=False):
+    n_batches = n_samples / batch_size + (1 if (n_samples % batch_size != 0) and allow_smaller else 0)
+
+    while True:
+      indx = np.random.permutation(n_samples)
+
+      for i in xrange(n_batches):
+        i_from = i * batch_size
+        i_to = i_from + batch_size
+        yield indx[i_from:i_to]
 
   @staticmethod
   def traverse(f, X, batch_size=1024):
@@ -91,91 +100,46 @@ class BatchStreams(object):
 
       yield np.hstack(sample), wc
 
-def loading_shuffling_worker(in_queue, out_queues, batch_size):
-  while True:
-    path, out_index = in_queue.get()
-    arr = np.load(path)
+def batch_worker(path, out_queue, batch_sizes):
+  import h5py
+  import itertools
 
-    n_samples = arr.shape[0]
-    n_batches = (n_samples / batch_size)
+  f = h5py.File(path, mode='r')
 
-    indx = np.random.choice(n_samples, size=n_batches * batch_size, replace=False)
-    arr = arr[indx].reshape((n_batches, batch_size) + arr.shape[1:])
-    out_queues[out_index].put((path, arr), block=False)
+  n_bins = len([ k for k in  f.keys() if k.startswith('bin_') ])
 
-def random_batch_stream(col):
-  import random
+  datasets = [
+    f['bin_%d' % i] for i in range(n_bins)
+  ]
 
-  while True:
-    i = random.randrange(0, len(col))
-    yield col[i]
+  if type(batch_sizes) in [long, int]:
+    batch_sizes = [batch_sizes] * len(datasets)
 
-def loading_worker(in_queue, out_queues):
-  while True:
-    path, out_index = in_queue.get()
-    arr = np.load(path)
-    k = arr.keys()[0]
-    out_queues[out_index].put((path, arr[k]), block=False)
+  indxes_stream = itertools.izip([
+    BatchStreams.inf_random_seq_batch_stream(n_samples=dataset.shape[0], batch_size=batch_size)
+    for dataset, batch_size in zip(datasets, batch_sizes)
+  ])
 
-class LoadingPool(object):
-  def __init__(self, n_workers=1, n_consumers=1):
-    self.inq = Queue()
-    self.outqs = [ Queue() for _ in range(n_consumers) ]
+  for indxes in indxes_stream:
+    batch = np.vstack([
+      ds[ind]
+      for ds, ind in zip(indxes, datasets)
+    ])
 
-    for _ in range(n_workers):
-      worker = threading.Thread(
-        target=loading_worker,
-        args=(self.inq, self.outqs)
-      )
-      worker.deamon = True
-      worker.start()
+    out_queue.put(batch, block=True)
 
-  def preload(self, path, sender_id):
-    self.inq.put((path, sender_id), block=False)
+def disk_stream(path, batch_sizes=8, cache_size=16):
+  queue = Queue(maxsize=cache_size)
 
-def disk_stream(path, output_queue, loading_pool, stream_id=0, batch_size=8, cache_size=0):
-  batch_paths = [osp.join(path, item) for item in os.listdir(path)]
-  batch_path_iterator = random_batch_stream(batch_paths)
+  worker = threading.Thread(
+    target=batch_worker,
+    kwargs=dict(path=path, out_queue=queue, batch_size=batch_sizes)
+  )
 
-  cache_size = min([len(batch_paths), cache_size])
+  worker.daemon = True
+  worker.start()
 
-  cache = {}
-
-  for path in batch_paths[:cache_size]:
-    loading_pool.preload(path, stream_id)
-
-  for _ in range(cache_size):
-    path, arr = loading_pool.outqs[stream_id].get(block=True)
-    cache[path] = arr
-
-  path = batch_path_iterator.next()
-
-  if path in cache:
-    current_arr = cache[path]
-  else:
-    loading_pool.preload(path, stream_id)
-    _, current_arr = loading_pool.outqs[stream_id].get(block=True)
-
-  for next_path in batch_path_iterator:
-    if next_path in cache:
-      pass
-    else:
-      loading_pool.preload(next_path, stream_id)
-
-    n_samples = current_arr.shape[0]
-    indx = np.random.permutation(n_samples)
-    n_batches = n_samples / batch_size
-
-    for i in xrange(n_batches):
-      i_from = i * batch_size
-      i_to = i_from + batch_size
-      batch_indx = indx[i_from:i_to]
-      output_queue.put(current_arr[batch_indx], block=True)
-
-    if next_path in cache:
-      current_arr = cache[next_path]
-    else:
-      _, current_arr = loading_pool.outqs[stream_id].get(block=True)
+  return queues_stream(queue)
 
 def queue_stream(queue):
   while True:
@@ -188,33 +152,3 @@ def queues_stream(queues):
 
   for xs in it:
     yield np.vstack(xs)
-
-class SuperStream(object):
-  def __init__(self, root_path, batch_size=8, n_loading_threads=2, cache_size_per_bin=0, queue_limit=64):
-    self.bin_paths = [
-      osp.join(root_path, 'bin_%d') % i for i in range(len(os.listdir(root_path)))
-    ]
-
-    self.loading_pool = LoadingPool(n_workers=n_loading_threads, n_consumers=len(self.bin_paths))
-    self.sub_queues = [ Queue(maxsize=queue_limit) for _ in self.bin_paths ]
-
-    for path, queue, i in zip(self.bin_paths, self.sub_queues, range(len(self.bin_paths))):
-      substream = threading.Thread(
-        target=disk_stream,
-        kwargs=dict(
-          path=path, output_queue=queue, loading_pool=self.loading_pool,
-          stream_id=i, batch_size=batch_size, cache_size=cache_size_per_bin
-        )
-      )
-      substream.deamon = True
-      substream.start()
-
-    self.grand_stream = itertools.izip(*[
-      queue_stream(queue) for queue in self.sub_queues
-    ])
-
-  def __iter__(self):
-    return self
-
-  def next(self):
-    return np.vstack(self.grand_stream.next())

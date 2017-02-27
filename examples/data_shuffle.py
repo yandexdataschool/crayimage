@@ -1,19 +1,21 @@
+"""
+ This example shows how to precompute batches so they can be accessed later much faster.
+"""
+
+import gc
 
 if __name__ == '__main__':
-
   import sys
 
   DATA_ROOT, OUTPUT_DIR = sys.argv[1:]
 
-  import matplotlib
-
-  matplotlib.use('agg')
+  import h5py
 
   WINDOW = 128
   STEP = WINDOW / 2
   BINS = 16
-  BATCH_SIZE = 2048 * 4
-  MIN_BATCH_SIZE = 512
+
+  BIN_MINIMAL = 1.0 / BINS / 10.0
 
   import numpy as np
 
@@ -28,13 +30,15 @@ if __name__ == '__main__':
   patches_max_bincount = np.bincount(patches_max)
 
   from crayimage.imgutils import almost_uniform_mapping
-  mapping = almost_uniform_mapping(patches_max_bincount.shape[0], minimal_bin_range=1024 / (2 * BINS), bin_minimal=MIN_BATCH_SIZE)
+  mapping = almost_uniform_mapping(patches_max_bincount, minimal_bin_range=1024 / (4 * BINS), bin_minimal=BIN_MINIMAL)
+  BINS = np.max(mapping) + 1
   print('Using mapping:')
   for i in range(BINS):
     indx = np.where(mapping == i)[0]
     from_i, to_i = np.min(indx), np.max(indx)
-    fraction = float(np.sum(patches_max_bincount[indx])) / np.sum(patches_max_bincount)
-    print('Bin %d: [%d, %d] (%.2e)' % (i, from_i, to_i, fraction))
+    bin_total = np.sum(patches_max_bincount[indx])
+    fraction = float(bin_total) / np.sum(patches_max_bincount)
+    print('Bin %d: [%d, %d] (%.2e or %d samples)' % (i, from_i, to_i, fraction, bin_total))
 
   def read_samples(path, mapping, select_category, window=WINDOW, step=STEP):
     from crayimage.imgutils import read_npz
@@ -52,9 +56,6 @@ if __name__ == '__main__':
   del patches_max
   del patches_max_bincount
 
-  print (BATCH_SIZE * BINS * WINDOW * WINDOW * 2 / 1024.0 / 1024), 'Mb per data batch'
-
-
   from joblib import Parallel, delayed
   import os
   import os.path as osp
@@ -68,42 +69,29 @@ if __name__ == '__main__':
 
     return np.vstack(samples)
 
-  from tqdm import tqdm
-
-  def save(samples, cat_path, batch_size=BATCH_SIZE):
-    n_samples = samples.shape[0]
-    indx = np.random.permutation(samples.shape[0])
-    n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
-    for i in tqdm(range(n_batches)):
-      i_from = i * batch_size
-      i_to = i_from + batch_size
-      if indx[i_from:i_to].shape[0] < MIN_BATCH_SIZE:
-        continue
-
-      batch = samples[indx[i_from:i_to]]
-      path = osp.join(cat_path, 'batch_%d' % i)
-      np.savez_compressed(path, batch=batch)
-
   for k in runs.keys():
-    print 'Splitting %s into %d bins by packs of %d slices %d x %d with step %d' % (
-      k, BINS, BATCH_SIZE, WINDOW, WINDOW, STEP
+    print 'Splitting %s into %d bins by packs of %d x %d slices with step %d' % (
+      k, BINS, WINDOW, WINDOW, STEP
     )
-    data_path = osp.join(OUTPUT_DIR, k)
-    try:
-      os.makedirs(data_path)
-    except OSError:
-      pass
+
+    data_path = osp.join(OUTPUT_DIR, '%s.hdf5' % k)
+    file = h5py.File(data_path, 'w')
 
     for cat in xrange(BINS):
       print 'Category %d' % cat
-      cat_path = osp.join(data_path, 'bin_%d' % cat)
-      try:
-        os.makedirs(cat_path)
-      except OSError:
-        pass
-
       samples = read_category(runs[k], mapping, category=cat, window=WINDOW, step=STEP, n_jobs=16)
+
       print 'Saving...'
-      save(samples, cat_path)
+      indx = np.random.permutation(samples.shape[0])
+      samples = samples[indx]
+
+      chunks = (1, ) + samples.shape[1:]
+      file.create_dataset('bin_%d' % cat, data=samples, chunks=chunks, compression='lzf')
+      file.flush()
 
       del samples
+
+      gc.collect()
+
+    file.flush()
+    file.close()
