@@ -139,7 +139,7 @@ def disk_stream(path, batch_sizes=8, cache_size=16):
   worker.daemon = True
   worker.start()
 
-  return queues_stream(queue)
+  return queue_stream(queue)
 
 def queue_stream(queue):
   while True:
