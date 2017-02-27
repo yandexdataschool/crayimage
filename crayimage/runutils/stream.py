@@ -133,7 +133,7 @@ def disk_stream(path, batch_sizes=8, cache_size=16):
 
   worker = threading.Thread(
     target=batch_worker,
-    kwargs=dict(path=path, out_queue=queue, batch_size=batch_sizes)
+    kwargs=dict(path=path, out_queue=queue, batch_sizes=batch_sizes)
   )
 
   worker.daemon = True
