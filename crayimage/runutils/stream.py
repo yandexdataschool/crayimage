@@ -100,7 +100,7 @@ class BatchStreams(object):
 
       yield np.hstack(sample), wc
 
-def batch_worker(path, out_queue, batch_sizes):
+def hdf5_batch_worker(path, out_queue, batch_sizes):
   import h5py
   import itertools
 
@@ -115,24 +115,52 @@ def batch_worker(path, out_queue, batch_sizes):
   if type(batch_sizes) in [long, int]:
     batch_sizes = [batch_sizes] * len(datasets)
 
-  indxes_stream = itertools.izip([
+  indxes_stream = itertools.izip(*[
     BatchStreams.inf_random_seq_batch_stream(n_samples=dataset.shape[0], batch_size=batch_size)
     for dataset, batch_size in zip(datasets, batch_sizes)
   ])
 
   for indxes in indxes_stream:
     batch = np.vstack([
-      ds[ind]
-      for ds, ind in zip(indxes, datasets)
+      ds[np.sort(ind).tolist()]
+      for ind, ds in zip(indxes, datasets)
     ])
 
     out_queue.put(batch, block=True)
 
-def disk_stream(path, batch_sizes=8, cache_size=16):
+def hdf5_batch_stream(path, batch_sizes=8):
+  import h5py
+  import itertools
+
+  f = h5py.File(path, mode='r')
+
+  n_bins = len([ k for k in  f.keys() if k.startswith('bin_') ])
+
+  datasets = [
+    f['bin_%d' % i] for i in range(n_bins)
+  ]
+
+  if type(batch_sizes) in [long, int]:
+    batch_sizes = [batch_sizes] * len(datasets)
+
+  indxes_stream = itertools.izip(*[
+    BatchStreams.inf_random_seq_batch_stream(n_samples=dataset.shape[0], batch_size=batch_size)
+    for dataset, batch_size in zip(datasets, batch_sizes)
+  ])
+
+  for indxes in indxes_stream:
+    batch = np.vstack([
+      ds[np.sort(ind).tolist()]
+      for ind, ds in zip(indxes, datasets)
+    ])
+
+    yield batch
+
+def hdf5_disk_stream(path, batch_sizes=8, cache_size=16):
   queue = Queue(maxsize=cache_size)
 
   worker = threading.Thread(
-    target=batch_worker,
+    target=hdf5_batch_worker,
     kwargs=dict(path=path, out_queue=queue, batch_sizes=batch_sizes)
   )
 
@@ -140,6 +168,38 @@ def disk_stream(path, batch_sizes=8, cache_size=16):
   worker.start()
 
   return queue_stream(queue)
+
+def np_batch_worker(path, out_queue, batch_size):
+  mmap = np.load(path, mmap_mode='r')
+
+  for indx in BatchStreams.inf_random_seq_batch_stream(mmap.shape[0], batch_size=batch_size, allow_smaller=False):
+    out_queue.put(mmap[indx], block=True)
+
+def np_disk_stream(data_root, batch_sizes=8, cache_size=16):
+  bin_patches = [
+    osp.join(data_root, 'bin_%d.npy' % i)
+    for i in range(len(os.listdir(data_root)))
+  ]
+
+  if type(batch_sizes) in [long, int]:
+    batch_sizes = [batch_sizes] * len(bin_patches)
+
+  queues = [ Queue(maxsize=cache_size) for _ in bin_patches ]
+
+  workers = [
+    threading.Thread(
+      target=np_batch_worker,
+      kwargs=dict(path=path, out_queue=queue, batch_size=batch_size)
+    )
+
+    for path, queue, batch_size in zip(bin_patches, queues, batch_sizes)
+  ]
+
+  for worker in workers:
+    worker.daemon = True
+    worker.start()
+
+  return queues_stream(queues)
 
 def queue_stream(queue):
   while True:

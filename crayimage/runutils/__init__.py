@@ -7,6 +7,6 @@ from run_utils import filter_patches, fmap_patches, select_patches
 from run_utils import map_run, slice_map_run, slice_fmap_run, slice_filter_run, slice_select_run
 
 from stream import BatchStreams
-from stream import disk_stream, queue_stream, queues_stream
+from stream import hdf5_disk_stream, hdf5_batch_stream, queue_stream, queues_stream, np_disk_stream
 
 from run import Run
