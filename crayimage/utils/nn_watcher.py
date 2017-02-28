@@ -3,8 +3,8 @@ import numpy as np
 
 
 class NNWatcher(object):
-  def __init__(self, labels=('loss', ), colors=('blue', ), epoches_hint=2):
-    self.fig = plt.figure(figsize=(12, 6))
+  def __init__(self, labels=('loss', ), colors=('blue', ), epoches_hint=2, fig_size=(12, 6)):
+    self.fig = plt.figure(figsize=fig_size)
     self.ax = self.fig.add_subplot(111)
 
     self.ax.set_xlim([0.0, epoches_hint - 1])

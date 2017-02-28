@@ -11,14 +11,14 @@ if __name__ == '__main__':
     stream = hdf5_disk_stream(osp.join(DATA_PATH, 'Co60.hdf5'), batch_sizes=8, cache_size=16)
   else:
     print('Using numpy memmaping')
-    stream = np_disk_stream(osp.join(DATA_PATH, 'Co60'), batch_sizes=8, cache_size=16, mmap_mode=None)
+    stream = np_disk_stream(osp.join(DATA_PATH, 'Co60'), batch_sizes=8, cache_size=16, mmap_mode='r')
 
   arr = stream.next()
 
   print arr.shape
 
   import time
-  r = range(1000)
+  r = range(5000)
 
   start_t = time.time()
   for _ in r:
