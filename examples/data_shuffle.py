@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
   BIN_MINIMAL = 1.0 / BINS / 10.0
 
-  HDF5 = True
+  HDF5 = False
 
   import numpy as np
 
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     for cat in xrange(BINS):
       print('Category %d' % cat)
-      samples = read_category(runs[k][::10], mapping, category=cat, window=WINDOW, step=STEP, n_jobs=3)
+      samples = read_category(runs[k][::50], mapping, category=cat, window=WINDOW, step=STEP, n_jobs=3)
       indx = np.random.permutation(samples.shape[0])
       samples = samples[indx]
 

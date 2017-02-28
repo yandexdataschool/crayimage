@@ -169,13 +169,13 @@ def hdf5_disk_stream(path, batch_sizes=8, cache_size=16):
 
   return queue_stream(queue)
 
-def np_batch_worker(path, out_queue, batch_size):
-  mmap = np.load(path, mmap_mode='r')
+def np_batch_worker(path, out_queue, batch_size, mmap_mode='r'):
+  mmap = np.load(path, mmap_mode=mmap_mode)
 
   for indx in BatchStreams.inf_random_seq_batch_stream(mmap.shape[0], batch_size=batch_size, allow_smaller=False):
     out_queue.put(mmap[indx], block=True)
 
-def np_disk_stream(data_root, batch_sizes=8, cache_size=16):
+def np_disk_stream(data_root, batch_sizes=8, cache_size=16, mmap_mode='r'):
   bin_patches = [
     osp.join(data_root, 'bin_%d.npy' % i)
     for i in range(len(os.listdir(data_root)))
@@ -189,7 +189,7 @@ def np_disk_stream(data_root, batch_sizes=8, cache_size=16):
   workers = [
     threading.Thread(
       target=np_batch_worker,
-      kwargs=dict(path=path, out_queue=queue, batch_size=batch_size)
+      kwargs=dict(path=path, out_queue=queue, batch_size=batch_size, mmap_mode=mmap_mode)
     )
 
     for path, queue, batch_size in zip(bin_patches, queues, batch_sizes)
