@@ -27,15 +27,15 @@ class ImgWatcher(object):
     for i, (im, cb) in enumerate(self.first_column):
       img = imgs1[i]
       im.set_data(img)
-      im.set_clim(0.0, np.max(img))
-      cb.set_clim(0.0, np.max(img))
+      im.set_clim(np.min(img), np.max(img))
+      cb.set_clim(np.min(img), np.max(img))
       cb.update_normal(im)
 
     for i, (im, cb) in enumerate(self.second_column):
       img = imgs2[i]
       im.set_data(img)
-      im.set_clim(0.0, np.max(img))
-      cb.set_clim(0.0, np.max(img))
+      im.set_clim(np.min(img), np.max(img))
+      cb.set_clim(np.min(img), np.max(img))
       cb.update_normal(im)
 
     self.fig.canvas.draw()
