@@ -10,8 +10,7 @@ from lasagne import objectives
 from crayimage.runutils import BatchStreams
 
 class Expression(object):
-  def __init__(self, input, net):
-    self.input = input
+  def __init__(self, net):
     self.net = net
     self._args = ()
     self._kwargs = {}
