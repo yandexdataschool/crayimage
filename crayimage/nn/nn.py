@@ -116,6 +116,18 @@ class Expression(object):
     except:
       return None
 
+  def load_weights(self, path):
+    import os.path as osp
+    import cPickle as pickle
+
+    with open(osp.join(path, 'weights.pickled'), 'r') as f:
+      params = pickle.load(f)
+
+    self.weights = params
+
+    return self
+
+
 class NN(object):
   def __init__(self, *args, **kwargs):
     self._args = args
