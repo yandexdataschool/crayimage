@@ -80,8 +80,14 @@ class Expression(object):
     return cls.load(osp.join(dump_dir, path))
 
   def save(self, path):
+    import os
     import os.path as osp
     import cPickle as pickle
+
+    try:
+      os.mkdir(path)
+    except:
+      pass
 
     with open(osp.join(path, 'args.pickled'), 'w') as f:
       pickle.dump((self._args, self._kwargs), f)
