@@ -127,7 +127,6 @@ class Expression(object):
 
     return self
 
-
 class NN(object):
   def __init__(self, *args, **kwargs):
     self._args = args
