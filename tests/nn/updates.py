@@ -11,21 +11,33 @@ import theano.tensor as T
 class UpdatesTest(unittest.TestCase):
 
   def setUp(self):
-    x = theano.shared(np.array([0.99, 0.99], dtype='float32'))
+    x = theano.shared(np.array([0.1, 0.1], dtype='float32'))
 
     self.params = [x]
+
+    left_bound = T.fscalar('left bound')
+    right_bound = T.fscalar('right bound')
+
+    self.inputs = [left_bound, right_bound]
+
     y = T.sum(x)
-    loss = -T.log(y - 1.0) - T.log(2.0 - y) + 1.0e-2 * T.sum(x ** 2)
+    loss = -T.log(y - left_bound) - T.log(right_bound - y) + 1.0e-2 * T.sum(x ** 2)
 
     self.loss = loss
 
   def test_gss(self):
-    train = nn.updates.ssgd([], self.loss, self.params, learning_rate=100.0)
+    train = nn.updates.ssgd(self.inputs, self.loss, self.params, learning_rate=100.0)
 
-    for i in range(100):
-      train()
+    for i in range(10):
+      inputs = [
+        np.float32(np.random.uniform(0.01, 0.011)),
+        np.float32(np.random.uniform(2.0, 2.1)),
+      ]
+      train(*inputs)
 
-    assert np.allclose(np.sum(self.params[0].get_value()), 1.5, atol=1e-1)
+    print([param.get_value() for param in self.params])
+
+    assert np.allclose(np.sum(self.params[0].get_value()), 1.1, atol=1e-1)
 
 if __name__ == '__main__':
   unittest.main()

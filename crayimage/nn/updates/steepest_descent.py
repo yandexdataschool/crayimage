@@ -75,7 +75,7 @@ def ssgd(inputs, loss, params, learning_rate, max_iter=16, epsilon=1.0e-6):
 
   inputs_givens = [
     (inp, inpc)
-    for inp, inpc in zip(inputs_cached, inputs)
+    for inp, inpc in zip(inputs, inputs_cached)
   ]
 
   grads = theano.grad(loss, params)
@@ -115,7 +115,7 @@ def ssgd(inputs, loss, params, learning_rate, max_iter=16, epsilon=1.0e-6):
   params_setter = OrderedDict(probe_givens)
 
   set_params = theano.function(
-    [alpha], loss,
+    [alpha], [],
     updates=params_setter
   )
 
