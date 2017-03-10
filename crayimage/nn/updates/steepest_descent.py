@@ -9,17 +9,14 @@ from utils import *
 
 __all__ = ['ssgd']
 
-def golden_section_search(
-        f, cache_inputs, cache_direction, set_alpha,
-        learning_rate, max_iter=16
-):
+def golden_section_search(f, cache_inputs, cache_direction, set_alpha, max_iter=16):
   gr = np.float32((np.sqrt(5) + 1) / 2)
 
-  def g(*inputs):
+  def g(learning_rate=1.0, *inputs, **kwargs):
     left = 0.0
     right = float(learning_rate)
 
-    cache_inputs(*inputs)
+    cache_inputs(*inputs, **kwargs)
     cache_direction()
 
     i = 0
@@ -60,10 +57,12 @@ def golden_section_search(
     solution = (left + right) / 2
     set_alpha(np.float32(solution))
 
+    return solution
+
   return g
 
 
-def ssgd(inputs, loss, params, learning_rate, max_iter=16, epsilon=1.0e-6):
+def ssgd(inputs, loss, params, max_iter=16, epsilon=1.0e-6):
   inputs_cached = [ to_shared(i) for i in inputs ]
 
   input_setter = OrderedDict()
@@ -119,7 +118,7 @@ def ssgd(inputs, loss, params, learning_rate, max_iter=16, epsilon=1.0e-6):
     updates=params_setter
   )
 
-  return golden_section_search(probe, memorize_inputs, memorize_gradients, set_params, learning_rate, max_iter)
+  return golden_section_search(probe, memorize_inputs, memorize_gradients, set_params, max_iter)
 
 
 

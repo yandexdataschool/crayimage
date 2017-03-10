@@ -26,14 +26,14 @@ class UpdatesTest(unittest.TestCase):
     self.loss = loss
 
   def test_gss(self):
-    train = nn.updates.ssgd(self.inputs, self.loss, self.params, learning_rate=100.0)
+    train = nn.updates.ssgd(self.inputs, self.loss, self.params)
 
     for i in range(10):
       inputs = [
         np.float32(np.random.uniform(0.01, 0.011)),
         np.float32(np.random.uniform(2.0, 2.1)),
       ]
-      train(*inputs)
+      train(100.0, *inputs)
 
     print([param.get_value() for param in self.params])
 
