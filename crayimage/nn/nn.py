@@ -15,6 +15,9 @@ class Expression(object):
     self._args = ()
     self._kwargs = {}
 
+    self._snapshot_index = None
+    self._dump_dir = None
+
   def __str__(self):
     return "%s(%s, %s)" % (
       str(self.__class__),
@@ -39,6 +42,33 @@ class Expression(object):
 
   def __repr__(self):
     return str(self)
+
+  @property
+  def snapshot_index(self):
+    return self._snapshot_index
+
+  @snapshot_index.setter
+  def snapshot_index(self, value):
+    assert type(value) in [long, int] or value is None
+    self._snapshot_index = value
+
+  @property
+  def dump_dir(self):
+    return self._dump_dir
+
+  @dump_dir.setter
+  def dump_dir(self, value):
+    import os
+    import os.path as osp
+
+    try:
+      os.mkdir(value)
+    except:
+      pass
+
+    assert osp.exists(value) and osp.isdir(value)
+
+    self._dump_dir = value
 
   @property
   def weights(self):
@@ -77,7 +107,8 @@ class Expression(object):
 
     count, path = sorted(snapshots, key=lambda x: x[0])[index]
 
-    return cls.load(osp.join(dump_dir, path))
+    instance = cls.load(osp.join(dump_dir, path))
+    instance.snapshot_index = count
 
   def save(self, path):
     import os
@@ -98,6 +129,20 @@ class Expression(object):
         f
       )
 
+  def make_snapshot(self, dump_dir=None, index=None):
+    import os.path as osp
+
+    if index is None:
+      if self.snapshot_index is None:
+        index = max([c for c, _ in self.get_all_snapshots(dump_dir)]) + 1
+      else:
+        index = self.snapshot_index + 1
+
+    dump_dir = dump_dir or self._dump_dir
+
+    self.save(osp.join(dump_dir, 'snapshot_%06d' % index))
+    self.snapshot_index += 1
+
   @classmethod
   def load(cls, path):
     import os.path as osp
@@ -116,7 +161,7 @@ class Expression(object):
     except:
       return None
 
-  def load_weights(self, path):
+  def reset_weights(self, path):
     import os.path as osp
     import cPickle as pickle
 
@@ -124,6 +169,27 @@ class Expression(object):
       params = pickle.load(f)
 
     self.weights = params
+
+    return self
+
+  def reset_to_snapshot(self, dump_dir=None, index=-1):
+    import os.path as osp
+
+    dump_dir = dump_dir or self._dump_dir
+    snapshots = self.get_all_snapshots(dump_dir)
+
+    count, path = sorted(snapshots, key=lambda x: x[0])[index]
+
+    self.reset_weights(osp.join(dump_dir, path))
+    self.snapshot_index = count
+
+    return self
+
+  def reset_to_latest(self, dump_dir=None):
+    import os.path as osp
+
+    dump_dir = dump_dir or self._dump_dir
+    self.reset_weights(osp.join(dump_dir, 'snapshot_%06d' % self._snapshot_index))
 
     return self
 

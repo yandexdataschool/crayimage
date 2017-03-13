@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
+import os.path as osp
 
 class NNWatcher(object):
-  def __init__(self, labels=('loss', ), colors=('blue', ), epoches_hint=2, fig_size=(12, 6)):
+  def __init__(self, title, labels=('loss', ), colors=('blue', ), epoches_hint=2, fig_size=(12, 6), save_dir='./'):
+    self.save_dir = save_dir
+
     self.fig = plt.figure(figsize=fig_size)
     self.ax = self.fig.add_subplot(111)
 
@@ -12,6 +14,9 @@ class NNWatcher(object):
 
     self.mean_lines = []
     self.lines = []
+
+    self.fig.suptitle(title)
+    self.title = title
 
     for label, color in zip(labels, colors):
       self.mean_lines.append(
@@ -60,3 +65,4 @@ class NNWatcher(object):
       line.set_ydata(d)
 
     self.fig.canvas.draw()
+    self.fig.savefig(osp.join(self.save_dir), '%s.png' % self.title)
