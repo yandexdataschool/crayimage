@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-from utils import *
+from crayimage.nn.utils import *
 
 __all__ = ['ssgd']
 
@@ -119,10 +119,3 @@ def ssgd(inputs, loss, params, max_iter=16, epsilon=1.0e-6):
   )
 
   return golden_section_search(probe, memorize_inputs, memorize_gradients, set_params, max_iter)
-
-
-
-
-
-
-
