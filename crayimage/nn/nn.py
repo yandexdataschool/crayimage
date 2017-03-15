@@ -62,7 +62,7 @@ class Expression(object):
     import os.path as osp
 
     try:
-      os.mkdir(value)
+      os.makedirs(value)
     except:
       pass
 

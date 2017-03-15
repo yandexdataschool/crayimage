@@ -9,12 +9,14 @@ def make_cnn(input_layer, depth = 3,
       net,
       num_filters=initial_filters * (2 ** i),
       filter_size=filter_size,
+      name = 'conv%d' % i,
       **conv_kwargs
     )
 
     if i < (depth - 1):
       net = layers.MaxPool2DLayer(
-        net, pool_size=(2, 2)
+        net, pool_size=(2, 2),
+        name='pool%d' % i,
       )
 
   return net
