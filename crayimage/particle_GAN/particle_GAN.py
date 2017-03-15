@@ -5,6 +5,10 @@ import theano.tensor as T
 from lasagne import *
 from .. import nn
 
+__all__ = [
+  'ParticleGAN'
+]
+
 class ParticleGAN(object):
   def __init__(self, background_net, particle_net, discriminator,
                mc_batch_layout, real_batch_layout, real_events_per_bin,

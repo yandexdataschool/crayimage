@@ -18,6 +18,8 @@ class BackgroundGenerator(Expression):
       name='input noise'
     )
 
+    self.input_noise = input_noise
+
     ### Since it is easier to just generate uniform distribution rather than
     ### binomial with n = 1023
     ### we just make a learnable custom transformation
