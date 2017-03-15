@@ -7,7 +7,7 @@ def make_cnn(input_layer, depth = 3,
   for i in range(depth):
     net = layers.Conv2DLayer(
       net,
-      num_filters=initial_filters ** (i + 1),
+      num_filters=initial_filters * (2 ** i),
       filter_size=filter_size,
       **conv_kwargs
     )
