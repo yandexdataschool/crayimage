@@ -16,7 +16,7 @@ join = lambda xs: reduce(lambda a, b: a + b, xs)
 joinc = lambda xs, cs: join([ x * c for x, c in  zip(xs, cs)])
 
 def softmin(xs, alpha=1.0):
-  if hasattr(xs, 'len'):
+  if hasattr(xs, '__len__'):
     x_min = reduce(T.minimum, xs)
     xs_c = [ x - x_min for x in xs ]
     n = join(xs_c)
