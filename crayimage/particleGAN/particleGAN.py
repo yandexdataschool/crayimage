@@ -196,14 +196,14 @@ class ParticleGAN(object):
     )
 
     self.train_discriminator = theano.function(
-      [X_real_raw, X_geant_raw, self.learning_rate],
+      [X_geant_raw, X_real_raw, self.learning_rate],
       [self.loss_pseudo, self.loss_real],
       updates=upd_discriminator
     )
 
     if self.anneal_discriminator:
       self.anneal_discriminator = nn.updates.sa(
-        [X_real_raw, X_geant_raw], self.loss_discriminator,
+        [X_geant_raw, X_real_raw], self.loss_discriminator,
         params = self.params_discriminator,
         **self.annealing_args
       )

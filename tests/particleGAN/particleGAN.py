@@ -54,14 +54,14 @@ class PartcileGANTest(unittest.TestCase):
     X_geant = np.random.uniform(0.0, 1.0, size=(np.sum(mc_batch_layout),) + geant_shape).astype('float32')
 
     gan.train_discriminator(
-      X_real, X_geant, 1.0e-3
+      X_geant, X_real, 1.0e-3
     )
 
     gan.train_generator(
       X_geant, 1.0e-3
     )
 
-    gan.anneal_discriminator(X_real, X_geant)
+    gan.anneal_discriminator(X_geant, X_real)
 
     assert gan is not None
 
