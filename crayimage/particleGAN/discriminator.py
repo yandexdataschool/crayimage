@@ -84,20 +84,6 @@ class SimpleDiscriminator(Expression):
 
     super(SimpleDiscriminator, self).__init__(self.outputs)
 
-    self.snapshot = None
-
-  def save_as_snapshot(self, path):
-    self.save(path)
-    self.snapshot = path
-
-  def reset(self):
-    self.reset_weights(self.snapshot)
-
-  def get_predictions(self, X):
-    return [
-      layers.get_output(self.outputs, inputs={self.input_layer: X})
-    ]
-
 class StairsDiscriminator(Expression):
   def __init__(self, depth = 5, img_shape=(1, 128, 128), noise_sigma=1.0 / (2 ** 11)):
     self.input_layer = layers.InputLayer(
@@ -115,21 +101,6 @@ class StairsDiscriminator(Expression):
       self.outputs.append(net)
 
     super(StairsDiscriminator, self).__init__(self.outputs)
-
-    self.snapshot = None
-
-  def save_as_snapshot(self, path):
-    self.save(path)
-    self.snapshot = path
-
-  def reset(self):
-    self.reset_weights(self.snapshot)
-
-  def get_predictions(self, X):
-    return [
-      layers.get_output(companion, inputs={self.input_layer: X})
-      for companion in self.outputs
-    ]
 
 class DeeplySupervisedDiscriminator(Expression):
   def __init__(self, img_shape=(1, 128, 128), noise_sigma=1.0 / (2 ** 11)):
@@ -217,18 +188,3 @@ class DeeplySupervisedDiscriminator(Expression):
     self.outputs.append(conv_companion(conv5))
 
     super(DeeplySupervisedDiscriminator, self).__init__(self.outputs)
-
-    self.snapshot = None
-
-  def save_as_snapshot(self, path):
-    self.save(path)
-    self.snapshot = path
-
-  def reset(self):
-    self.reset_weights(self.snapshot)
-
-  def get_predictions(self, X):
-    return [
-      layers.get_output(companion, inputs={self.input_layer: X})
-      for companion in self.outputs
-    ]

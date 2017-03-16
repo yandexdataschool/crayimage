@@ -20,9 +20,8 @@ class PartcileGANTest(unittest.TestCase):
     from crayimage.particleGAN import ParticleGenerator
     particle_net = ParticleGenerator(input_shape=geant_shape)
 
-    from crayimage.particleGAN import StairsDiscriminator
-
-    discriminator = StairsDiscriminator(depth=5)
+    from crayimage.particleGAN import SimpleDiscriminator
+    discriminator = SimpleDiscriminator()
 
     mc_batch_layout = (2,) * 32
 
@@ -61,7 +60,7 @@ class PartcileGANTest(unittest.TestCase):
       X_geant, 1.0e-3
     )
 
-    gan.discriminator_annealing(X_geant, X_real)
+    gan.anneal_discriminator(X_geant, X_real)
 
     assert gan is not None
 
