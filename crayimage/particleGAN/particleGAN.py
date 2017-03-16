@@ -208,4 +208,4 @@ class ParticleGAN(object):
         **self.annealing_args
       )
 
-    self.get_realistic = theano.function([X_geant_raw], X_pseudo)
+    self.get_realistic = theano.function([X_geant_raw], X_pseudo * self.real_normalization)

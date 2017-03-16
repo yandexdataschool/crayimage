@@ -1,5 +1,5 @@
-from nn_watcher import NNWatcher
-from img_watcher import ImgWatcher
+from nn_watcher import *
+from img_watcher import *
 
 import visualize
 from save import *
