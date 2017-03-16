@@ -80,7 +80,7 @@ class SimpleDiscriminator(Expression):
       name='conv4'
     )
 
-    self.outputs = conv_companion(conv5)
+    self.outputs = [conv_companion(conv5)]
 
     super(SimpleDiscriminator, self).__init__(self.outputs)
 
