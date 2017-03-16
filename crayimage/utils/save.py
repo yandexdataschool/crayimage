@@ -1,3 +1,7 @@
+__all__ = [
+  'save_images'
+]
+
 def save_images(cycle, version, original, transformed, outdir='output', pack=True):
   import matplotlib.pyplot as plt
   import os

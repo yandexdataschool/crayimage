@@ -2,6 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os.path as osp
 
+__all__ = [
+  'NNWatcher'
+]
+
 class NNWatcher(object):
   def __init__(self, title, labels=('loss', ), colors=('blue', ), epoches_hint=2, fig_size=(12, 6), save_dir='./'):
     self.save_dir = save_dir

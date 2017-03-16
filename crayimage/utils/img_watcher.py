@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+__all__ = [
+  'ImgWatcher'
+]
+
 class ImgWatcher(object):
   def __init__(self, n_rows=3, img_size=(128, 128), cmap1=plt.cm.gray_r, cmap2=plt.cm.gray_r, fig_size=3):
     self.fig = plt.figure(figsize=(fig_size * 2 + 1, fig_size * n_rows + n_rows - 1))
