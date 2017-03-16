@@ -61,7 +61,7 @@ class PartcileGANTest(unittest.TestCase):
       X_geant, 1.0e-3
     )
 
-    gan.anneal_discriminator(X_geant, X_real)
+    gan.discriminator_annealing(X_geant, X_real)
 
     assert gan is not None
 

@@ -19,7 +19,7 @@ class ParticleGAN(object):
     'minimal_loss_trick' : False,
     'miminal_loss_focus' : 2.0,
     'grad_clip_norm' : 1.0e-2,
-    'anneal_discriminator' : False,
+    'discriminator_annealing' : False,
     'annealing_args' : {
       'iters' : 64,
       'initial_temperature' : 1.0e-1,
@@ -201,11 +201,13 @@ class ParticleGAN(object):
       updates=upd_discriminator
     )
 
-    if self.anneal_discriminator:
+    if self.discriminator_annealing:
       self.anneal_discriminator = nn.updates.sa(
         [X_geant_raw, X_real_raw], self.loss_discriminator,
         params = self.params_discriminator,
         **self.annealing_args
       )
+    else:
+      self.anneal_discriminator = lambda *args: None
 
     self.get_realistic = theano.function([X_geant_raw], X_pseudo * self.real_normalization)
