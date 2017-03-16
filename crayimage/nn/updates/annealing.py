@@ -9,13 +9,14 @@ from crayimage.nn.utils import *
 
 __all__ = ['sa']
 
-def simulated_annealing(f, cache_inputs, set_params, generate_deltas):
+def simulated_annealing(f, cache_inputs, set_params, generate_deltas,
+                        iters, initial_temperature = 1.0e-1, learning_rate=1.0e-2):
   import random
 
-  def g(iters, initial_temperature = 1.0e-1, learning_rate=1.0e-2, *inputs, **kwargs):
+  def g(*inputs, **kwargs):
     cache_inputs(*inputs, **kwargs)
 
-    learning_rate = np.float32(learning_rate)
+    lr = np.float32(learning_rate)
 
     generate_deltas(0.0)
     current_loss = f()
@@ -23,7 +24,7 @@ def simulated_annealing(f, cache_inputs, set_params, generate_deltas):
     for iter in range(iters):
       temperature = initial_temperature * float(iters - iter) / iters
 
-      generate_deltas(learning_rate)
+      generate_deltas(lr)
       new_loss = f()
 
       if not np.isfinite(new_loss):
@@ -37,7 +38,7 @@ def simulated_annealing(f, cache_inputs, set_params, generate_deltas):
 
   return g
 
-def sa(inputs, loss, params, srng=None, seed=1122334455):
+def sa(inputs, loss, params, srng=None, seed=1122334455, iters=32, initial_temperature = 1.0e-1, learning_rate=1.0e-2):
   # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
   from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
   srng = srng or RandomStreams(seed=seed)
@@ -87,4 +88,7 @@ def sa(inputs, loss, params, srng=None, seed=1122334455):
     no_default_updates=True
   )
 
-  return simulated_annealing(probe, memorize_inputs, set_params, generate_deltas)
+  return simulated_annealing(
+    probe, memorize_inputs, set_params, generate_deltas,
+    iters, initial_temperature, learning_rate
+  )
