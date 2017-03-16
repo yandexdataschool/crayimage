@@ -24,7 +24,9 @@ class ParticleGAN(object):
       'iters' : 64,
       'initial_temperature' : 1.0e-1,
       'learning_rate' : 1.0e-2
-    }
+    },
+    'adaptive_learning_rate_discriminator' : False,
+    'adaptive_learning_rate_generator' : False
   }
 
   def __init__(self, background_net, particle_net, discriminator,
@@ -166,28 +168,41 @@ class ParticleGAN(object):
 
     self.params_discriminator = layers.get_all_params(discriminator.outputs, trainable=True)
 
-    self.grads_generator = theano.grad(self.loss_generator, self.params_generator)
-    self.grads_discriminator = theano.grad(self.loss_discriminator, self.params_discriminator)
-
-    self.grads_generator_clipped = updates.total_norm_constraint(
-      self.grads_generator, max_norm = self.grad_clip_norm
-    )
-
-    self.grads_discriminator_clipped = updates.total_norm_constraint(
-      self.grads_discriminator, max_norm=self.grad_clip_norm
-    )
-
     self.learning_rate = T.fscalar('learning rate')
 
-    upd_generator = updates.sgd(
-      self.grads_generator_clipped, self.params_generator,
-      learning_rate=self.learning_rate
-    )
+    if self.adaptive_learning_rate_generator:
+      upd_generator = nn.updates.constrained_adadelta(
+        self.loss_generator, self.params_generator, learning_rate=self.learning_rate,
+        max_norm=self.grad_clip_norm
+      )
+    else:
+      self.grads_generator = theano.grad(self.loss_generator, self.params_generator)
 
-    upd_discriminator = updates.sgd(
-      self.grads_discriminator_clipped, self.params_discriminator,
-      learning_rate=self.learning_rate
-    )
+      self.grads_generator_clipped = updates.total_norm_constraint(
+        self.grads_generator, max_norm=self.grad_clip_norm
+      )
+
+      upd_generator = updates.sgd(
+        self.grads_generator_clipped, self.params_generator,
+        learning_rate=self.learning_rate
+      )
+
+    if self.adaptive_learning_rate_discriminator:
+      upd_discriminator = nn.updates.constrained_adadelta(
+        self.loss_discriminator, self.params_discriminator, learning_rate=self.learning_rate,
+        max_norm=self.grad_clip_norm
+      )
+    else:
+      self.grads_discriminator = theano.grad(self.loss_discriminator, self.params_discriminator)
+
+      self.grads_discriminator_clipped = updates.total_norm_constraint(
+        self.grads_discriminator, max_norm=self.grad_clip_norm
+      )
+
+      upd_discriminator = updates.sgd(
+        self.grads_discriminator_clipped, self.params_discriminator,
+        learning_rate=self.learning_rate
+      )
 
     self.train_generator = theano.function(
       [X_geant_raw, self.learning_rate],

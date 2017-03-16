@@ -46,7 +46,8 @@ class PartcileGANTest(unittest.TestCase):
         'iters': 4,
         'initial_temperature': 1.0e-1,
         'learning_rate': 1.0e-2
-      }
+      },
+      adaptive_learning_rate_discriminator=True
     )
 
     X_real = np.random.randint(0, 1024, size=(np.sum(real_tracks_batch_layout), 1, 128, 128), dtype='uint16')
