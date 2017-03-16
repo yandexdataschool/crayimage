@@ -65,4 +65,4 @@ class NNWatcher(object):
       line.set_ydata(d)
 
     self.fig.canvas.draw()
-    self.fig.savefig(osp.join(self.save_dir), '%s.png' % self.title)
+    self.fig.savefig(osp.join(self.save_dir, '%s.png' % self.title), dpi=420)
