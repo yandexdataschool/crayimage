@@ -3,7 +3,7 @@ import theano
 import theano.tensor as T
 
 from lasagne import *
-from .. import nn
+from crayimage import nn
 
 __all__ = [
   'ParticleGAN'
@@ -15,8 +15,8 @@ class ParticleGAN(object):
                event_rate_init=6.0, losses_coefs=None,
                geant_normalization=0.2, real_normalization=1024.0,
                event_rate_bounds=(1e-3, 64),
-               minimal_loss_trick=False
-               ):
+               minimal_loss_trick=False, grad_clip_norm = 1.0e-2,
+               anneal_discriminator = True):
     self.noise_generator = background_net
     self.particle_generator = particle_net
     self.discriminator = discriminator
@@ -139,3 +139,46 @@ class ParticleGAN(object):
     self.params_generator = self.params_background_net + self.params_pacticle_net + [self.mc_event_rate]
 
     self.params_discriminator = layers.get_all_params(discriminator.outputs, trainable=True)
+
+    self.grads_generator = theano.grad(self.loss_generator, self.params_generator)
+    self.grads_discriminator = theano.grad(self.loss_discriminator, self.params_discriminator)
+
+    self.grads_generator_clipped = updates.total_norm_constraint(
+      self.grads_generator, max_norm = grad_clip_norm
+    )
+
+    self.grads_discriminator_clipped = updates.total_norm_constraint(
+      self.grads_discriminator, max_norm=grad_clip_norm
+    )
+
+    self.learning_rate = T.fscalar('learning rate')
+
+    upd_generator = updates.sgd(
+      self.grads_generator_clipped, self.params_generator,
+      learning_rate=self.learning_rate
+    )
+
+    upd_discriminator = updates.sgd(
+      self.grads_discriminator_clipped, self.params_discriminator,
+      learning_rate=self.learning_rate
+    )
+
+    self.train_generator = theano.function(
+      [X_geant_raw, self.learning_rate],
+      self.loss_pseudo,
+      updates=upd_generator
+    )
+
+    self.train_discriminator = theano.function(
+      [X_real_raw, X_geant_raw, self.learning_rate],
+      [self.loss_pseudo, self.loss_real],
+      updates=upd_discriminator
+    )
+
+    if anneal_discriminator:
+      self.anneal_discriminator = nn.updates.sa(
+        [X_real_raw, X_geant_raw], self.loss_discriminator,
+        params = self.params_discriminator
+      )
+
+

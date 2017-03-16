@@ -9,7 +9,8 @@ __all__ = [
   'joinc',
   'log_barrier',
   'make_copy',
-  'to_shared'
+  'to_shared',
+  'make_uniform'
 ]
 
 join = lambda xs: reduce(lambda a, b: a + b, xs)
@@ -39,4 +40,11 @@ def to_shared(var):
   return theano.shared(
     np.zeros(shape=(0, ) * var.ndim, dtype=var.dtype),
     broadcastable=var.broadcastable
+  )
+
+def make_uniform(shared, a, b, srng):
+  return srng.uniform(
+    low=a, high=b,
+    size=shared.get_value(borrow=True).shape,
+    ndim=shared.ndim, dtype=shared.dtype
   )

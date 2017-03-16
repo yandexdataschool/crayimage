@@ -9,7 +9,6 @@ theano.config.floatX = "float32"
 import theano.tensor as T
 
 class UpdatesTest(unittest.TestCase):
-
   def setUp(self):
     x = theano.shared(np.array([0.1, 0.1], dtype='float32'))
 
@@ -34,6 +33,20 @@ class UpdatesTest(unittest.TestCase):
         np.float32(np.random.uniform(2.0, 2.1)),
       ]
       train(100.0, *inputs)
+
+    print([param.get_value() for param in self.params])
+
+    assert np.allclose(np.sum(self.params[0].get_value()), 1.1, atol=1e-1)
+
+  def test_sa(self):
+    train = nn.updates.sa(self.inputs, self.loss, self.params, max_iter=128)
+
+    inputs = [
+      np.float32(np.random.uniform(0.01, 0.011)),
+      np.float32(np.random.uniform(2.0, 2.1)),
+    ]
+
+    train(0.1, 1.0e-1, *inputs)
 
     print([param.get_value() for param in self.params])
 
