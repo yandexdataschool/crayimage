@@ -9,7 +9,7 @@ from crayimage.nn.utils import *
 
 __all__ = ['ssgd']
 
-def golden_section_search(f, cache_inputs, cache_direction, set_alpha, max_iter=16):
+def golden_section_search(cache_inputs, cache_direction, f, set_alpha, max_iter=16):
   gr = np.float32((np.sqrt(5) + 1) / 2)
 
   def g(learning_rate=1.0, *inputs, **kwargs):
@@ -63,59 +63,7 @@ def golden_section_search(f, cache_inputs, cache_direction, set_alpha, max_iter=
 
 
 def ssgd(inputs, loss, params, max_iter=16, epsilon=1.0e-6):
-  inputs_cached = [ to_shared(i) for i in inputs ]
-
-  input_setter = OrderedDict()
-
-  for inpc, inp in zip(inputs_cached, inputs):
-    input_setter[inpc] = inp
-
-  memorize_inputs = theano.function(inputs, [], updates=input_setter, no_default_updates=True)
-
-  inputs_givens = [
-    (inp, inpc)
-    for inp, inpc in zip(inputs, inputs_cached)
-  ]
-
-  grads = theano.grad(loss, params)
-
-  grad_norm = T.sqrt(
-    reduce(lambda a, b: a + b, [ T.sum(g ** 2) for g in grads ]) + epsilon
+  cache_inputs, cache_grads, get_loss, set_params = grad_base(
+    inputs, loss, params, epsilon, norm_gradients=True
   )
-
-  normed_grads = [ g / grad_norm for g in grads ]
-
-  normed_grads_cached = [ make_copy(param) for param in params ]
-
-  grads_setter = OrderedDict()
-
-  for ngs, ng in zip(normed_grads_cached, normed_grads):
-    grads_setter[ngs] = ng
-
-  memorize_gradients = theano.function(
-    [], [], updates=grads_setter,
-    no_default_updates=True,
-    givens=inputs_givens
-  )
-
-  alpha = T.fscalar('alpha')
-
-  probe_givens = [
-    (param, param - alpha * ngrad)
-    for param, ngrad in zip(params, normed_grads_cached)
-  ]
-
-  probe = theano.function(
-    [alpha], loss,
-    givens=probe_givens + inputs_givens,
-    no_default_updates=True
-  )
-
-  params_setter = OrderedDict(probe_givens)
-
-  set_params = theano.function(
-    [alpha], [],
-    updates=params_setter
-  )
-
-  return golden_section_search(probe, memorize_inputs, memorize_gradients, set_params, max_iter)
+  return golden_section_search(cache_inputs, cache_grads, get_loss, set_params, max_iter)

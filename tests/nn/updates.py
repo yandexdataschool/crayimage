@@ -9,8 +9,36 @@ theano.config.floatX = "float32"
 import theano.tensor as T
 
 class UpdatesTest(unittest.TestCase):
+  def precheck(self):
+    self.params[0].set_value(self.initial)
+    assert np.allclose(self.params[0].get_value(), self.initial)
+
+  def check(self, method):
+    print([param.get_value() for param in self.params])
+    arr = self.params[0].get_value()
+
+    if not np.allclose(np.sum(arr), np.sum(self.solution), atol=1e-1):
+      raise Exception(
+        '\n%s failed to find weak minimum:\nTrue solution: %s\nPresented: %s' % (
+          method,
+          str(np.sum(self.solution)),
+          str(np.sum(arr))
+        )
+      )
+
+    if not np.allclose(arr, self.solution, atol=1e-1):
+      import warnings
+      warnings.warn(
+        '\n%s failed to find exact minimum:\nTrue solution: %s\nPresented: %s' % (
+          method,
+          str(self.solution),
+          str(arr)
+        )
+      )
+
   def setUp(self):
-    x = theano.shared(np.array([0.1, 0.1], dtype='float32'))
+    self.initial = np.array([0.1, 0.1], dtype='float32')
+    x = theano.shared(self.initial)
 
     self.params = [x]
 
@@ -20,37 +48,51 @@ class UpdatesTest(unittest.TestCase):
     self.inputs = [left_bound, right_bound]
 
     y = T.sum(x)
-    loss = -T.log(y - left_bound) - T.log(right_bound - y) + 1.0e-2 * T.sum(x ** 2)
+    loss = -T.log(y - left_bound) - T.log(right_bound - y) + 1.0e-3 * T.sum(x ** 2)
 
     self.loss = loss
+    x0 = (0.01 + 0.011 + 2.0 + 2.1) / 4.0
+    self.solution = np.array([x0 / 2, x0 / 2], dtype='float32')
 
-  def test_gss(self):
-    train = nn.updates.ssgd(self.inputs, self.loss, self.params)
-
-    for i in range(10):
-      inputs = [
+    self.get_inputs = lambda : [
         np.float32(np.random.uniform(0.01, 0.011)),
         np.float32(np.random.uniform(2.0, 2.1)),
       ]
-      train(100.0, *inputs)
 
-    print([param.get_value() for param in self.params])
+  def test_ssgd(self):
+    self.precheck()
 
-    assert np.allclose(np.sum(self.params[0].get_value()), 1.1, atol=1e-1)
+    train = nn.updates.ssgd(self.inputs, self.loss, self.params)
+
+    for i in range(32):
+      train(100.0, *self.get_inputs())
+
+    self.check('Stochastic Steepest Gradient Descent')
 
   def test_sa(self):
-    train = nn.updates.sa(self.inputs, self.loss, self.params, max_iter=128)
+    self.precheck()
 
-    inputs = [
-      np.float32(np.random.uniform(0.01, 0.011)),
-      np.float32(np.random.uniform(2.0, 2.1)),
-    ]
+    train = nn.updates.sa(
+      self.inputs, self.loss, self.params, iters=512,
+      initial_temperature=1.0, learning_rate=2.5e-1
+    )
 
-    train(0.1, 1.0e-1, *inputs)
+    train(*self.get_inputs())
 
-    print([param.get_value() for param in self.params])
+    self.check('Simulated Annealing')
 
-    assert np.allclose(np.sum(self.params[0].get_value()), 1.1, atol=1e-1)
+  def test_adastep(self):
+    self.precheck()
+
+    train = nn.updates.adastep(
+      self.inputs, self.loss, self.params, max_iter=8,
+      rho=0.9, initial_learning_rate=1.0e-1
+    )
+
+    for i in range(128):
+      train(*self.get_inputs())
+
+    self.check('AdaStep')
 
 if __name__ == '__main__':
   unittest.main()
