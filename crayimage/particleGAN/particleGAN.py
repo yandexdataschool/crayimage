@@ -10,32 +10,32 @@ __all__ = [
 ]
 
 class ParticleGAN(object):
-  _defaults = {
-    'event_rate_init' : 6.0,
-    'losses_coefs' : None,
-    'geant_normalization' : 0.2,
-    'real_normalization' : 1024.0,
-    'event_rate_bounds' : (1e-2, 64),
-    'minimal_loss_trick' : False,
-    'miminal_loss_focus' : 2.0,
-    'grad_clip_norm' : 1.0e-2,
-    'discriminator_annealing' : False,
-    'annealing_args' : {
-      'iters' : 64,
-      'initial_temperature' : 1.0e-1,
-      'learning_rate' : 1.0e-2
-    },
-    'adaptive_learning_rate_discriminator' : False,
-    'adaptive_learning_rate_generator' : False
-  }
+  def _constants(self):
+
+    ### essential constants
+
+    self.event_rate_init = 6.0
+    self.losses_coefs = None
+    self.geant_normalization = 0.2
+    self.real_normalization = 1024.0
+    self.event_rate_bounds = (1e-2, 64)
+    self.minimal_loss_trick = False
+    self.miminal_loss_focus = 2.0
+
+    ### default training
+
+    self.grad_clip_norm = 1.0e-2
+
+    self.annealing_args = dict(
+      iters = 64,
+      initial_temperature = 1.0e-1,
+      learning_rate = 1.0e-2
+    )
 
   def __init__(self, background_net, particle_net, discriminator,
                mc_batch_layout, real_batch_layout, real_events_per_bin,
                **kwargs):
-
-    for k, v in self._defaults.items():
-      if not hasattr(self, k):
-        setattr(self, k, v)
+    self._constants()
 
     for k, v in kwargs.items():
       setattr(self, k, v)
@@ -168,61 +168,47 @@ class ParticleGAN(object):
 
     self.params_discriminator = layers.get_all_params(discriminator.outputs, trainable=True)
 
+    self.get_realistic = theano.function([X_geant_raw], X_pseudo * self.real_normalization)
+    self._train_procedures()
+
+  def _train_procedures(self):
     self.learning_rate = T.fscalar('learning rate')
+    self.grads_generator = theano.grad(self.loss_generator, self.params_generator)
 
-    if self.adaptive_learning_rate_generator:
-      upd_generator = nn.updates.constrained_adadelta(
-        self.loss_generator, self.params_generator, learning_rate=self.learning_rate,
-        max_norm=self.grad_clip_norm
-      )
-    else:
-      self.grads_generator = theano.grad(self.loss_generator, self.params_generator)
+    self.grads_generator_clipped = updates.total_norm_constraint(
+      self.grads_generator, max_norm=self.grad_clip_norm
+    )
 
-      self.grads_generator_clipped = updates.total_norm_constraint(
-        self.grads_generator, max_norm=self.grad_clip_norm
-      )
-
-      upd_generator = updates.sgd(
-        self.grads_generator_clipped, self.params_generator,
-        learning_rate=self.learning_rate
-      )
-
-    if self.adaptive_learning_rate_discriminator:
-      upd_discriminator = nn.updates.constrained_adadelta(
-        self.loss_discriminator, self.params_discriminator, learning_rate=self.learning_rate,
-        max_norm=self.grad_clip_norm
-      )
-    else:
-      self.grads_discriminator = theano.grad(self.loss_discriminator, self.params_discriminator)
-
-      self.grads_discriminator_clipped = updates.total_norm_constraint(
-        self.grads_discriminator, max_norm=self.grad_clip_norm
-      )
-
-      upd_discriminator = updates.sgd(
-        self.grads_discriminator_clipped, self.params_discriminator,
-        learning_rate=self.learning_rate
-      )
+    upd_generator = updates.sgd(
+      self.grads_generator_clipped, self.params_generator,
+      learning_rate=self.learning_rate
+    )
 
     self.train_generator = theano.function(
-      [X_geant_raw, self.learning_rate],
+      [self.X_geant_raw, self.learning_rate],
       self.loss_pseudo,
       updates=upd_generator
     )
 
+    self.grads_discriminator = theano.grad(self.loss_discriminator, self.params_discriminator)
+
+    self.grads_discriminator_clipped = updates.total_norm_constraint(
+      self.grads_discriminator, max_norm=self.grad_clip_norm
+    )
+
+    upd_discriminator = updates.sgd(
+      self.grads_discriminator_clipped, self.params_discriminator,
+      learning_rate=self.learning_rate
+    )
+
     self.train_discriminator = theano.function(
-      [X_geant_raw, X_real_raw, self.learning_rate],
+      [self.X_geant_raw, self.X_real_raw, self.learning_rate],
       [self.loss_pseudo, self.loss_real],
       updates=upd_discriminator
     )
 
-    if self.discriminator_annealing:
-      self.anneal_discriminator = nn.updates.sa(
-        [X_geant_raw, X_real_raw], self.loss_discriminator,
-        params = self.params_discriminator,
-        **self.annealing_args
-      )
-    else:
-      self.anneal_discriminator = lambda *args: None
-
-    self.get_realistic = theano.function([X_geant_raw], X_pseudo * self.real_normalization)
+    self.anneal_discriminator = nn.updates.sa(
+      [self.X_geant_raw, self.X_real_raw], self.loss_discriminator,
+      params=self.params_discriminator,
+      **self.annealing_args
+    )

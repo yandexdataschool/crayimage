@@ -17,7 +17,7 @@ class UpdatesTest(unittest.TestCase):
     print([param.get_value() for param in self.params])
     arr = self.params[0].get_value()
 
-    if not np.allclose(np.sum(arr), np.sum(self.solution), atol=1e-1):
+    if not np.allclose(np.sum(arr), np.sum(self.solution), atol=2.5e-2):
       raise Exception(
         '\n%s failed to find weak minimum:\nTrue solution: %s\nPresented: %s' % (
           method,
@@ -26,7 +26,7 @@ class UpdatesTest(unittest.TestCase):
         )
       )
 
-    if not np.allclose(arr, self.solution, atol=1e-1):
+    if not np.allclose(arr, self.solution, atol=2.5e-2):
       import warnings
       warnings.warn(
         '\n%s failed to find exact minimum:\nTrue solution: %s\nPresented: %s' % (
@@ -64,7 +64,7 @@ class UpdatesTest(unittest.TestCase):
 
     train = nn.updates.ssgd(self.inputs, self.loss, self.params)
 
-    for i in range(32):
+    for i in range(128):
       train(100.0, *self.get_inputs())
 
     self.check('Stochastic Steepest Gradient Descent')
@@ -86,7 +86,8 @@ class UpdatesTest(unittest.TestCase):
 
     train = nn.updates.adastep(
       self.inputs, self.loss, self.params, max_iter=8,
-      rho=0.9, initial_learning_rate=1.0e-1
+      rho=0.9, initial_learning_rate=1.0e-1,
+      momentum=0.9
     )
 
     for i in range(128):

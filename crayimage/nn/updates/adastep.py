@@ -25,22 +25,24 @@ def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_
       f_alpha = f(alpha)
       i += 1
 
-    print i
-
     while not np.isfinite(f_alpha):
       alpha /= 2
       f_alpha = f(alpha)
 
-    set_params(alpha)
-
-    return alpha
+    if f_alpha <= current_f:
+      set_params(alpha)
+      update_v(alpha)
+      return alpha
+    else:
+      update_v(0.0)
+      return 0.0
 
   return g
 
 
-def adastep(inputs, loss, params, max_iter=8, rho = 0.9, initial_learning_rate = 1.0e-3, epsilon=1.0e-6):
+def adastep(inputs, loss, params, max_iter=8, rho = 0.9, momentum=None, initial_learning_rate = 1.0e-3, epsilon=1.0e-6):
   cache_inputs, cache_grads, get_loss, set_params = grad_base(
-    inputs, loss, params, epsilon, norm_gradients=True
+    inputs, loss, params, epsilon, norm_gradients=False, momentum=momentum
   )
 
   one = T.constant(1.0, dtype='float32')

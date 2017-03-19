@@ -54,7 +54,7 @@ def make_uniform(shared, a, b, srng):
     ndim=shared.ndim, dtype=shared.dtype
   )
 
-def grad_base(inputs, loss, params, epsilon=1.0e-6, norm_gradients = False):
+def grad_base(inputs, loss, params, epsilon=1.0e-6, momentum=None, norm_gradients = False):
   inputs_cached = [to_shared(i) for i in inputs]
 
   input_setter = OrderedDict()
@@ -81,9 +81,14 @@ def grad_base(inputs, loss, params, epsilon=1.0e-6, norm_gradients = False):
   grads_cached = [make_copy(param) for param in params]
 
   grads_setter = OrderedDict()
+  if momentum is None or momentum is False or momentum <= 0.0:
+    for ngs, ng in zip(grads_cached, grads_):
+      grads_setter[ngs] = ng
+  else:
+    one = T.constant(1, dtype='float32')
 
-  for ngs, ng in zip(grads_cached, grads_):
-    grads_setter[ngs] = ng
+    for ngs, ng in zip(grads_cached, grads_):
+      grads_setter[ngs] = ngs * momentum + (one - momentum) * ng
 
   cache_grads = theano.function(
     [], [], updates=grads_setter,
