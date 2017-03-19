@@ -16,33 +16,46 @@ def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_
     cache_direction()
 
     alpha = np.float32(get_v() * 2.0)
-    current_f = f(0.0)
-    f_alpha = f(alpha)
+
+    output_current = f(0.0)
+    f_current = output_current[0]
+
+    output_alpha = f(alpha)
+    f_alpha = output_alpha[0]
     i = 1
 
-    while (f_alpha > current_f or not np.isfinite(f_alpha)) and i < max_iter:
+    while (f_alpha > f_current or not np.isfinite(f_alpha)) and i < max_iter:
       alpha /= 2
-      f_alpha = f(alpha)
+
+      output_alpha = f(alpha)
+      f_alpha = output_alpha[0]
+
       i += 1
 
     while not np.isfinite(f_alpha):
       alpha /= 2
-      f_alpha = f(alpha)
 
-    if f_alpha <= current_f:
+      output_alpha = f(alpha)
+      f_alpha = output_alpha[0]
+
+    if f_alpha <= f_current:
       set_params(alpha)
       update_v(alpha)
-      return alpha
+      return output_alpha[1:]
     else:
       update_v(0.0)
-      return 0.0
+      return output_current[1:]
 
   return g
 
 
-def adastep(inputs, loss, params, max_iter=8, rho = 0.9, momentum=None, initial_learning_rate = 1.0e-3, epsilon=1.0e-6):
+def adastep(
+        inputs, loss, params, outputs=[],
+        max_iter=8, rho = 0.9, momentum=None,
+        initial_learning_rate = 1.0e-3, epsilon=1.0e-6):
   cache_inputs, cache_grads, get_loss, set_params = grad_base(
-    inputs, loss, params, epsilon, norm_gradients=False, momentum=momentum
+    inputs, loss, params, outputs,
+    epsilon, norm_gradients=False, momentum=momentum
   )
 
   one = T.constant(1.0, dtype='float32')

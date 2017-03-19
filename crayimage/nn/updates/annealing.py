@@ -19,13 +19,16 @@ def simulated_annealing(f, cache_inputs, set_params, generate_deltas,
     lr = np.float32(learning_rate)
 
     generate_deltas(0.0)
-    current_loss = f()
+    current_output = f()
+    current_loss = current_output[0]
 
     for iter in range(iters):
       temperature = initial_temperature * float(iters - iter) / iters
 
       generate_deltas(lr)
-      new_loss = f()
+
+      new_output = f()
+      new_loss = new_output[0]
 
       if not np.isfinite(new_loss):
         continue
@@ -35,10 +38,13 @@ def simulated_annealing(f, cache_inputs, set_params, generate_deltas,
       if random.random() < acceptance_p:
         set_params()
         current_loss = new_loss
+        current_output = new_output
+
+    return current_output[1:]
 
   return g
 
-def sa(inputs, loss, params, srng=None, seed=1122334455, iters=32,
+def sa(inputs, loss, params, outputs = (), srng=None, seed=1122334455, iters=32,
        initial_temperature = 1.0e-1, learning_rate=1.0e-2):
   # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
   from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
@@ -76,7 +82,7 @@ def sa(inputs, loss, params, srng=None, seed=1122334455, iters=32,
   ]
 
   probe = theano.function(
-    [], loss,
+    [], [loss] + list(outputs),
     givens=probe_givens + inputs_givens,
     no_default_updates=True
   )

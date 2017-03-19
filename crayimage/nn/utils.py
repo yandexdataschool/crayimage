@@ -54,7 +54,7 @@ def make_uniform(shared, a, b, srng):
     ndim=shared.ndim, dtype=shared.dtype
   )
 
-def grad_base(inputs, loss, params, epsilon=1.0e-6, momentum=None, norm_gradients = False):
+def grad_base(inputs, loss, params, outputs=(), epsilon=1.0e-6, momentum=None, norm_gradients = False):
   inputs_cached = [to_shared(i) for i in inputs]
 
   input_setter = OrderedDict()
@@ -104,7 +104,7 @@ def grad_base(inputs, loss, params, epsilon=1.0e-6, momentum=None, norm_gradient
   ]
 
   get_loss = theano.function(
-    [alpha], loss,
+    [alpha], [loss] + list(outputs),
     givens=probe_givens + inputs_givens,
     no_default_updates=True
   )
