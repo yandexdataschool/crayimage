@@ -199,7 +199,7 @@ class BackgroundGenerator(Expression):
     deconv1 = concat_conv(
       redist2, depool1,
       num_filters=1, filter_size=(3, 3), pad='valid',
-      nonlinearity=nonlinearities.softplus,
+      nonlinearity=nonlinearities.linear,
       name='deconv 1'
     )
 
@@ -274,7 +274,7 @@ class ParticleGenerator(Expression):
     readout2 = layers.Conv2DLayer(
       readout1,
       num_filters=1, filter_size=(1, 1),
-      nonlinearity=nonlinearities.softplus,
+      nonlinearity=nonlinearities.linear,
       name='readout2'
     )
 
