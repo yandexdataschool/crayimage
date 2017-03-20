@@ -19,6 +19,7 @@ class ParticleGAN(object):
     self.geant_normalization = 0.2
     self.real_normalization = 1024.0
     self.event_rate_bounds = (1e-2, 64)
+
     self.minimal_loss_trick = False
     self.miminal_loss_focus = 2.0
 
@@ -163,8 +164,8 @@ class ParticleGAN(object):
     ])
 
     self.params_background_net = layers.get_all_params(background_net.net, trainable=True)
-    self.params_pacticle_net = layers.get_all_params(particle_net.net, trainable=True)
-    self.params_generator = self.params_background_net + self.params_pacticle_net + [self.mc_event_rate]
+    self.params_particle_net = layers.get_all_params(particle_net.net, trainable=True)
+    self.params_generator = self.params_background_net + self.params_particle_net + [self.mc_event_rate]
 
     self.params_discriminator = layers.get_all_params(discriminator.outputs, trainable=True)
 

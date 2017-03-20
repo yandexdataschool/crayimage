@@ -158,7 +158,7 @@ class BackgroundGenerator(Expression):
     conv1 = layers.Conv2DLayer(
       redist2,
       num_filters=4, filter_size=(3, 3), pad='valid',
-      nonlinearity=nonlinearities.elu,
+      nonlinearity=nonlinearities.softplus,
       name='conv 1'
     )
 
@@ -170,7 +170,7 @@ class BackgroundGenerator(Expression):
     conv2 = layers.Conv2DLayer(
       pool1,
       num_filters=8, filter_size=(3, 3), pad='valid',
-      nonlinearity=nonlinearities.elu,
+      nonlinearity=nonlinearities.softplus,
       name='conv 2'
     )
 
@@ -187,7 +187,7 @@ class BackgroundGenerator(Expression):
     deconv2 = concat_conv(
       pool1, depool2,
       num_filters=4, filter_size=(3, 3), pad='valid',
-      nonlinearity=nonlinearities.elu,
+      nonlinearity=nonlinearities.softplus,
       name='deconv 2'
     )
 
@@ -232,7 +232,7 @@ class ParticleGenerator(Expression):
     conv1 = layers.Conv2DLayer(
       input_geant,
       num_filters=8, filter_size=(3, 3), pad='valid',
-      nonlinearity=nonlinearities.elu,
+      nonlinearity=nonlinearities.softplus,
       name='conv1'
     )
 
@@ -240,7 +240,7 @@ class ParticleGenerator(Expression):
 
     conv2 = layers.Conv2DLayer(
       pool1, num_filters=16, filter_size=(3, 3), pad='valid',
-      nonlinearity=nonlinearities.elu,
+      nonlinearity=nonlinearities.softplus,
       name='conv2'
     )
 
@@ -251,7 +251,7 @@ class ParticleGenerator(Expression):
     u2 = concat_conv(
       pool1, depool2, pad='valid',
       num_filters=8, filter_size=(3, 3),
-      nonlinearity=nonlinearities.elu,
+      nonlinearity=nonlinearities.softplus,
       name='deconv2'
     )
 
@@ -260,7 +260,7 @@ class ParticleGenerator(Expression):
     deconv1 = concat_conv(
       depool1, input_geant, pad='valid',
       num_filters=1, filter_size=(3, 3),
-      nonlinearity=nonlinearities.elu,
+      nonlinearity=nonlinearities.softplus,
       name='deconv1'
     )
 
@@ -283,7 +283,9 @@ class ParticleGenerator(Expression):
       cropping=[None, None, 'center', 'center']
     )
 
-    super(ParticleGenerator, self).__init__(sum_l)
+    norm_l = layers.ExpressionLayer(sum_l, lambda x: x / 2)
+
+    super(ParticleGenerator, self).__init__(norm_l)
 
 class SimpleParticleGenerator(Expression):
   def __init__(self, input_shape=(1, 142, 142), noise_shape=(1, 128, 128)):

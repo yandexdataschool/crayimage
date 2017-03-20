@@ -17,8 +17,8 @@ class AdaGAN(ParticleGAN):
 
     self.train_discriminator = adastep(
       inputs=[self.X_geant_raw, self.X_real_raw],
-      loss=self.loss_pseudo,
-      params=self.params_generator,
+      loss=self.loss_discriminator,
+      params=self.params_discriminator,
       outputs=[self.loss_pseudo, self.loss_real],
       rho=0.9, momentum=0.9
     )
