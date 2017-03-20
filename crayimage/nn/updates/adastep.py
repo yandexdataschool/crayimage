@@ -9,13 +9,13 @@ from crayimage.nn.utils import *
 
 __all__ = ['adastep']
 
-def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_iter=5):
+def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_iter=5, max_learning_rate=1.0e-3):
   def g(*inputs, **kwargs):
 
     cache_inputs(*inputs, **kwargs)
     cache_direction()
 
-    alpha = np.float32(get_v() * 2.0)
+    alpha = min(np.float32(get_v() * 2.0), max_learning_rate)
 
     output_current = f(0.0)
     f_current = output_current[0]
@@ -46,7 +46,7 @@ def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_
 def adastep(
         inputs, loss, params, outputs=(),
         max_iter=8, rho = 0.9, momentum=None,
-        initial_learning_rate = 1.0e-3):
+        initial_learning_rate = 1.0e-3, max_learning_rate=1.0e-3):
   cache_inputs, cache_grads, get_loss, set_params = grad_base(
     inputs, loss, params, outputs, norm_gradients=False, momentum=momentum
   )
@@ -67,5 +67,5 @@ def adastep(
   return _adastep(
     cache_inputs, cache_grads, get_loss, set_params,
     get_v, update_v,
-    max_iter
+    max_iter, max_learning_rate
   )

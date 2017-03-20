@@ -26,8 +26,8 @@ class UpdatesTest(unittest.TestCase):
     if self.estimate(arr) - eps > self.estimate(self.approx_solution):
       raise Exception(
         '\n%s failed to find minimum:'
-        '\nTest solution: %s (y = %.3f, f = %.3f)'
-        '\nPresented: %s (y = %.3f, f = %.3f)' % (
+        '\nTest solution: %s (y = %.3f, f = %.5f)'
+        '\nPresented: %s (y = %.3f, f = %.5f)' % (
           method,
           str(self.approx_solution), np.sum(self.approx_solution), self.estimate(self.approx_solution),
           str(arr), np.sum(arr), self.estimate(arr)
@@ -37,8 +37,8 @@ class UpdatesTest(unittest.TestCase):
       import warnings
       warnings.warn(
         '\n%s found minimum:'
-        '\nTest solution: %s (y = %.3f, f = %.3f)'
-        '\nPresented: %s (y = %.3f, f = %.3f)' % (
+        '\nTest solution: %s (y = %.3f, f = %.5f)'
+        '\nPresented: %s (y = %.3f, f = %.5f)' % (
           method,
           str(self.approx_solution), np.sum(self.approx_solution), self.estimate(self.approx_solution),
           str(arr), np.sum(arr), self.estimate(arr)
@@ -103,7 +103,8 @@ class UpdatesTest(unittest.TestCase):
 
     train = nn.updates.adastep(
       self.inputs, self.loss, self.params, outputs=[self.loss / 2],
-      max_iter=8, rho=0.9, initial_learning_rate=1.0e-1, momentum=0.9
+      max_iter=8, rho=0.9, initial_learning_rate=1.0e-1, momentum=0.9,
+      max_learning_rate=1.0e-1
     )
 
     for i in range(128):
