@@ -106,7 +106,8 @@ def grad_base(inputs, loss, params, outputs=(), epsilon=1.0e-6, momentum=None, n
   get_loss = theano.function(
     [alpha], [loss] + list(outputs),
     givens=probe_givens + inputs_givens,
-    no_default_updates=True
+    no_default_updates=True,
+    allow_input_downcast=True
   )
 
   params_setter = OrderedDict(probe_givens)

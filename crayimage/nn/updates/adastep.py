@@ -9,7 +9,7 @@ from crayimage.nn.utils import *
 
 __all__ = ['adastep']
 
-def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_iter=8):
+def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_iter=5):
   def g(*inputs, **kwargs):
 
     cache_inputs(*inputs, **kwargs)
@@ -32,13 +32,7 @@ def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_
 
       i += 1
 
-    while not np.isfinite(f_alpha):
-      alpha /= 2
-
-      output_alpha = f(alpha)
-      f_alpha = output_alpha[0]
-
-    if f_alpha <= f_current:
+    if np.isfinite(f_alpha) and f_alpha <= f_current:
       set_params(alpha)
       update_v(alpha)
       return output_alpha[1:]
@@ -52,10 +46,9 @@ def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_
 def adastep(
         inputs, loss, params, outputs=(),
         max_iter=8, rho = 0.9, momentum=None,
-        initial_learning_rate = 1.0e-3, epsilon=1.0e-6):
+        initial_learning_rate = 1.0e-3):
   cache_inputs, cache_grads, get_loss, set_params = grad_base(
-    inputs, loss, params, outputs,
-    epsilon, norm_gradients=False, momentum=momentum
+    inputs, loss, params, outputs, norm_gradients=False, momentum=momentum
   )
 
   one = T.constant(1.0, dtype='float32')
