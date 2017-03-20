@@ -50,7 +50,7 @@ def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v, max_
 
 
 def adastep(
-        inputs, loss, params, outputs=[],
+        inputs, loss, params, outputs=(),
         max_iter=8, rho = 0.9, momentum=None,
         initial_learning_rate = 1.0e-3, epsilon=1.0e-6):
   cache_inputs, cache_grads, get_loss, set_params = grad_base(
