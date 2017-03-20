@@ -23,11 +23,10 @@ def softmin(xs, alpha=1.0):
   alpha = np.float32(alpha)
 
   if hasattr(xs, '__len__'):
-    x_min = reduce(T.minimum, xs)
-    xs_c = [ x - x_min for x in xs ]
-    n = join(xs_c)
+    exp_xs = [ T.exp(-x * alpha) for x in xs ]
+    n = join(exp_xs)
 
-    return [ T.exp(-x * alpha) / n for x in xs_c ]
+    return [ ex / n for ex in exp_xs ]
   else:
     T.nnet.softmax(-xs * alpha)
 

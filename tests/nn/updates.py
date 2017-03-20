@@ -104,7 +104,7 @@ class UpdatesTest(unittest.TestCase):
     train = nn.updates.adastep(
       self.inputs, self.loss, self.params, outputs=[self.loss / 2],
       max_iter=8, rho=0.9, initial_learning_rate=1.0e-1, momentum=0.9,
-      max_learning_rate=1.0e-1
+      max_learning_rate=1.0e-1, max_delta=0.1
     )
 
     for i in range(128):

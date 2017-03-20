@@ -11,16 +11,20 @@ class AdaGAN(ParticleGAN):
       inputs=[self.X_geant_raw],
       loss=self.loss_pseudo,
       params=self.params_generator,
-      outputs=[self.loss_pseudo],
-      rho=0.9, momentum=0.9
+      outputs=self.losses_pseudo,
+      rho=0.9, momentum=0.9,
+      max_learning_rate=1.0e-1,
+      max_delta=5.0e-2
     )
 
     self.train_discriminator = adastep(
       inputs=[self.X_geant_raw, self.X_real_raw],
       loss=self.loss_discriminator,
       params=self.params_discriminator,
-      outputs=[self.loss_pseudo, self.loss_real],
-      rho=0.9, momentum=0.9
+      outputs=self.losses_pseudo + self.losses_real,
+      rho=0.9, momentum=0.9,
+      max_learning_rate=1.0e-1,
+      max_delta=1.0
     )
 
     self.anneal_discriminator = sa(
