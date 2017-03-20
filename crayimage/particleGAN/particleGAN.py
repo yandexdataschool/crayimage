@@ -21,7 +21,7 @@ class ParticleGAN(object):
     self.event_rate_bounds = (1e-2, 64)
 
     self.minimal_loss_trick = False
-    self.miminal_loss_focus = 2.0
+    self.minimal_loss_focus = 2.0
 
     ### default training
 
@@ -150,7 +150,7 @@ class ParticleGAN(object):
     if self.minimal_loss_trick:
       self.pure_loss_generator = -nn.joinc(
         self.losses_pseudo,
-        nn.softmin(self.losses_pseudo, alpha=self.miminal_loss_focus)
+        nn.softmin(self.losses_pseudo, alpha=self.minimal_loss_focus)
       )
     else:
       self.pure_loss_generator = -self.loss_pseudo

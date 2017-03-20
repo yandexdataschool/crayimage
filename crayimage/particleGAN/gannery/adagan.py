@@ -6,6 +6,12 @@ __all__ = [
 ]
 
 class AdaGAN(ParticleGAN):
+  def _constants(self):
+    super(AdaGAN, self)._constants()
+
+    self.minimal_loss_trick = True
+    self.mimimal_loss_focus = 2.0
+
   def _train_procedures(self):
     self.train_generator = adastep(
       inputs=[self.X_geant_raw],
