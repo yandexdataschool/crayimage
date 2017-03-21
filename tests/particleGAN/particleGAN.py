@@ -20,8 +20,8 @@ class PartcileGANTest(unittest.TestCase):
     from crayimage.particleGAN import ParticleGenerator
     particle_net = ParticleGenerator(input_shape=geant_shape)
 
-    from crayimage.particleGAN import SimpleDiscriminator
-    discriminator = SimpleDiscriminator()
+    from crayimage.particleGAN import DeeplySupervisedDiscriminator
+    discriminator = DeeplySupervisedDiscriminator(depth=3)
 
     mc_batch_layout = (2,) * 32
 
