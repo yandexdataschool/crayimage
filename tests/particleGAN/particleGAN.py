@@ -65,6 +65,33 @@ class PartcileGANTest(unittest.TestCase):
 
     assert gan is not None
 
+  def test_toygan(self):
+    img_shape = (1, 32, 32)
+    noise_shape = (8, 1, 36, 36)
+
+    from crayimage.particleGAN import ToyGenerator, ToyTrueGenerator
+    generator = ToyGenerator(input_shape=noise_shape)
+    truth = ToyTrueGenerator(input_shape=noise_shape)
+
+    from crayimage.particleGAN import JustDiscriminator
+    discriminator = JustDiscriminator(depth=3, img_shape=(1, 32, 32))
+
+    from crayimage.particleGAN import ToyGAN
+
+    gan = ToyGAN(
+      true_net=truth,
+      generator=generator,
+      discriminator=discriminator
+    )
+
+    gan.train_discriminator(1.0e-3)
+
+    gan.train_generator(1.0e-3)
+
+    gan.anneal_discriminator()
+
+    assert gan is not None
+
   def test_adagan(self):
     img_shape = (1, 128, 128)
     noise_shape = (1, 144, 144)

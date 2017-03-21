@@ -1,5 +1,5 @@
-from ..particleGAN import ParticleGAN
 from crayimage.nn.updates import sa, adastep
+from crayimage.particleGAN.gannery.particleGAN import ParticleGAN
 
 __all__ = [
   'AdaGAN'
