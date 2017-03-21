@@ -9,6 +9,53 @@ __all__ = [
   'SimpleParticleGenerator'
 ]
 
+class SimpleBackgroundGenerator(Expression):
+  def __init__(self, input_shape=(1, 132, 132)):
+    input_noise = layers.InputLayer(
+      shape=(None,) + input_shape, input_var=None,
+      name='input noise'
+    )
+
+    self.input_noise = input_noise
+
+    ### Since it is easier to just generate uniform distribution rather than
+    ### binomial with n = 1023
+    ### we just make a learnable custom transformation
+    ### which is approximated with a small NN with 32 hidden sigmoid units
+    ### applied to each pixel.
+
+    ### which is essentially 2 convs with filter_size = (1, 1)
+    redist1 = layers.Conv2DLayer(
+      input_noise,
+      num_filters=32, filter_size=(1, 1), pad='valid',
+      nonlinearity=nonlinearities.sigmoid,
+      name='redist 1'
+    )
+
+    redist2 = layers.Conv2DLayer(
+      redist1,
+      num_filters=1, filter_size=(1, 1), pad='valid',
+      nonlinearity=nonlinearities.linear,
+      name='redist 2'
+    )
+
+    ### now to model possible large noise structures
+    conv1 = layers.Conv2DLayer(
+      redist2,
+      num_filters=8, filter_size=(5, 5), pad='valid',
+      nonlinearity=nonlinearities.elu,
+      name='conv 1'
+    )
+
+    conv2 = layers.Conv2DLayer(
+      conv1,
+      num_filters=1, filter_size=(1, 1), pad='valid',
+      nonlinearity=nonlinearities.linear,
+      name = 'conv2'
+    )
+
+    super(SimpleBackgroundGenerator, self).__init__(conv2)
+
 class BackgroundGenerator3(Expression):
   def __init__(self, input_shape=(1, 158, 158)):
     input_noise = layers.InputLayer(
@@ -318,7 +365,7 @@ class SimpleParticleGenerator(Expression):
 
     conv3 = layers.Conv2DLayer(
       conv2, num_filters=1, filter_size=(1, 1), pad='valid',
-      nonlinearity=nonlinearities.softplus,
+      nonlinearity=nonlinearities.elu,
       name='conv3'
     )
 
@@ -327,4 +374,8 @@ class SimpleParticleGenerator(Expression):
       cropping=[None, None, 'center', 'center']
     )
 
-    super(SimpleParticleGenerator, self).__init__(sum_l)
+    n_l = layers.ExpressionLayer(
+      sum_l, lambda x: x / 2
+    )
+
+    super(SimpleParticleGenerator, self).__init__(n_l)

@@ -15,7 +15,7 @@ class AdaGAN(ParticleGAN):
   def _train_procedures(self):
     self.train_generator = adastep(
       inputs=[self.X_geant_raw],
-      loss=self.loss_pseudo,
+      loss=self.loss_generator,
       params=self.params_generator,
       outputs=self.losses_pseudo,
       rho=0.9, momentum=0.9,
