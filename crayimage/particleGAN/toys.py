@@ -66,7 +66,7 @@ class ToyGenerator(Expression):
     )
 
     self.redist2 = layers.Conv2DLayer(
-      self.input,
+      self.redist1,
       num_filters=1,
       filter_size=(1, 1),
       nonlinearity=nonlinearities.linear
