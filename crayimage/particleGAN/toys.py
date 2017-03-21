@@ -13,12 +13,13 @@ __all__ = [
 ]
 
 class ToyTrueGenerator(Expression):
-  def __init__(self, input_shape = (16, 1, 36, 36), mean=16.0):
+  def __init__(self, input_shape = (16, 1, 36, 36), mean=1.0, srng=None):
     self.input_shape = input_shape
 
-    # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
-    from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-    srng = RandomStreams(seed=11223344)
+    if srng is None:
+      # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
+      from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+      srng = RandomStreams(seed=11223344)
 
     X_random = srng.uniform(size=input_shape, low=1.0e-9, high=1.0, dtype='float32')
 
@@ -43,12 +44,13 @@ class ToyTrueGenerator(Expression):
     super(ToyTrueGenerator, self).__init__(self.conv)
 
 class ToyGenerator(Expression):
-  def __init__(self, input_shape = (16, 1, 36, 36)):
+  def __init__(self, input_shape = (16, 1, 36, 36), srng=None):
     self.input_shape = input_shape
 
-    # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
-    from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-    srng = RandomStreams(seed=11223344)
+    if srng is None:
+      # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
+      from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+      srng = RandomStreams(seed=11223344)
 
     X_random = srng.uniform(size=input_shape, dtype='float32')
 
