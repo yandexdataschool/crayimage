@@ -6,11 +6,14 @@ from lasagne import *
 __all__ = [
   'BackgroundGenerator',
   'ParticleGenerator',
-  'SimpleParticleGenerator'
+  'SimpleParticleGenerator',
+  'SimpleBackgroundGenerator'
 ]
 
 class SimpleBackgroundGenerator(Expression):
   def __init__(self, input_shape=(1, 132, 132)):
+    self.input_shape = input_shape
+
     input_noise = layers.InputLayer(
       shape=(None,) + input_shape, input_var=None,
       name='input noise'
@@ -58,6 +61,8 @@ class SimpleBackgroundGenerator(Expression):
 
 class BackgroundGenerator3(Expression):
   def __init__(self, input_shape=(1, 158, 158)):
+    self.input_shape = input_shape
+
     input_noise = layers.InputLayer(
       shape=(None,) + input_shape, input_var=None,
       name='input noise'
