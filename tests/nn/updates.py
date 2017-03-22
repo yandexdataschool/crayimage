@@ -23,11 +23,13 @@ class UpdatesTest(unittest.TestCase):
     print([param.get_value() for param in self.params])
     arr = self.params[0].get_value()
 
-    if self.estimate(arr) - eps > self.estimate(self.approx_solution):
+    if not (self.estimate(arr) - eps < self.estimate(self.approx_solution)):
       raise Exception(
         '\n%s failed to find minimum:'
         '\nTest solution: %s (y = %.3f, f = %.5f)'
-        '\nPresented: %s (y = %.3f, f = %.5f)' % (
+        '\nPresented: %s (y = %.3f, f = %.5f)'
+        '\nNote, that some methods are stochastic and the result depends on the Moon position.'
+        '\nIn such case, please, ensure the Moon is in a right position and repeat.' % (
           method,
           str(self.approx_solution), np.sum(self.approx_solution), self.estimate(self.approx_solution),
           str(arr), np.sum(arr), self.estimate(arr)
@@ -71,20 +73,6 @@ class UpdatesTest(unittest.TestCase):
     x_sub = T.fvector('x sub')
     self.get_loss = theano.function([x_sub] + self.inputs, self.loss, givens=[(self.params[0], x_sub)])
 
-  def test_ssgd(self):
-    self.precheck()
-
-    train = nn.updates.ssgd(
-      self.inputs, self.loss, self.params,
-      outputs=[self.loss / 2], learning_rate=1.0, max_iter=16
-    )
-
-    for i in range(256):
-      ret = train(*self.get_inputs())
-
-    assert len(ret) == 1, 'Optimization function should return output!'
-    self.check('Stochastic Steepest Gradient Descent')
-
   def test_sa(self):
     self.precheck()
 
@@ -112,6 +100,144 @@ class UpdatesTest(unittest.TestCase):
 
     assert len(ret) == 1
     self.check('AdaStep')
+
+  def std_opt(self, method):
+    import lasagne.updates as updates
+
+    self.precheck()
+
+    upd = getattr(updates, method)(
+      self.loss, self.params, learning_rate = 1.0 if method == 'adadelta' else 1.0e-3
+    )
+    train = theano.function(self.inputs, outputs=self.loss, updates=upd)
+
+    for i in range(2048):
+      train(*self.get_inputs())
+
+    self.check(method)
+
+  def test_sgd(self):
+    self.std_opt('sgd')
+
+  def test_adam(self):
+    self.std_opt('adam')
+
+  def test_adamax(self):
+    self.std_opt('adamax')
+
+  def test_adadelta(self):
+    self.std_opt('adadelta')
+
+  def test_rmsprop(self):
+    self.std_opt('rmsprop')
+
+  def test_nesterov(self):
+    self.std_opt('nesterov_momentum')
+
+
+class HardTest(unittest.TestCase):
+  def precheck(self):
+    self.params[0].set_value(self.initial)
+    assert np.allclose(self.params[0].get_value(), self.initial)
+
+  def estimate(self, solution):
+    return self.get_loss(solution)
+
+  def check(self, method, eps=1.0e-2):
+    print([param.get_value() for param in self.params])
+    arr = self.params[0].get_value()
+
+    if self.estimate(arr) - eps > self.estimate(self.approx_solution):
+      raise Exception(
+        '\n%s failed to find minimum:'
+        '\nTest solution: %s (f = %.5f)'
+        '\nPresented: %s (f = %.5f)'
+        '\nNote, that some methods are stochastic and the result depends on the Moon position.'
+        '\nIn such case, please, ensure the Moon is in a right position and repeat.' % (
+          method,
+          str(self.approx_solution), self.estimate(self.approx_solution),
+          str(arr), self.estimate(arr)
+        )
+      )
+    else:
+      import warnings
+      warnings.warn(
+        '\n%s found minimum:'
+        '\nTest solution: %s (f = %.5f)'
+        '\nPresented: %s (f = %.5f)' % (
+          method,
+          str(self.approx_solution), self.estimate(self.approx_solution),
+          str(arr), self.estimate(arr)
+        ), stacklevel=0
+      )
+
+  def setUp(self):
+    self.initial = -2.0
+    self.approx_solution = 0.0
+    x = theano.shared(np.array(self.initial, dtype='float32'))
+
+    self.params = [x]
+
+    self.inputs = []
+
+    loss = -T.nnet.sigmoid(10.0 * x) * T.nnet.sigmoid(-10.0 * x)
+
+    self.loss = loss
+
+    x_sub = T.fscalar('x sub')
+    self.get_loss = theano.function([x_sub] + self.inputs, self.loss, givens=[(self.params[0], x_sub)])
+
+  def test_adastep(self):
+    self.precheck()
+
+    train = nn.updates.adastep(
+      self.inputs, self.loss, self.params, outputs=[self.loss / 2],
+      max_iter=8, rho=0.9, initial_learning_rate=1.0e-3, momentum=0.9,
+      max_learning_rate=1.0e+6, max_delta=0.1, eps=1.0e-6
+    )
+
+    for i in range(512):
+      ret = train()
+
+    assert len(ret) == 1
+    self.check('AdaStep')
+
+  def std_opt(self, method):
+    import lasagne.updates as updates
+
+    self.precheck()
+
+    upd = getattr(updates, method)(
+      self.loss, self.params, learning_rate = 1.0
+    )
+
+    train = theano.function([], outputs=self.loss, updates=upd)
+
+    for i in range(512):
+      train()
+
+    self.check(method)
+
+  def test_sgd(self):
+    self.std_opt('sgd')
+
+  def test_adam(self):
+    self.std_opt('adam')
+
+  def test_adamax(self):
+    """
+    Adamax seems to be considerably faster in this test.
+    """
+    self.std_opt('adamax')
+
+  def test_adadelta(self):
+    self.std_opt('adadelta')
+
+  def test_rmsprop(self):
+    self.std_opt('rmsprop')
+
+  def test_nesterov(self):
+    self.std_opt('nesterov_momentum')
 
 if __name__ == '__main__':
   unittest.main()

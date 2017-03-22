@@ -9,7 +9,12 @@ from lasagne import objectives
 
 from crayimage.runutils import BatchStreams
 
+# from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
+from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+
 class Expression(object):
+  srng = RandomStreams(seed=11223344)
+
   def __init__(self, net):
     self.net = net
     self._args = ()
@@ -69,6 +74,9 @@ class Expression(object):
     assert osp.exists(value) and osp.isdir(value)
 
     self._dump_dir = value
+
+  def params(self, **tags):
+    return layers.get_all_param_values(self.net, **tags)
 
   @property
   def weights(self):

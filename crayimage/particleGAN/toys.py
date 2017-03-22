@@ -13,15 +13,10 @@ __all__ = [
 ]
 
 class ToyTrueGenerator(Expression):
-  def __init__(self, input_shape = (16, 1, 36, 36), mean=1.0, saturation=2.0, srng=None):
+  def __init__(self, input_shape = (16, 1, 34, 34), mean=1.0, saturation=2.0):
     self.input_shape = input_shape
 
-    if srng is None:
-      # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
-      from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-      srng = RandomStreams(seed=11223344)
-
-    X_random = srng.uniform(size=input_shape, low=1.0e-30, high=1.0, dtype='float32')
+    X_random = self.srng.uniform(size=input_shape, low=1.0e-30, high=1.0, dtype='float32')
 
     self.input = layers.InputLayer(
       shape=input_shape,
@@ -35,8 +30,8 @@ class ToyTrueGenerator(Expression):
 
     self.conv = layers.Conv2DLayer(
       self.redist,
-      num_filters=1, filter_size=(5, 5),
-      W=np.ones(shape=(1, 1, 5, 5), dtype='float32') / 25.0,
+      num_filters=1, filter_size=(3, 3),
+      W=np.ones(shape=(1, 1, 3, 3), dtype='float32') / 9.0,
       b=init.Constant(0.0),
       nonlinearity=nonlinearities.linear
     )
@@ -49,15 +44,9 @@ class ToyTrueGenerator(Expression):
     super(ToyTrueGenerator, self).__init__(self.conv)
 
 class ToyGenerator(Expression):
-  def __init__(self, input_shape = (16, 1, 36, 36), srng=None):
+  def __init__(self, input_shape = (16, 1, 36, 36)):
     self.input_shape = input_shape
-
-    if srng is None:
-      # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
-      from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-      srng = RandomStreams(seed=11223344)
-
-    X_random = srng.uniform(size=input_shape, dtype='float32')
+    X_random = self.srng.uniform(size=input_shape, dtype='float32')
 
     self.input = layers.InputLayer(
       shape=input_shape,

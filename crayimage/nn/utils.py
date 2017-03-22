@@ -4,6 +4,7 @@ import theano.tensor as T
 import numpy as np
 
 from collections import OrderedDict
+from functools import reduce
 
 __all__ = [
   'softmin',
@@ -70,9 +71,7 @@ def grad_base(inputs, loss, params, outputs=(), epsilon=1.0e-6, momentum=None, n
   grads = theano.grad(loss, params)
 
   if norm_gradients:
-    grad_norm = T.sqrt(
-      reduce(lambda a, b: a + b, [T.sum(g ** 2) for g in grads]) + epsilon
-    )
+    grad_norm = T.sqrt(join([T.sum(g ** 2) for g in grads]) + epsilon)
     grads_ = [g / grad_norm for g in grads]
   else:
     grads_ = grads

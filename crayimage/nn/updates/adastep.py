@@ -10,7 +10,7 @@ from crayimage.nn.utils import *
 __all__ = ['adastep']
 
 def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v,
-             max_iter=5, max_learning_rate=1.0, max_delta=1.0e-1):
+             max_iter=5, max_learning_rate=1.0, max_delta=1.0e-1, eps=1.0e-6):
   def g(*inputs, **kwargs):
 
     cache_inputs(*inputs, **kwargs)
@@ -18,30 +18,35 @@ def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v,
 
     alpha = min(np.float32(get_v() * 2.0), max_learning_rate)
 
-    output_current = f(0.0)
-    f_current = output_current[0]
+    output_0 = f(0.0)
+    f_0 = output_0[0]
 
-    output_alpha = f(alpha)
-    f_alpha = output_alpha[0]
-    delta = f_current - f_alpha
+    output_cur = f(alpha)
+    f_cur = output_cur[0]
+
+    if not np.isfinite(f_cur):
+      update_v(0.0)
+      return output_0[1:]
 
     i = 1
-    while (delta < 0 or delta > max_delta) or (not np.isfinite(f_alpha)) and (i < max_iter):
+    while i < max_iter:
+      output_prev = output_cur
+      f_prev = f_cur
+
       alpha /= 2
 
-      output_alpha = f(alpha)
-      f_alpha = output_alpha[0]
-      delta = f_current - f_alpha
+      output_cur = f(alpha)
+      f_cur = output_cur[0]
 
-      i += 1
+      if (f_prev - eps < f_cur) and (f_prev - eps < f_0) and (f_0 - f_prev < max_delta):
+        set_params(2 * alpha)
+        update_v(2 * alpha)
+        return output_prev[1:]
+      else:
+        i += 1
 
-    if np.isfinite(f_alpha) and delta > 0 and delta < max_delta:
-      set_params(alpha)
-      update_v(alpha)
-      return output_alpha[1:]
-    else:
-      update_v(0.0)
-      return output_current[1:]
+    update_v(0.0)
+    return output_0[1:]
 
   return g
 
@@ -49,7 +54,7 @@ def _adastep(cache_inputs, cache_direction, f, set_params, get_v, update_v,
 def adastep(
         inputs, loss, params, outputs=(),
         max_iter=8, rho = 0.9, momentum=None,
-        initial_learning_rate = 1.0e-3, max_learning_rate=1.0, max_delta = 1.0e-1):
+        initial_learning_rate = 1.0e-3, max_learning_rate=1.0, max_delta = 1.0e-1, eps=1.0e-6):
   cache_inputs, cache_grads, get_loss, set_params = grad_base(
     inputs, loss, params, outputs, norm_gradients=False, momentum=momentum
   )
@@ -72,5 +77,6 @@ def adastep(
     get_v, update_v,
     max_iter=max_iter,
     max_learning_rate=max_learning_rate,
-    max_delta=max_delta
+    max_delta=max_delta,
+    eps=eps
   )

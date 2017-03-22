@@ -46,9 +46,10 @@ def simulated_annealing(f, cache_inputs, set_params, generate_deltas,
 
 def sa(inputs, loss, params, outputs = (), srng=None, seed=1122334455, iters=32,
        initial_temperature = 1.0e-1, learning_rate=1.0e-2):
-  # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
-  from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-  srng = srng or RandomStreams(seed=seed)
+  if srng is None:
+    # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
+    from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+    srng = srng or RandomStreams(seed=seed)
 
   inputs_cached = [ to_shared(i) for i in inputs ]
   input_setter = OrderedDict()
