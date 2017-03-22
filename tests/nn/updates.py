@@ -193,7 +193,7 @@ class HardTest(unittest.TestCase):
     train = nn.updates.adastep(
       self.inputs, self.loss, self.params, outputs=[self.loss / 2],
       max_iter=8, rho=0.9, initial_learning_rate=1.0e-3, momentum=0.9,
-      max_learning_rate=1.0e+6, max_delta=0.1, eps=1.0e-6
+      max_learning_rate=1.0e+6, max_delta=1.0e-1, eps=1.0e-6
     )
 
     for i in range(512):

@@ -15,6 +15,9 @@ class ToyGAN(object):
     self.minimal_loss_focus = 1.0
     self.losses_coefs = None
 
+    self.c_reg_generator = 0.0
+    self.c_reg_discriminator = 1.0e-3
+
     self.grad_clip_norm = 1.0e-2
 
     self.annealing_args = dict(
@@ -59,7 +62,7 @@ class ToyGAN(object):
     self.loss_real = nn.joinc(self.losses_real, self.losses_coefs)
 
     self.pure_loss_discriminator = (self.loss_pseudo + self.loss_real) / 2
-    self.loss_discriminator = self.pure_loss_discriminator + 1.0e-3 * self.reg_discriminator
+    self.loss_discriminator = self.pure_loss_discriminator + self.c_reg_discriminator * self.reg_discriminator
 
     if self.minimal_loss_trick:
       self.pure_loss_generator = -nn.joinc(
@@ -69,7 +72,7 @@ class ToyGAN(object):
     else:
       self.pure_loss_generator = -self.loss_pseudo
 
-    self.loss_generator = self.pure_loss_generator + 1.0e-2 * self.reg_generator
+    self.loss_generator = self.pure_loss_generator + self.c_reg_generator * self.reg_generator
 
     self.params_generator = layers.get_all_params(self.generator.net, trainable=True)
     self.params_discriminator = layers.get_all_params(discriminator.outputs, trainable=True)

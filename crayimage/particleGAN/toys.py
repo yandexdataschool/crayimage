@@ -41,7 +41,7 @@ class ToyTrueGenerator(Expression):
       lambda x: T.minimum(x, np.float32(saturation))
     )
 
-    super(ToyTrueGenerator, self).__init__(self.conv)
+    super(ToyTrueGenerator, self).__init__(self.saturated)
 
 class ToyGenerator(Expression):
   def __init__(self, input_shape = (16, 1, 36, 36)):
