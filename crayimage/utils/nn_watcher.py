@@ -7,6 +7,8 @@ __all__ = [
 ]
 
 class NNWatcher(object):
+  limit = 2 ** 17
+
   def __init__(self, title, labels=('loss', ), colors=('blue', ), epoches_hint=2, fig_size=(12, 6), save_dir='./'):
     self.save_dir = save_dir
 
@@ -52,6 +54,14 @@ class NNWatcher(object):
 
 
   def draw(self, *data):
+    def crop(d):
+      epoch_size = np.prod(d.shape[1:])
+      lim = self.limit / epoch_size
+
+      return d[:lim]
+
+    data = [ crop(d) for d in data ]
+
     x_lim = np.max([d.shape[0] for d in data])
     self.ax.set_xlim(0.0, x_lim)
 

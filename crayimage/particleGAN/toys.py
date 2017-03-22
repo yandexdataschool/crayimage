@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 class ToyTrueGenerator(Expression):
-  def __init__(self, input_shape = (16, 1, 36, 36), mean=1.0, srng=None):
+  def __init__(self, input_shape = (16, 1, 36, 36), mean=1.0, saturation=2.0, srng=None):
     self.input_shape = input_shape
 
     if srng is None:
@@ -21,7 +21,7 @@ class ToyTrueGenerator(Expression):
       from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
       srng = RandomStreams(seed=11223344)
 
-    X_random = srng.uniform(size=input_shape, low=1.0e-9, high=1.0, dtype='float32')
+    X_random = srng.uniform(size=input_shape, low=1.0e-30, high=1.0, dtype='float32')
 
     self.input = layers.InputLayer(
       shape=input_shape,
@@ -39,6 +39,11 @@ class ToyTrueGenerator(Expression):
       W=np.ones(shape=(1, 1, 5, 5), dtype='float32') / 25.0,
       b=init.Constant(0.0),
       nonlinearity=nonlinearities.linear
+    )
+
+    self.saturated = layers.ExpressionLayer(
+      self.conv,
+      lambda x: T.minimum(x, np.float32(saturation))
     )
 
     super(ToyTrueGenerator, self).__init__(self.conv)
