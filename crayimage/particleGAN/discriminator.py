@@ -12,6 +12,8 @@ __all__ = [
 
 class StairsDiscriminator(Expression):
   def __init__(self, depth = 5, img_shape=(1, 128, 128), noise_sigma=1.0 / (2 ** 11)):
+    self.img_shape = img_shape
+
     self.input_layer = layers.InputLayer(
       shape=(None,) + img_shape,
       name='input'
@@ -32,6 +34,8 @@ class JustDiscriminator(Expression):
   def __init__(self, depth = 5, initial_filters=8,
                img_shape=(1, 128, 128), noise_sigma=1.0 / (2 ** 11),
                deeply_supervised=False):
+    self.img_shape = img_shape
+
     self.outputs = []
 
     self.input_layer = layers.InputLayer(

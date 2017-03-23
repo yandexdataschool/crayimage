@@ -4,6 +4,7 @@ import theano.tensor as T
 
 from lasagne import *
 from crayimage import nn
+from crayimage.nn.nn import Expression
 
 __all__ = [
   'ToyGAN'
@@ -26,7 +27,10 @@ class ToyGAN(object):
       learning_rate=1.0e-2
     )
 
-  def __init__(self, true_net, generator, discriminator, **kwargs):
+    self.noisy_samples = 1024
+    self.noise_C = 0.25
+
+  def __init__(self, true_net, generator, discriminator, noisy=False, **kwargs):
     self._constants()
 
     for k, v in kwargs.items():
@@ -39,6 +43,12 @@ class ToyGAN(object):
     self.X_real = layers.get_output(true_net.net)
     self.X_pseudo = layers.get_output(generator.net)
 
+    if noisy:
+      self.X_noise = Expression.srng.uniform(
+        low=0.0, high=2.0,
+        size=(self.noisy_samples, ) + self.discriminator.img_shape, dtype='float32'
+      )
+
     self.probas_pseudo = layers.get_output(discriminator.outputs, inputs={
       discriminator.input_layer: self.X_pseudo
     })
@@ -47,8 +57,16 @@ class ToyGAN(object):
       discriminator.input_layer: self.X_real
     })
 
+    if noisy:
+      self.probas_noise = layers.get_output(discriminator.outputs, inputs={
+        discriminator.input_layer: self.X_noise
+      })
+
     self.losses_pseudo = [ -T.mean(T.log(1 - p_pseudo)) for p_pseudo in self.probas_pseudo]
     self.losses_real = [ -T.mean(T.log(p_real)) for p_real in self.probas_real ]
+
+    if noisy:
+      self.losses_noisy = [ -T.mean(T.log(1 - p_noise)) for p_noise in self.probas_noise ]
 
     self.reg_generator = regularization.regularize_network_params(generator.net, regularization.l2)
     self.reg_discriminator = regularization.regularize_network_params(discriminator.outputs, regularization.l2)
@@ -61,7 +79,18 @@ class ToyGAN(object):
     self.loss_pseudo = nn.joinc(self.losses_pseudo, self.losses_coefs)
     self.loss_real = nn.joinc(self.losses_real, self.losses_coefs)
 
-    self.pure_loss_discriminator = (self.loss_pseudo + self.loss_real) / 2
+    if noisy:
+      self.loss_noisy = nn.joinc(self.losses_noisy, self.losses_coefs)
+
+    if noisy:
+      self.pure_loss_discriminator = nn.join([
+        0.5 * (1.0 - self.noise_C) * self.loss_pseudo,
+        0.5 * self.noise_C * self.loss_noisy,
+        0.5 * self.loss_real,
+      ])
+    else:
+      self.pure_loss_discriminator = (self.loss_pseudo + self.loss_real) / 2
+
     self.loss_discriminator = self.pure_loss_discriminator + self.c_reg_discriminator * self.reg_discriminator
 
     if self.minimal_loss_trick:

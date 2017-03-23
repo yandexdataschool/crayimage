@@ -82,7 +82,8 @@ class PartcileGANTest(unittest.TestCase):
     gan = ToyGAN(
       true_net=truth,
       generator=generator,
-      discriminator=discriminator
+      discriminator=discriminator,
+      noisy=True
     )
 
     gan.train_discriminator(1.0e-3)
@@ -104,8 +105,8 @@ class PartcileGANTest(unittest.TestCase):
     from crayimage.particleGAN import ParticleGenerator
     particle_net = ParticleGenerator(input_shape=geant_shape)
 
-    from crayimage.particleGAN import JustDiscriminator
-    discriminator = JustDiscriminator(depth = 3)
+    from crayimage.particleGAN import StairsDiscriminator
+    discriminator = StairsDiscriminator(depth = 3)
 
     mc_batch_layout = (2,) * 6
 
