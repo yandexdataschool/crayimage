@@ -20,7 +20,7 @@ class StairsDiscriminator(Expression):
     self.outputs = []
     noise = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma, name='noise')
 
-    for i in range(1, depth + 1):
+    for i in range(0, depth + 1):
       net = make_cnn(noise, depth=i, initial_filters=8, nonlinearity=nonlinearities.elu)
       net = conv_companion(net)
 
@@ -54,7 +54,7 @@ class JustDiscriminator(Expression):
         num_filters=initial_filters * (2 ** i),
         filter_size=(3, 3),
         pad='valid',
-        nonlinearity=nonlinearities.softplus,
+        nonlinearity=nonlinearities.elu,
         name='conv%d' % (i + 1)
       )
 
@@ -71,7 +71,7 @@ class JustDiscriminator(Expression):
       num_filters=initial_filters * (2 ** (depth - 1)),
       filter_size=(3, 3),
       pad='valid',
-      nonlinearity=nonlinearities.softplus,
+      nonlinearity=nonlinearities.elu,
       name='conv%d' % (i + 1)
     )
 
