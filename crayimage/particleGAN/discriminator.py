@@ -54,6 +54,8 @@ class CNN(Expression):
 
 class StairsClassifier(Expression):
   def __init__(self, base_classifier = CNN, max_depth = 5, img_shape=(1, 128, 128), input_layer=None, **kwargs):
+    self.img_shape = img_shape
+
     if input_layer is None:
       self.input_layer = layers.InputLayer(
         shape=(None,) + img_shape,

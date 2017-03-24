@@ -74,8 +74,8 @@ class PartcileGANTest(unittest.TestCase):
     generator = ToyGenerator(input_shape=generator_shape)
     truth = ToyTrueGenerator(input_shape=truth_shape)
 
-    from crayimage.particleGAN import CNN
-    discriminator = CNN(depth=3, img_shape=(1, 32, 32))
+    from crayimage.particleGAN import StairsClassifier
+    discriminator = StairsClassifier(max_depth=3, img_shape=(1, 32, 32))
 
     from crayimage.particleGAN import ToyGAN
 
