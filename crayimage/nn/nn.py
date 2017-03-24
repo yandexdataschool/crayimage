@@ -201,6 +201,9 @@ class Expression(object):
 
     return self
 
+  def __call__(self, inputs = None, **kwargs):
+    return layers.get_output(self.net, inputs=inputs, **kwargs)
+
 class NN(object):
   def __init__(self, *args, **kwargs):
     self._args = args

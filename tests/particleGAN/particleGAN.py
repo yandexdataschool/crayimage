@@ -20,8 +20,8 @@ class PartcileGANTest(unittest.TestCase):
     from crayimage.particleGAN import ParticleGenerator
     particle_net = ParticleGenerator(input_shape=geant_shape)
 
-    from crayimage.particleGAN import JustDiscriminator
-    discriminator = JustDiscriminator(depth=3)
+    from crayimage.particleGAN import CNN
+    discriminator = CNN(depth=3)
 
     mc_batch_layout = (2,) * 32
 
@@ -74,8 +74,8 @@ class PartcileGANTest(unittest.TestCase):
     generator = ToyGenerator(input_shape=generator_shape)
     truth = ToyTrueGenerator(input_shape=truth_shape)
 
-    from crayimage.particleGAN import JustDiscriminator
-    discriminator = JustDiscriminator(depth=3, img_shape=(1, 32, 32))
+    from crayimage.particleGAN import CNN
+    discriminator = CNN(depth=3, img_shape=(1, 32, 32))
 
     from crayimage.particleGAN import ToyGAN
 

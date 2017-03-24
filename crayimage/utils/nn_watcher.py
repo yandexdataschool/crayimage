@@ -58,7 +58,7 @@ class NNWatcher(object):
       epoch_size = np.prod(d.shape[1:])
       lim = self.limit / epoch_size
 
-      return d[:lim]
+      return d[-lim:]
 
     data = [ crop(d) for d in data ]
 

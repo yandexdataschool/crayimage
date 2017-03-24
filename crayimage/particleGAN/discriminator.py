@@ -6,53 +6,31 @@ import theano.tensor as T
 from lasagne import *
 
 __all__ = [
-  'JustDiscriminator',
-  'StairsDiscriminator'
+  'CNN',
+  'StairsClassifier',
+  'DSN'
 ]
 
-class StairsDiscriminator(Expression):
-  def __init__(self, depth = 5, img_shape=(1, 128, 128), noise_sigma=1.0 / (2 ** 11)):
-    self.img_shape = img_shape
-
-    self.input_layer = layers.InputLayer(
-      shape=(None,) + img_shape,
-      name='input'
-    )
-
-    self.outputs = []
-    noise = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma, name='noise')
-
-    for i in range(0, depth + 1):
-      net = make_cnn(noise, depth=i, initial_filters=8, nonlinearity=nonlinearities.elu)
-      net = conv_companion(net)
-
-      self.outputs.append(net)
-
-    super(StairsDiscriminator, self).__init__(self.outputs)
-
-class JustDiscriminator(Expression):
+class CNN(Expression):
   def __init__(self, depth = 5, initial_filters=8,
-               img_shape=(1, 128, 128), noise_sigma=1.0 / (2 ** 11),
-               deeply_supervised=False):
+               img_shape=(1, 128, 128),
+               noise_sigma=1.0 / (2 ** 11),
+               input_layer = None):
     self.img_shape = img_shape
 
     self.outputs = []
 
-    self.input_layer = layers.InputLayer(
-      shape=(None,) + img_shape,
-      name='input'
-    )
+    if input_layer is None:
+      self.input_layer = layers.InputLayer(
+        shape=(None,) + img_shape,
+        name='input'
+      )
+    else:
+      self.input_layer = input_layer
 
-    noise = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma, name='noise')
+    net = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma, name='noise')
 
-    if deeply_supervised:
-      self.outputs.append(conv_companion(noise, pool_function=T.mean))
-      self.outputs.append(conv_companion(noise, pool_function=T.max))
-      self.outputs.append(conv_companion(noise, pool_function=T.min))
-
-    net = noise
-
-    for i in range(depth - 1):
+    for i in range(depth):
       net = layers.Conv2DLayer(
         net,
         num_filters=initial_filters * (2 ** i),
@@ -62,23 +40,71 @@ class JustDiscriminator(Expression):
         name='conv%d' % (i + 1)
       )
 
-      if deeply_supervised:
-        self.outputs.append(conv_companion(net))
+      if i != depth - 1:
+        net = layers.MaxPool2DLayer(
+          net, pool_size=(2, 2),
+          name='pool%d' % (i + 1)
+        )
 
-      net = layers.MaxPool2DLayer(
-        net, pool_size=(2, 2),
-        name='pool%d' % (i + 1)
+    net = conv_companion(net, hidden=8)
+
+    self.outputs = [net]
+
+    super(CNN, self).__init__(net)
+
+class StairsClassifier(Expression):
+  def __init__(self, base_classifier = CNN, max_depth = 5, img_shape=(1, 128, 128), input_layer=None, **kwargs):
+    if input_layer is None:
+      self.input_layer = layers.InputLayer(
+        shape=(None,) + img_shape,
+        name='input'
       )
+    else:
+      self.input_layer = input_layer
 
-    net = layers.Conv2DLayer(
-      net,
-      num_filters=initial_filters * (2 ** (depth - 1)),
-      filter_size=(3, 3),
-      pad='valid',
-      nonlinearity=nonlinearities.elu,
-      name='conv%d' % (i + 1)
-    )
+    self.cnns = [
+      base_classifier(depth=i, img_shape=img_shape, input_layer=self.input_layer, **kwargs)
+      for i in range(max_depth + 1)
+    ]
 
+    self.outputs = [out for cnn in self.cnns for out in cnn.outputs]
+
+    super(StairsClassifier, self).__init__(self.outputs)
+
+class DSN(Expression):
+  def __init__(self, depth=5, initial_filters=8,
+               img_shape=(1, 128, 128),
+               noise_sigma=1.0 / (2 ** 11),
+               input_layer = None):
+    if input_layer is None:
+      self.input_layer = layers.InputLayer(
+        shape=(None,) + img_shape,
+        name='input'
+      )
+    else:
+      self.input_layer = input_layer
+
+    self.outputs = []
+
+    net = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma, name='noise')
     self.outputs.append(conv_companion(net))
 
-    super(JustDiscriminator, self).__init__(self.outputs)
+    for i in range(depth):
+      net = layers.Conv2DLayer(
+        net,
+        num_filters=initial_filters * (2 ** i),
+        filter_size=(3, 3),
+        pad='valid',
+        nonlinearity=nonlinearities.elu,
+        name='conv%d' % (i + 1)
+      )
+
+      self.outputs.append(conv_companion(net))
+
+      if i != depth - 1:
+        net = layers.MaxPool2DLayer(
+          net, pool_size=(2, 2),
+          name='pool%d' % (i + 1)
+        )
+
+    super(DSN, self).__init__(self.net)
