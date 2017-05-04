@@ -8,7 +8,8 @@ from lasagne import *
 __all__ = [
   'CNN',
   'StairsClassifier',
-  'DSN'
+  'DSN',
+  'EnergyBased'
 ]
 
 class CNN(Expression):
@@ -47,7 +48,6 @@ class CNN(Expression):
         )
 
     net = conv_companion(net, hidden=8)
-
     super(CNN, self).__init__([self.input_layer], [net])
 
 class StairsClassifier(Expression):
@@ -62,12 +62,12 @@ class StairsClassifier(Expression):
     else:
       self.input_layer = input_layer
 
-    self.cnns = [
+    self.bases = [
       base_classifier(depth=i, img_shape=img_shape, input_layer=self.input_layer, **kwargs)
       for i in range(max_depth + 1)
     ]
 
-    self.outputs = [out for cnn in self.cnns for out in cnn.outputs]
+    self.outputs = [out for base in self.bases for out in base.outputs]
 
     super(StairsClassifier, self).__init__([self.input_layer], self.outputs)
 
@@ -159,7 +159,7 @@ class EnergyBased(Expression):
       name='deconv%d' % (i + 1)
     )
 
-    net = layers.ElemwiseMergeLayer([ net, self.input_layer ], merge_function=lambda a, b: (a - b))
+    net = layers.ElemwiseMergeLayer([ net, self.input_layer ], merge_function=lambda a, b: (a - b) ** 2)
     net = layers.ExpressionLayer(net, function=lambda a: T.sum(a, axis=(1, 2, 3)), output_shape=(None, ))
     
     super(EnergyBased, self).__init__([self.input_layer], [net])

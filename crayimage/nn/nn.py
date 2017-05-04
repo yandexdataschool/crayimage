@@ -145,7 +145,11 @@ class Expression(object):
   def save(self, path):
     import os
     import os.path as osp
-    import cPickle as pickle
+
+    try:
+      import cPickle as pickle
+    except:
+      import pickle
 
     try:
       os.mkdir(path)
@@ -178,7 +182,12 @@ class Expression(object):
   @classmethod
   def load(cls, path):
     import os.path as osp
-    import cPickle as pickle
+
+    try:
+      import cPickle as pickle
+    except:
+      import pickle
+
     try:
       with open(osp.join(path, 'args.pickled'), 'r') as f:
         args, kwargs = pickle.load(f)
@@ -195,7 +204,11 @@ class Expression(object):
 
   def reset_weights(self, path):
     import os.path as osp
-    import cPickle as pickle
+
+    try:
+      import cPickle as pickle
+    except:
+      import pickle
 
     with open(osp.join(path, 'weights.pickled'), 'r') as f:
       params = pickle.load(f)
