@@ -10,15 +10,27 @@ __all__ = [
   'softmin',
   'join',
   'joinc',
+  'ldot',
   'log_barrier',
   'make_copy',
   'to_shared',
   'make_uniform',
+  'make_normal',
+  'get_srng',
   'grad_base'
 ]
 
 join = lambda xs: reduce(lambda a, b: a + b, xs)
 joinc = lambda xs, cs: join([ x * c for x, c in  zip(xs, cs)])
+ldot = lambda xs, ys: join([ T.sum(x * y) for x, y in zip(xs, ys) ])
+
+def get_srng(srng):
+  if srng is None:
+    # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
+    from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+    return RandomStreams(seed=np.random.randint(2**30))
+  else:
+    return srng
 
 def softmin(xs, alpha=1.0):
   alpha = np.float32(alpha)
@@ -47,9 +59,19 @@ def to_shared(var):
     broadcastable=var.broadcastable
   )
 
-def make_uniform(shared, a, b, srng):
+def make_uniform(shared, a, b, srng=None):
+  srng = get_srng(srng)
+
   return srng.uniform(
     low=a, high=b,
+    size=shared.get_value(borrow=True).shape,
+    ndim=shared.ndim, dtype=shared.dtype
+  )
+
+def make_normal(shared, srng):
+  srng = get_srng(srng)
+
+  return srng.normal(
     size=shared.get_value(borrow=True).shape,
     ndim=shared.ndim, dtype=shared.dtype
   )

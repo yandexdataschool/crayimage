@@ -89,7 +89,8 @@ setup(
       'crayimage/hotornot/bayesian/*.pyx',
       'crayimage/hotornot/em/*.pyx',
       'crayimage/tracking/generation/*.pyx',
-      'crayimage/simulation/particle/*.pyx'
+      'crayimage/simulation/particle/*.pyx',
+      'crayimage/nn/updates/*.pyx'
     ]
 
     for module in cythonize(target)

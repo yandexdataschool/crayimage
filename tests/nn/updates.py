@@ -101,18 +101,38 @@ class UpdatesTest(unittest.TestCase):
     assert len(ret) == 1
     self.check('AdaStep')
 
-  def std_opt(self, method):
-    import lasagne.updates as updates
+  def std_opt(self, method, learning_rate=1.0e-3, *args, **kwargs):
+    if not callable(method):
+      import lasagne.updates as updates
+      method = getattr(updates, method)
 
     self.precheck()
 
-    upd = getattr(updates, method)(
-      self.loss, self.params, learning_rate = 1.0 if method == 'adadelta' else 1.0e-3
-    )
+    upd = method(self.loss, self.params, learning_rate=learning_rate, *args, **kwargs)
     train = theano.function(self.inputs, outputs=self.loss, updates=upd)
+
+    #path = []
 
     for i in range(2048):
       train(*self.get_inputs())
+      #path.append(self.params[0].get_value())
+
+    # path = np.array(path)
+    #
+    # Xs, Ys = np.meshgrid(np.linspace(-1, 2, num=50), np.linspace(-1, 2, num=50))
+    # Zs = np.zeros(shape=(50, 50))
+    #
+    # for i in range(50):
+    #   for j in range(50):
+    #     Zs[i, j] = self.get_loss(np.array([Xs[i, j], Ys[i, j]]).astype('float32'), *self.get_inputs())
+    #
+    # import matplotlib.pyplot as plt
+    #
+    # plt.figure()
+    # plt.contourf(Xs, Ys, Zs)
+    # plt.colorbar()
+    # plt.scatter(path[:, 0], path[:, 1], color=[ plt.cm.Greys(x) for x in np.linspace(0, 1, num=2048) ], s = 5)
+    # plt.show()
 
     self.check(method)
 
@@ -126,7 +146,7 @@ class UpdatesTest(unittest.TestCase):
     self.std_opt('adamax')
 
   def test_adadelta(self):
-    self.std_opt('adadelta')
+    self.std_opt('adadelta', learning_rate=1.0)
 
   def test_rmsprop(self):
     self.std_opt('rmsprop')
@@ -134,6 +154,8 @@ class UpdatesTest(unittest.TestCase):
   def test_nesterov(self):
     self.std_opt('nesterov_momentum')
 
+  def test_pseudograd(self):
+    self.std_opt(nn.updates.pseudograd, temperature=1.0e-3, learning_rate=1.0e-2)
 
 class HardTest(unittest.TestCase):
   def precheck(self):
