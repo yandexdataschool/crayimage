@@ -1,4 +1,4 @@
-from nn import NN, Expression
+from nn import Expression
 from calibration import Calibration
 
 import updates
