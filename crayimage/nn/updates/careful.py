@@ -132,6 +132,3 @@ def clipped_rmsprop(loss_or_grads, params, learning_rate=1.0, rho=0.9, epsilon=1
     updates[param] = T.clip(new_param, -clip, clip)
 
   return updates, reset
-
-
-

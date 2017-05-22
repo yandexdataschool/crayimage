@@ -148,7 +148,7 @@ class EnergyBased(Expression):
         name='deconv%d' % (i + 1)
       )
 
-    net = layers.Upscale2DLayer(net, scale_factor=(2, 2), name='depool%d' % (i + 1))
+    net = layers.Upscale2DLayer(net, scale_factor=(2, 2), name='depool%d' % 1)
 
     net = layers.Deconv2DLayer(
       net,

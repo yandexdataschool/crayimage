@@ -1,5 +1,10 @@
 import numpy as np
 
+import pyximport
+pyximport.install()
+
+from utils import greedy_binning
+
 import os
 import os.path as osp
 import itertools
@@ -80,9 +85,23 @@ def binned_batch_stream(target_statistics, batch_size, n_batches, n_bins=64):
 
     yield np.hstack(sample), wc
 
-def approx_probabilistic_stream(ps, batch_size, n_batches, n_bins=64):
-  
+def almost_probability_stream(probs, per_bin, n_batches, n_bins=64):
+  groups = greedy_binning(probs, n_bins=n_bins)
+  groups_len = np.array([g.shape[0] for g in groups])
 
+  n_samples = probs.shape[0]
+
+  weight_correction = (n_bins * np.float64(groups_len) / n_samples).astype('float32')
+  wc = np.repeat(weight_correction, per_bin)
+
+  sample = np.ndarray(shape=per_bin * n_bins, dtype='int32')
+
+  for i in xrange(n_batches):
+    for j in range(n_bins):
+      ind = groups[j]
+      sample[j * per_bin:(j + 1) * per_bin] = np.random.choice(ind, size=per_bin, replace=True)
+
+    yield sample, wc
 
 def hdf5_batch_worker(path, out_queue, batch_sizes):
   import h5py
