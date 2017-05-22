@@ -131,7 +131,7 @@ class ToyTrackGenerator(Expression):
     X_random = self.srng.uniform(size=X_geant.shape, ndim=4, dtype='float32')
 
     self.random_input = layers.InputLayer(
-      shape=input_shape,
+      shape=(None, ) + input_shape,
       input_var=X_random,
       name = 'uniform noise'
     )
@@ -151,7 +151,7 @@ class ToyTrackGenerator(Expression):
     )
 
     self.track_input = layers.InputLayer(
-      shape=input_shape,
+      shape=(None, ) + input_shape,
       input_var=X_geant,
       name = 'GEANT tracks'
     )

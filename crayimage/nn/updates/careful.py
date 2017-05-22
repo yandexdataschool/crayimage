@@ -4,56 +4,18 @@ import theano
 import theano.tensor as T
 
 from lasagne import updates
-from lasagne.updates import get_or_compute_grads
+from lasagne.updates import get_or_compute_grads, total_norm_constraint
 from collections import OrderedDict
 
-
-def careful_rmsprop(loss_or_grads, params, learning_rate=1.0, rho=0.9, epsilon=1e-6, reset_scaling=2.0):
-  """RMSProp updates
-
-  Scale learning rates by dividing with the moving average of the root mean
-  squared (RMS) gradients. See [1]_ for further description.
-
-  Parameters
-  ----------
-  loss_or_grads : symbolic expression or list of expressions
-      A scalar loss expression, or a list of gradient expressions
-  params : list of shared variables
-      The variables to generate update expressions for
-  learning_rate : float or symbolic scalar
-      The learning rate controlling the size of update steps
-  rho : float or symbolic scalar
-      Gradient moving average decay factor
-  epsilon : float or symbolic scalar
-      Small value added for numerical stability   
-
-  Returns
-  -------
-  OrderedDict
-      A dictionary mapping each parameter to its update expression
-
-  Notes
-  -----
-  `rho` should be between 0 and 1. A value of `rho` close to 1 will decay the
-  moving average slowly and a value close to 0 will decay the moving average
-  fast.
-
-  Using the step size :math:`\\eta` and a decay factor :math:`\\rho` the
-  learning rate :math:`\\eta_t` is calculated as:
-
-  .. math::
-     r_t &= \\rho r_{t-1} + (1-\\rho)*g^2\\\\
-     \\eta_t &= \\frac{\\eta}{\\sqrt{r_t + \\epsilon}}
-
-  References
-  ----------
-  .. [1] Tieleman, T. and Hinton, G. (2012):
-         Neural Networks for Machine Learning, Lecture 6.5 - rmsprop.
-         Coursera. http://www.youtube.com/watch?v=O3sxAc4hxZU (formula @5:20)
+def careful_rmsprop(loss_or_grads, params, learning_rate=1.0, rho=0.9, epsilon=1e-6, grad_clipping=1.0e-2):
+  """
+  RMSProp with gradient clipping.
+  :param grad_clipping: maximal norm of gradient, if norm of the actual gradient exceeds this values it is rescaled.
+  :return: updates
   """
   grads = get_or_compute_grads(loss_or_grads, params)
   updates = OrderedDict()
-  reset = OrderedDict()
+  grads = total_norm_constraint(grads, max_norm=grad_clipping, epsilon=epsilon)
 
   # Using theano constant to prevent upcasting of float32
   one = T.constant(1)
@@ -64,58 +26,46 @@ def careful_rmsprop(loss_or_grads, params, learning_rate=1.0, rho=0.9, epsilon=1
                          broadcastable=param.broadcastable)
     accu_new = rho * accu + (one - rho) * grad ** 2
     updates[accu] = accu_new
-    reset[accu] = accu * reset_scaling
     updates[param] = param - (learning_rate * grad /
                               T.sqrt(accu_new + epsilon))
 
-  return updates, reset
+  return updates
 
-def clipped_rmsprop(loss_or_grads, params, learning_rate=1.0, rho=0.9, epsilon=1e-6, reset_scaling=2.0, clip=1.0):
-  """RMSProp updates
+def hard_rmsprop(loss_or_grads, params, learning_rate = 1.0e-2, epsilon=1e-6):
+  """
+  Not an actual RMSProp: just normalizes the gradient, so it norm equal to the `learning rate` parameter.
+  Don't use unless you have to.
 
-  Scale learning rates by dividing with the moving average of the root mean
-  squared (RMS) gradients. See [1]_ for further description.
+  :param loss_or_grads: loss to minimize 
+  :param params: params to optimize
+  :param learning_rate: norm of the gradient
+  :param epsilon: small number for computational stability.
+  :return: 
+  """
+  grads = get_or_compute_grads(loss_or_grads, params)
+  gnorm = T.sqrt(sum(T.sum(g**2) for g in grads) + epsilon)
+  grads = [ g / gnorm for g in grads ]
 
-  Parameters
-  ----------
-  loss_or_grads : symbolic expression or list of expressions
-      A scalar loss expression, or a list of gradient expressions
-  params : list of shared variables
-      The variables to generate update expressions for
-  learning_rate : float or symbolic scalar
-      The learning rate controlling the size of update steps
-  rho : float or symbolic scalar
-      Gradient moving average decay factor
-  epsilon : float or symbolic scalar
-      Small value added for numerical stability   
+  updates = OrderedDict()
 
-  Returns
-  -------
-  OrderedDict
-      A dictionary mapping each parameter to its update expression
+  for param, grad in zip(params, grads):
+    updates[param] = param - learning_rate * grad
 
-  Notes
-  -----
-  `rho` should be between 0 and 1. A value of `rho` close to 1 will decay the
-  moving average slowly and a value close to 0 will decay the moving average
-  fast.
+  return updates
 
-  Using the step size :math:`\\eta` and a decay factor :math:`\\rho` the
-  learning rate :math:`\\eta_t` is calculated as:
 
-  .. math::
-     r_t &= \\rho r_{t-1} + (1-\\rho)*g^2\\\\
-     \\eta_t &= \\frac{\\eta}{\\sqrt{r_t + \\epsilon}}
-
-  References
-  ----------
-  .. [1] Tieleman, T. and Hinton, G. (2012):
-         Neural Networks for Machine Learning, Lecture 6.5 - rmsprop.
-         Coursera. http://www.youtube.com/watch?v=O3sxAc4hxZU (formula @5:20)
+def cruel_rmsprop(loss_or_grads, params, learning_rate=1.0, rho=0.9, epsilon=1e-6,
+                  grad_clipping=1.0e-2, param_clipping=1.0e-2):
+  """
+  A version of careful RMSProp for Wassershtein GAN. 
+  :param epsilon: small number for computational stability.
+  :param grad_clipping: maximal norm of gradient, if norm of the actual gradient exceeds this values it is rescaled.
+  :param param_clipping: after each update all params are clipped to [-`param_clipping`, `param_clipping`].
+  :return: 
   """
   grads = get_or_compute_grads(loss_or_grads, params)
   updates = OrderedDict()
-  reset = OrderedDict()
+  grads = total_norm_constraint(grads, max_norm=grad_clipping, epsilon=epsilon)
 
   # Using theano constant to prevent upcasting of float32
   one = T.constant(1)
@@ -126,9 +76,12 @@ def clipped_rmsprop(loss_or_grads, params, learning_rate=1.0, rho=0.9, epsilon=1
                          broadcastable=param.broadcastable)
     accu_new = rho * accu + (one - rho) * grad ** 2
     updates[accu] = accu_new
-    reset[accu] = accu * reset_scaling
-    new_param = param - (learning_rate * grad / T.sqrt(accu_new + epsilon))
 
-    updates[param] = T.clip(new_param, -clip, clip)
+    updated = param - (learning_rate * grad / T.sqrt(accu_new + epsilon))
 
-  return updates, reset
+    if param_clipping is not None:
+      updates[param] = T.clip(param, -param_clipping, param_clipping)
+    else:
+      updates[param] = updated
+
+  return updates
