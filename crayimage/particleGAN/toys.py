@@ -82,8 +82,12 @@ class ToyTrueTrackGenerator(Expression):
       nonlinearity=nonlinearities.linear
     )
 
+    self.counts = layers.ExpressionLayer(
+      self.conv, lambda x: T.sqrt(abs(x))
+    )
+
     self.saturated = layers.ExpressionLayer(
-      self.conv,
+      self.counts,
       lambda x: T.minimum(x, np.float32(saturation))
     )
 
