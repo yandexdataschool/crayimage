@@ -59,7 +59,7 @@ def save_images(cycle, version, original, transformed, outdir='output', pack=Tru
     os.system('tar -czf %s %s ' % (tar_path, path))
 
 def plot_and_pack(imgs, outdir='output', pack=True, name="image_{index}.png",
-                  figsize=(5, 4), cmap='Gray', **data):
+                  figsize=(5, 4), cmap='Grey', **data):
   import matplotlib.pyplot as plt
   import os
   import os.path as osp

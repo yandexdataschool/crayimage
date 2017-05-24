@@ -80,7 +80,7 @@ def cruel_rmsprop(loss_or_grads, params, learning_rate=1.0, rho=0.9, epsilon=1e-
     updated = param - (learning_rate * grad / T.sqrt(accu_new + epsilon))
 
     if param_clipping is not None:
-      updates[param] = T.clip(param, -param_clipping, param_clipping)
+      updates[param] = T.clip(updated, -param_clipping, param_clipping)
     else:
       updates[param] = updated
 
