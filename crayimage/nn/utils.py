@@ -5,6 +5,7 @@ import numpy as np
 
 from collections import OrderedDict
 from functools import reduce
+from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
 __all__ = [
   'softmin',
@@ -27,7 +28,6 @@ ldot = lambda xs, ys: join([ T.sum(x * y) for x, y in zip(xs, ys) ])
 def get_srng(srng):
   if srng is None:
     # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
-    from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
     return RandomStreams(seed=np.random.randint(2**30))
   else:
     return srng
