@@ -27,8 +27,16 @@ class EnergyBased(Expression):
       filter_size = (3, 3)
     )
 
-    net = layers.ElemwiseMergeLayer([net, self.input_layer], merge_function=lambda a, b: (a - b) ** 2)
-    net = layers.ExpressionLayer(net, function=lambda a: T.sum(a, axis=(1, 2, 3)), output_shape=(None,))
+    net = layers.ElemwiseMergeLayer(
+      [self.input_layer, net], merge_function=lambda a, b: (a - b) ** 2,
+      name='square difference'
+    )
+
+    net = layers.ExpressionLayer(
+      net,
+      lambda x: T.mean(x, axis=(1, 2, 3)), output_shape=(None,),
+      name='MSE'
+    )
 
     super(EnergyBased, self).__init__([self.input_layer], [net])
 

@@ -7,7 +7,7 @@ __all__ = [
 ]
 
 class NNWatcher(object):
-  limit = 2 ** 17
+  limit = 2 ** 16
 
   def __init__(self, title, labels=('loss', ), colors=('blue', ), mode='full',
                fig_size=(12, 6), save_dir='./'):

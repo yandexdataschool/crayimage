@@ -16,6 +16,7 @@ from . import runutils
 from . import statutils
 from . import utils
 from . import simulation
+from . import cosmicGAN
 
 __version__ = '0.1.0'
 __author__ = 'CRAYFIS collaboration, Yandex School of Data Analysis and contributors.'
