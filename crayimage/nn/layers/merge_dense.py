@@ -1,32 +1,9 @@
 import theano
 import theano.tensor as T
 
-from lasagne import *
+from lasagne import layers, init, nonlinearities
 
-class DenseNNKernel(Kernel, Expression):
-  def __init__(self, n_units, n_bins, nonlinearity=lasagne.nonlinearities.sigmoid):
-    Kernel.__init__(self)
-
-    W = lambda shape: theano.shared(np.random.uniform(-1, 1, size=shape).astype('float32'))
-
-    self.W_expected = W((n_bins, n_units))
-    self.W_observed = W((n_bins, n_units))
-    self.W_weights = W((1, n_units))
-
-    self.nonlinearity = nonlinearity
-
-  @property
-  def params(self):
-    return [self.W_expected, self.W_observed, self.W_weights]
-
-  def __call__(self, expected, observed, weights):
-    obs = T.tensordot(observed, self.W_observed, axes=(2, 0))
-    exp = T.dot(expected, self.W_expected)
-    weights = weights[:, None] * self.W_weights[None, :]
-
-    return self.nonlinearity(obs + exp + weights)
-
-class KernelInputDense(layers.MergeLayer):
+class MergeDense(layers.MergeLayer):
   @classmethod
   def merge_dense(cls, shapes, input_vars=None, **kwargs):
     if input_vars is not None:
@@ -40,7 +17,7 @@ class KernelInputDense(layers.MergeLayer):
         for shape in shapes
       ]
 
-    return inputs, KernelInputDense(inputs, **kwargs)
+    return inputs, MergeDense(inputs, **kwargs)
 
   def get_weights(self, W, shape, name=''):
     if len(shape) == 1:

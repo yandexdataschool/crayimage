@@ -1,26 +1,48 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os.path as osp
 
+__all__ = [
+  'NNWatcher'
+]
 
 class NNWatcher(object):
-  def __init__(self, labels=('loss', ), colors=('blue', ), epoches_hint=2):
-    self.fig = plt.figure(figsize=(12, 6))
+  limit = 2 ** 16
+
+  def __init__(self, title, labels=('loss', ), colors=('blue', ), mode='full',
+               fig_size=(12, 6), save_dir='./'):
+    self.save_dir = save_dir
+
+    self.mode = mode
+
+    self.fig = plt.figure(figsize=fig_size)
     self.ax = self.fig.add_subplot(111)
 
-    self.ax.set_xlim([0.0, epoches_hint - 1])
+    self.ax.set_xlim([0.0, 1.0])
     self.ax.set_ylim([0.0, 1.0])
 
     self.mean_lines = []
     self.lines = []
+
+    self.fig.suptitle(title)
+    self.title = title
 
     for label, color in zip(labels, colors):
       self.mean_lines.append(
         self.ax.plot([], [], label=label, color=color)[0]
       )
 
-      self.lines.append(
-        self.ax.plot([], [], alpha=0.5, color=color)[0]
-      )
+      if mode is 'full':
+        self.lines.append(
+          self.ax.plot([], [], alpha=0.5, color=color)[0]
+        )
+      else:
+        self.lines.append(
+          (
+            self.ax.plot([], [], alpha=0.5, color=color)[0],
+            self.ax.plot([], [], alpha=0.5, color=color)[0]
+          )
+        )
 
     self.ax.legend()
 
@@ -43,6 +65,14 @@ class NNWatcher(object):
 
 
   def draw(self, *data):
+    def crop(d):
+      epoch_size = np.prod(d.shape[1:])
+      lim = self.limit / epoch_size
+
+      return d[-lim:]
+
+    data = [ crop(d) for d in data ]
+
     x_lim = np.max([d.shape[0] for d in data])
     self.ax.set_xlim(0.0, x_lim)
 
@@ -52,11 +82,20 @@ class NNWatcher(object):
     for d, line, mean_line in zip(data, self.lines, self.mean_lines):
       trend = np.mean(d, axis=1)
 
-      mean_line.set_xdata(np.arange(d.shape[0]))
+      mean_line.set_xdata(np.arange(d.shape[0]) + 0.5)
       mean_line.set_ydata(trend)
 
-      xs = np.linspace(0, d.shape[0] - 1, num=int(np.prod(d.shape)))
-      line.set_xdata(xs)
-      line.set_ydata(d)
+      if self.mode == 'full':
+        xs = np.linspace(0, d.shape[0], num=int(np.prod(d.shape)))
+        line.set_xdata(xs)
+        line.set_ydata(d)
+      else:
+        minl, maxl = line
+        minl.set_xdata(np.arange(d.shape[0]) + 0.5)
+        minl.set_ydata(np.percentile(d, q = 10, axis=1))
+
+        maxl.set_xdata(np.arange(d.shape[0]) + 0.5)
+        maxl.set_ydata(np.percentile(d, q=90, axis=1))
 
     self.fig.canvas.draw()
+    self.fig.savefig(osp.join(self.save_dir, '%s.png' % self.title), dpi=420)

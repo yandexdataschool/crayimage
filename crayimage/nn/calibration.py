@@ -3,10 +3,9 @@ import theano
 import theano.tensor as T
 
 from lasagne import layers, nonlinearities, updates, objectives
+from nn import Expression
 
-from nn import NN
-
-class Calibration(NN):
+class Calibration(Expression):
   def __init__(self, *args, **kwargs):
     super(Calibration, self).__init__(*args, **kwargs)
     

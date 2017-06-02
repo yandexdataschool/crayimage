@@ -1,1 +1,1 @@
-from merge_dense import MergeDense
+from cnn import *

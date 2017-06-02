@@ -1,5 +1,10 @@
 import numpy as np
 
+import pyximport
+pyximport.install()
+
+from utils import greedy_binning
+
 import os
 import os.path as osp
 import itertools
@@ -9,96 +14,94 @@ from Queue import Queue
 
 from crayimage.imgutils import slice
 
-class BatchStreams(object):
-  @staticmethod
-  def random_batch_stream(n_samples, batch_size=128,
-                          n_batches=None, replace=True,
-                          priors=None):
-    if n_batches is None:
-      n_batches = n_samples / batch_size
+def random_batch_stream(n_samples, batch_size=128,
+                        n_batches=None, replace=True,
+                        priors=None):
+  if n_batches is None:
+    n_batches = n_samples / batch_size
 
-    for i in xrange(n_batches):
-      yield np.random.choice(n_samples, size=batch_size, replace=replace, p=priors)
+  for i in xrange(n_batches):
+    yield np.random.choice(n_samples, size=batch_size, replace=replace, p=priors)
 
-  @staticmethod
-  def seq_batch_stream(n_samples, batch_size=128):
-    indx = np.arange(n_samples)
+def seq_batch_stream(n_samples, batch_size=128):
+  indx = np.arange(n_samples)
 
-    n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
+  n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
 
-    for i in xrange(n_batches):
-      i_from = i * batch_size
-      i_to = i_from + batch_size
-      yield indx[i_from:i_to]
+  for i in xrange(n_batches):
+    i_from = i * batch_size
+    i_to = i_from + batch_size
+    yield indx[i_from:i_to]
 
-  @staticmethod
-  def random_seq_batch_stream(n_samples, batch_size=128):
+def random_seq_batch_stream(n_samples, batch_size=128):
+  indx = np.random.permutation(n_samples)
+
+  n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
+
+  for i in xrange(n_batches):
+    i_from = i * batch_size
+    i_to = i_from + batch_size
+    yield indx[i_from:i_to]
+
+def inf_random_seq_batch_stream(n_samples, batch_size=128, allow_smaller=False):
+  n_batches = n_samples / batch_size + (1 if (n_samples % batch_size != 0) and allow_smaller else 0)
+
+  while True:
     indx = np.random.permutation(n_samples)
 
-    n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
-
     for i in xrange(n_batches):
       i_from = i * batch_size
       i_to = i_from + batch_size
       yield indx[i_from:i_to]
 
-  @staticmethod
-  def inf_random_seq_batch_stream(n_samples, batch_size=128, allow_smaller=False):
-    n_batches = n_samples / batch_size + (1 if (n_samples % batch_size != 0) and allow_smaller else 0)
+def traverse(f, X, batch_size=1024):
+  return np.vstack([
+    f(X[indx])
+    for indx in seq_batch_stream(X.shape[0], batch_size=batch_size)
+  ])
 
-    while True:
-      indx = np.random.permutation(n_samples)
+def traverse_image(f, img, window = 40, step = 20, batch_size=32):
+  patches = slice(img, window = window, step = step)
+  patches_shape = patches.shape[:2]
 
-      for i in xrange(n_batches):
-        i_from = i * batch_size
-        i_to = i_from + batch_size
-        yield indx[i_from:i_to]
+  return traverse(f, patches, batch_size=batch_size).reshape(patches_shape + (-1, ))
 
-  @staticmethod
-  def traverse(f, X, batch_size=1024):
-    return np.vstack([
-      f(X[indx])
-      for indx in BatchStreams.seq_batch_stream(X.shape[0], batch_size=batch_size)
-    ])
+def binned_batch_stream(target_statistics, batch_size, n_batches, n_bins=64):
+  hist, bins = np.histogram(target_statistics, bins=n_bins)
+  indx = np.argsort(target_statistics)
+  indicies_categories = np.array_split(indx, np.cumsum(hist)[:-1])
+  n_samples = target_statistics.shape[0]
 
-  @staticmethod
-  def traverse_image(f, img, window = 40, step = 20, batch_size=32):
-    patches = slice(img, window = window, step = step)
-    patches_shape = patches.shape[:2]
+  per_category = batch_size / n_bins
 
-    return BatchStreams.traverse(f, patches, batch_size=batch_size).reshape(patches_shape + (-1, ))
+  weight_correction = (n_bins * np.float64(hist) / n_samples).astype('float32')
+  wc = np.repeat(weight_correction, per_category)
 
-  @staticmethod
-  def traverse_run(f, run, window=40, step=20, batch_size=32):
-    results = []
+  for i in xrange(n_batches):
+    sample = [
+      np.random.choice(ind, size=per_category, replace=True)
+      for ind in indicies_categories
+    ]
 
-    for img in run:
-      patches = slice(img, window=window, step=step)
-      patches_shape = patches.shape[:2]
-      results.append(
-        BatchStreams._traverse_flat(f, patches, batch_size=batch_size).reshape(patches_shape + (-1,))
-      )
+    yield np.hstack(sample), wc
 
-    return np.vstack(results)
+def almost_probability_stream(probs, per_bin, n_batches, n_bins=64):
+  groups = greedy_binning(probs, n_bins=n_bins)
+  groups_len = np.array([g.shape[0] for g in groups])
 
-  @staticmethod
-  def binned_batch_stream(target_statistics, batch_size, n_batches, n_bins=64):
-    hist, bins = np.histogram(target_statistics, bins=n_bins)
-    indx = np.argsort(target_statistics)
-    indicies_categories = np.array_split(indx, np.cumsum(hist)[:-1])
+  n_samples = probs.shape[0]
 
-    per_category = batch_size / n_bins
+  weight_correction = (n_bins * np.float64(groups_len) / n_samples).astype('float32')
+  wc = np.repeat(weight_correction, per_bin)
 
-    weight_correction = (np.float64(hist) / per_category).astype('float32')
-    wc = np.repeat(weight_correction, per_category)
+  sample = np.ndarray(shape=per_bin * n_bins, dtype='int32')
 
-    for i in xrange(n_batches):
-      sample = [
-        np.random.choice(ind, size=per_category, replace=True)
-        for ind in indicies_categories
-        ]
+  for i in xrange(n_batches):
+    for j in range(n_bins):
+      ind = groups[j]
+      sample[j * per_bin:(j + 1) * per_bin] = np.random.choice(ind, size=per_bin, replace=True)
 
-      yield np.hstack(sample), wc
+    yield sample, wc
 
 def hdf5_batch_worker(path, out_queue, batch_sizes):
   import h5py

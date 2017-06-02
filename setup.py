@@ -65,6 +65,7 @@ setup(
     'tqdm',
     'numpy',
     'scipy',
+    'joblib',
     'matplotlib',
     'theano',
     'lasagne',
@@ -87,7 +88,9 @@ setup(
       'crayimage/imgutils/*.pyx',
       'crayimage/hotornot/bayesian/*.pyx',
       'crayimage/hotornot/em/*.pyx',
-      'crayimage/tracking/generation/*.pyx'
+      'crayimage/tracking/generation/*.pyx',
+      'crayimage/simulation/particle/*.pyx',
+      'crayimage/nn/updates/*.pyx'
     ]
 
     for module in cythonize(target)
