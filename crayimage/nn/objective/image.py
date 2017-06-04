@@ -25,11 +25,9 @@ def border_mask(exclude_borders, img_shape, dtype='float32'):
 
   return theano.shared(mask, name='border_excluding_mask')
 
-def img_mse(original, reconstructed, exclude_borders=0, img_shape=None):
-  diff = (original - reconstructed) ** 2
-
+def img_mse(exclude_borders=0, img_shape=None, dtype='float32'):
   if exclude_borders != 0:
-    mask = border_mask(exclude_borders, img_shape, original.dtype)
-    return T.sum(mask[None, None, :, :] * diff, axis=(1, 2, 3))
+    mask = border_mask(exclude_borders, img_shape, dtype)
+    return lambda a, b: T.sum(mask[None, None, :, :] * (a - b) ** 2, axis=(1, 2, 3))
   else:
-    return T.sum(diff, axis=(1, 2, 3))
+    return lambda a, b: T.sum((a - b) ** 2, axis=(1, 2, 3))
