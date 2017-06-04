@@ -1,1 +1,1 @@
-from cnn import *
+from conv import *

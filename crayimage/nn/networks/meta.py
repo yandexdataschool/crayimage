@@ -1,10 +1,5 @@
 from crayimage.nn import Expression
-from crayimage.nn.layers import conv_companion, make_cnn
 from common import *
-
-import numpy as np
-import theano
-import theano.tensor as T
 
 from lasagne import *
 

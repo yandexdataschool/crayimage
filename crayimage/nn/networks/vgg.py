@@ -1,5 +1,5 @@
 from crayimage.nn import Expression
-from crayimage.nn.layers import make_cnn
+from crayimage.nn.subnetworks import make_cnn
 from common import *
 
 import theano.tensor as T
@@ -7,10 +7,10 @@ import theano.tensor as T
 from lasagne import *
 
 __all__ = [
-  'CNN', 'cnn', 'default_cnn'
+  'VGG', 'vgg', 'default_vgg'
 ]
 
-class CNN(Expression):
+class VGG(Expression):
   def __init__(self, n_filters,
                img_shape=(1, 128, 128),
                noise_sigma=1.0 / (2 ** 11),
@@ -30,7 +30,7 @@ class CNN(Expression):
     net = layers.DenseLayer(net, num_units=1, nonlinearity=nonlinearities.sigmoid)
     net = layers.FlattenLayer(net, outdim=1)
 
-    super(CNN, self).__init__([self.input_layer], [net])
+    super(VGG, self).__init__([self.input_layer], [net])
 
-cnn = factory(CNN)
-default_cnn = default_cls(cnn)
+vgg = factory(VGG)
+default_vgg = default_cls(vgg)

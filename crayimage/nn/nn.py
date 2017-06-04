@@ -1,4 +1,8 @@
+import os
+import os.path as osp
+
 import numpy as np
+
 from lasagne import layers
 from lasagne import regularization
 
@@ -87,9 +91,6 @@ class Expression(object):
 
   @dump_dir.setter
   def dump_dir(self, value):
-    import os
-    import os.path as osp
-
     try:
       os.makedirs(value)
     except:
@@ -112,8 +113,6 @@ class Expression(object):
 
   @staticmethod
   def get_all_snapshots(dump_dir):
-    import os
-    import os.path as osp
     import re
 
     snapshot = re.compile(r"""snapshot_(\d+)""")
@@ -134,7 +133,6 @@ class Expression(object):
 
   @classmethod
   def load_snapshot(cls, dump_dir, index=-1):
-    import os.path as osp
     snapshots = cls.get_all_snapshots(dump_dir)
 
     count, path = sorted(snapshots, key=lambda x: x[0])[index]
@@ -143,9 +141,6 @@ class Expression(object):
     instance.snapshot_index = count
 
   def save(self, path):
-    import os
-    import os.path as osp
-
     try:
       import cPickle as pickle
     except:
@@ -166,8 +161,6 @@ class Expression(object):
       )
 
   def make_snapshot(self, dump_dir=None, index=None):
-    import os.path as osp
-
     if index is None:
       if self.snapshot_index is None:
         index = max([c for c, _ in self.get_all_snapshots(dump_dir)]) + 1
@@ -181,8 +174,6 @@ class Expression(object):
 
   @classmethod
   def load(cls, path):
-    import os.path as osp
-
     try:
       import cPickle as pickle
     except:
@@ -203,8 +194,6 @@ class Expression(object):
       return None
 
   def reset_weights(self, path):
-    import os.path as osp
-
     try:
       import cPickle as pickle
     except:
@@ -218,8 +207,6 @@ class Expression(object):
     return self
 
   def reset_to_snapshot(self, dump_dir=None, index=-1):
-    import os.path as osp
-
     dump_dir = dump_dir or self._dump_dir
     snapshots = self.get_all_snapshots(dump_dir)
 
@@ -231,8 +218,6 @@ class Expression(object):
     return self
 
   def reset_to_latest(self, dump_dir=None):
-    import os.path as osp
-
     dump_dir = dump_dir or self._dump_dir
     self.reset_weights(osp.join(dump_dir, 'snapshot_%06d' % self._snapshot_index))
 

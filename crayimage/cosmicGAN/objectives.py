@@ -1,7 +1,7 @@
 import theano.tensor as T
 from crayimage.nn import joinc
 
-def GAN_single_cross_entropy(output_real, output_pseudo):
+def single_cross_entropy(output_real, output_pseudo):
   assert len(output_real) == 1
   assert len(output_pseudo) == 1
 
@@ -16,7 +16,7 @@ def GAN_single_cross_entropy(output_real, output_pseudo):
 
   return loss_generator, loss_discriminator
 
-def GAN_weighted_cross_entropy(output_real, output_pseudo, coefs=None):
+def weighted_cross_entropy(output_real, output_pseudo, coefs=None):
   if coefs is None:
     coefs = [ 1.0 / len(output_real) ] * len(output_real)
 

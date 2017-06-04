@@ -70,7 +70,8 @@ setup(
     'theano',
     'lasagne',
     'cython',
-    'scikit-learn'
+    'scikit-learn',
+    'pydot'
   ],
 
   include_package_data=True,
