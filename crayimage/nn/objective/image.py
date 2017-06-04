@@ -28,6 +28,6 @@ def border_mask(exclude_borders, img_shape, dtype='float32'):
 def img_mse(exclude_borders=0, img_shape=None, dtype='float32'):
   if exclude_borders != 0:
     mask = border_mask(exclude_borders, img_shape, dtype)
-    return lambda a, b: T.sum(mask[None, None, :, :] * (a - b) ** 2, axis=(1, 2, 3))
+    return lambda a, b: T.mean(mask[None, None, :, :] * (a - b) ** 2, axis=(1, 2, 3))
   else:
-    return lambda a, b: T.sum((a - b) ** 2, axis=(1, 2, 3))
+    return lambda a, b: T.mean((a - b) ** 2, axis=(1, 2, 3))
