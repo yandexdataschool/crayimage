@@ -1,5 +1,5 @@
 from crayimage.nn import Expression
-from crayimage.nn.subnetworks import make_cnn
+from crayimage.nn.subnetworks import make_cnn, make_cae
 from common import *
 
 import theano.tensor as T
@@ -7,7 +7,8 @@ import theano.tensor as T
 from lasagne import *
 
 __all__ = [
-  'VGG', 'vgg', 'default_vgg'
+  'VGG', 'vgg', 'default_vgg',
+  'CAE', 'cae',
 ]
 
 class VGG(Expression):
@@ -34,3 +35,24 @@ class VGG(Expression):
 
 vgg = factory(VGG)
 default_vgg = default_cls(vgg)
+
+
+class CAE(Expression):
+  def __init__(self,
+               n_channels=(8, 16, 32),
+               noise_sigma=1.0 / 1024.0,
+               input_layer=None,
+               img_shape=None,
+               **conv_kwargs):
+    self.input_layer = get_input_layer(img_shape, input_layer)
+
+    net = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma, name='noise')
+
+    net = make_cae(
+      net, n_channels,
+      **conv_kwargs
+    )
+
+    super(CAE, self).__init__([self.input_layer], [net])
+
+cae = factory(CAE)
