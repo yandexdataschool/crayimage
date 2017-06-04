@@ -44,6 +44,7 @@ class ToyTrueTrackGenerator(Expression):
       num_filters=1, filter_size=(3, 3),
       W=init.Constant(self.dissipation_matrix),
       b=init.Constant(0.0),
+      pad='same',
       nonlinearity=nonlinearities.linear
     )
 

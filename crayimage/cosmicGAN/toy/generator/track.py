@@ -45,6 +45,7 @@ class ToyTrackGenerator(Expression):
     self.conv = layers.Conv2DLayer(
       self.energy,
       num_filters=1, filter_size=(3, 3),
+      pad='same',
       nonlinearity=nonlinearities.linear
     )
 
