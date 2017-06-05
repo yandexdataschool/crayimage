@@ -4,7 +4,7 @@ import theano
 import theano.tensor as T
 
 __all__ = [
-  'img_mse'
+  'img_mse', 'plain_mse'
 ]
 
 def border_mask(exclude_borders, img_shape, dtype='float32'):
@@ -25,9 +25,18 @@ def border_mask(exclude_borders, img_shape, dtype='float32'):
 
   return theano.shared(mask, name='border_excluding_mask')
 
-def img_mse(exclude_borders=0, img_shape=None, dtype='float32'):
+def img_mse(exclude_borders=0, img_shape=None, norm=True, dtype='float32'):
   if exclude_borders != 0:
     mask = border_mask(exclude_borders, img_shape, dtype)
-    return lambda a, b: T.mean(mask[None, None, :, :] * (a - b) ** 2, axis=(1, 2, 3))
+    if norm:
+      norm_term = T.constant(np.sum(mask, dtype=dtype))
+      return lambda a, b: T.sum(mask[None, None, :, :] * (a - b) ** 2, axis=(1, 2, 3)) / norm_term
+    else:
+      return lambda a, b: T.sum(mask[None, None, :, :] * (a - b) ** 2, axis=(1, 2, 3))
   else:
-    return lambda a, b: T.mean((a - b) ** 2, axis=(1, 2, 3))
+    if norm:
+      return lambda a, b: T.mean((a - b) ** 2, axis=(1, 2, 3))
+    else:
+      return lambda a, b: T.sum((a - b) ** 2, axis=(1, 2, 3))
+
+plain_mse = img_mse(exclude_borders=0, norm=False)

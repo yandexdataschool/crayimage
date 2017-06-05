@@ -41,14 +41,14 @@ def make_resnet_block(input_layer, n, num_filters, nonlinearity=nonlinearities.e
 
   return net
 
-def make_resnet(input_layer, channels_sizes, n_block_layers, nonlinearity, **conv_kwargs):
+def make_resnet(input_layer, channels_sizes, block_size, nonlinearity, **conv_kwargs):
   """
   Almost ResNet.
   """
   net = input_layer
 
   for i, n_channels in enumerate(channels_sizes):
-    net = make_resnet_block(net, n_block_layers, num_filters=n_channels, nonlinearity=nonlinearity, **conv_kwargs)
+    net = make_resnet_block(net, block_size, num_filters=n_channels, nonlinearity=nonlinearity, **conv_kwargs)
     net = layers.MaxPool2DLayer(net, pool_size=(2, 2))
 
   return net
