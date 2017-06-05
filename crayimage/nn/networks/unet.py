@@ -19,4 +19,4 @@ class UNet(Expression):
     net = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma)
     net = make_unet(net, channels, **conv_kwargs)
 
-    super(UNet, self).__init__(self.input_layer, [net])
+    super(UNet, self).__init__([self.input_layer], [net])
