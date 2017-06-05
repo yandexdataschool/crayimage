@@ -29,7 +29,7 @@ def img_mse(exclude_borders=0, img_shape=None, norm=True, dtype='float32'):
   if exclude_borders != 0:
     mask = border_mask(exclude_borders, img_shape, dtype)
     if norm:
-      norm_term = T.constant(np.sum(mask).astype(dtype))
+      norm_term = T.constant(np.sum(mask.get_value(), dtype=dtype))
       return lambda a, b: T.sum(mask[None, None, :, :] * (a - b) ** 2, axis=(1, 2, 3)) / norm_term
     else:
       return lambda a, b: T.sum(mask[None, None, :, :] * (a - b) ** 2, axis=(1, 2, 3))
