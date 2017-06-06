@@ -6,9 +6,14 @@ __all__ = [
   'concat_conv'
 ]
 
-def conv_companion(layer, pool_function=T.max):
+def conv_companion(layer, pool_function=T.max, n_units = 1):
   net = layers.GlobalPoolLayer(layer, pool_function=pool_function)
-  net = layers.DenseLayer(net, num_units=1, nonlinearity=nonlinearities.sigmoid)
+
+  if n_units == 1:
+    net = layers.DenseLayer(net, num_units=1, nonlinearity=nonlinearities.sigmoid)
+  else:
+    net = layers.DenseLayer(net, num_units=n_units, nonlinearity=nonlinearities.softmax())
+
   return net
 
 ### Instead of conventional concatination of two layers, we remember that convolution is a linear transformation.

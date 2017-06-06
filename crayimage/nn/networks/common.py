@@ -44,11 +44,10 @@ def transfer_reg(layer, norm = False, penalty=regularization.l2):
   W_shape = W.get_value(borrow=True).shape
   dtype = W.get_value(borrow=True).dtype
 
-  mask = T.constant(
-    make_transfer_reg_mask(W_shape, dtype=dtype)
-  )
+  mask_ = make_transfer_reg_mask(W_shape, dtype=dtype)
+  mask = T.constant(mask_)
 
   if norm:
-    return penalty(W * mask) / T.constant(np.sum(mask, dtype=dtype))
+    return penalty(W * mask) / T.constant(np.sum(mask_, dtype=dtype))
   else:
     return penalty(W * mask)
