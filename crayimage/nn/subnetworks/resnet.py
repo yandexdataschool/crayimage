@@ -31,11 +31,12 @@ def make_resnet_block(input_layer, n, num_filters, nonlinearity=nonlinearities.e
       net,
       num_filters=num_filters,
       nonlinearity=nonlinearity if i < (n - 1) else nonlinearities.linear,
+      W=init.GlorotUniform(gain=0.01),
       **conv_kwargs
     )
 
   net = layers.NonlinearityLayer(
-    layers.ElemwiseMergeLayer([origin, net], merge_function= lambda a, b: (a + b) / 2),
+    layers.ElemwiseSumLayer([origin, net]),
     nonlinearity=nonlinearity
   )
 
