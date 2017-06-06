@@ -12,7 +12,7 @@ def conv_companion(layer, pool_function=T.max, n_units = 1):
   if n_units == 1:
     net = layers.DenseLayer(net, num_units=1, nonlinearity=nonlinearities.sigmoid)
   else:
-    net = layers.DenseLayer(net, num_units=n_units, nonlinearity=nonlinearities.softmax())
+    net = layers.DenseLayer(net, num_units=n_units, nonlinearity=nonlinearities.softmax)
 
   return net
 
