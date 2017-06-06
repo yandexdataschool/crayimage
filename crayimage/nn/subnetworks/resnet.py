@@ -35,7 +35,7 @@ def make_resnet_block(input_layer, n, num_filters, nonlinearity=nonlinearities.e
     )
 
   net = layers.NonlinearityLayer(
-    layers.ElemwiseSumLayer([origin, net]),
+    layers.ElemwiseMergeLayer([origin, net], merge_function= lambda a, b: (a + b) / 2),
     nonlinearity=nonlinearity
   )
 
