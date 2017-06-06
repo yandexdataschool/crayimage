@@ -7,8 +7,9 @@ __all__ = [
   'make_resae'
 ]
 
-def make_resnet_block(input_layer, n, num_filters, nonlinearity=nonlinearities.elu, **conv_kwargs):
+def make_resnet_block(input_layer, n, num_filters, nonlinearity=nonlinearities.elu, return_convs=False, **conv_kwargs):
   net = input_layer
+  convs = []
 
   input_channels = layers.get_output_shape(input_layer)[1]
 
@@ -35,12 +36,17 @@ def make_resnet_block(input_layer, n, num_filters, nonlinearity=nonlinearities.e
       **conv_kwargs
     )
 
+    convs.append(net)
+
   net = layers.NonlinearityLayer(
     layers.ElemwiseSumLayer([origin, net]),
     nonlinearity=nonlinearity
   )
 
-  return net
+  if return_convs:
+    return net, convs
+  else:
+    return net
 
 def make_resnet(input_layer, channels_sizes, block_size, nonlinearity, **conv_kwargs):
   """

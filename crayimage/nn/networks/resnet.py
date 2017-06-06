@@ -53,8 +53,11 @@ class DiffusionNet(Expression):
 
     net = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma)
 
+    self.convs = []
+
     for n_channels in channels:
-      net = make_resnet_block(net, block_size, n_channels, **conv_kwargs)
+      net, cs = make_resnet_block(net, block_size, n_channels, return_convs=True, **conv_kwargs)
+      self.convs.extend(cs)
 
     if output_nonlinearity is None:
        output_nonlinearity = conv_kwargs.get('nonlinearity', nonlinearities.linear)
@@ -68,3 +71,11 @@ class DiffusionNet(Expression):
     )
 
     super(DiffusionNet, self).__init__([self.input_layer], [net])
+
+  def special_reg(self, penalty=regularization.l2, norm=True):
+    reg = 0.0
+
+    for c in self.convs:
+      reg += transfer_reg(c, penalty=penalty, norm=norm)
+
+    return reg
