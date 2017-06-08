@@ -30,11 +30,16 @@ def get_input_layer(img_shape, input_layer):
   else:
     return input_layer
 
-def make_transfer_reg_mask(shape, dtype='float32'):
+def make_transfer_reg_mask(shape, c_diffusion=1.0e-1, dtype='float32'):
   mask = np.ones(shape, dtype=dtype)
 
+  filter_size = shape[2:]
+
+  filter_center = (filter_size[0] - 1) / 2
+
   for i in range(min(shape[:2])):
-    mask[i, i] = 0.0
+    mask[i, i] = c_diffusion
+    mask[i, i, filter_center, filter_center] = 0.0
 
   return mask
 
