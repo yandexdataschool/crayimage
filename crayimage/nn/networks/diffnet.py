@@ -8,6 +8,11 @@ import theano.tensor as T
 
 from lasagne import *
 
+__all__ = [
+  'DiffusionNet',
+  'DiffusionNetClassification'
+]
+
 class DiffusionNet(Expression):
   """
   Similar to ResNetAE, however, does not decrease size of the image.

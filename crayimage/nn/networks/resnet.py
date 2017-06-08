@@ -11,9 +11,7 @@ from lasagne import *
 
 __all__ = [
   'ResNet',
-  'ResNetAE',
-  'DiffusionNet',
-  'DiffusionNetClassification'
+  'ResNetAE'
 ]
 
 class ResNet(Expression):
