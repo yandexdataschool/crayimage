@@ -6,13 +6,18 @@ __all__ = [
 ]
 
 class ImgWatcher(object):
-  def __init__(self, n_rows=3, img_size=(128, 128), cmap1=plt.cm.gray_r, cmap2=plt.cm.gray_r, fig_size=3):
+  def __init__(self,
+               n_rows=3, img_size=(128, 128), cmap1=plt.cm.gray_r, cmap2=plt.cm.gray_r, fig_size=3,
+               vmin=None, vmax=None):
     self.fig = plt.figure(figsize=(fig_size * 2 + 1, fig_size * n_rows + n_rows - 1))
 
     def add_image(j, cmap):
       ax = self.fig.add_subplot(n_rows, 2, j)
       ax.grid('off')
-      im = ax.imshow(np.random.uniform(size=img_size), interpolation='None', cmap=cmap)
+      im = ax.imshow(
+        np.random.uniform(size=img_size), interpolation='None', cmap=cmap,
+        vmin=vmin, vmax=vmax
+      )
       cb = self.fig.colorbar(im)
       return im, cb
 
