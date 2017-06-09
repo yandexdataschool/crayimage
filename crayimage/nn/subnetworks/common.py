@@ -3,7 +3,8 @@ from lasagne import *
 __all__ = [
   'complete_conv_kwargs',
   'complete_deconv_kwargs',
-  'get_deconv_kwargs'
+  'get_deconv_kwargs',
+  'redistribute_channels'
 ]
 
 def complete_conv_kwargs(conv_kwargs):
@@ -35,3 +36,19 @@ def get_deconv_kwargs(conv_kwargs):
     deconv_kwargs['crop'] = 'valid'
 
   return deconv_kwargs
+
+def redistribute_channels(net, target_channels, nonlinearity=nonlinearities.linear):
+  input_channels = layers.get_output_shape(net)[1]
+
+  if input_channels != target_channels:
+    net = layers.Conv2DLayer(
+      net,
+      W=init.GlorotUniform(1.0),
+      filter_size=(1, 1),
+      num_filters=target_channels,
+      nonlinearity=nonlinearity,
+      name='channel redistribution'
+    )
+    return net
+  else:
+    return net

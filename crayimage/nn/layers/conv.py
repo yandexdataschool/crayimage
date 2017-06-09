@@ -3,8 +3,16 @@ from lasagne import *
 
 __all__ = [
   'conv_companion',
-  'concat_conv'
+  'concat_conv',
+  'softmax2d'
 ]
+
+
+def softmax2d(x):
+  max_value = T.max(x, axis=1)
+  exped = T.exp(x - max_value[:, None, :, :])
+  sums = T.sum(exped, axis=1)
+  return exped / sums[:, None, :, :]
 
 def conv_companion(layer, pool_function=T.max, n_units = 1):
   net = layers.GlobalPoolLayer(layer, pool_function=pool_function)
@@ -18,17 +26,20 @@ def conv_companion(layer, pool_function=T.max, n_units = 1):
 
 ### Instead of conventional concatination of two layers, we remember that convolution is a linear transformation.
 def concat_conv(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,
+                W=init.GlorotUniform(0.5),
                 avoid_concat=False, *args, **kwargs):
   if avoid_concat:
     conv1 = layers.Conv2DLayer(
       incoming1, nonlinearity=nonlinearities.identity,
       name='%s [part 1]' % (name or ''),
+      W = W,
       *args, **kwargs
     )
 
     conv2 = layers.Conv2DLayer(
       incoming2, nonlinearity=nonlinearities.identity,
       name='%s [part 2]' % (name or ''),
+      W=W,
       *args, **kwargs
     )
 

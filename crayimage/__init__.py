@@ -9,12 +9,15 @@ from __future__ import print_function, absolute_import, division
 
 from .runutils import Run
 
-from . import hotornot
 from . import imgutils
-from . import nn
 from . import runutils
 from . import statutils
+
+from . import nn
+
+from . import hotornot
 from . import utils
+
 from . import simulation
 from . import cosmicGAN
 

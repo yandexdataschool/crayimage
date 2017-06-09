@@ -4,7 +4,7 @@ import theano.tensor as T
 
 from lasagne import *
 from crayimage import nn
-from crayimage.nn.nn import Expression
+from crayimage.nn.expression import Expression
 
 __all__ = [
   'ToyGAN'
@@ -18,7 +18,7 @@ class ToyGAN(object):
   def __init__(self, true_net, generator, discriminator, loss, solver, **kwargs):
     """
     :param true_net: generator for ground truth;
-    :param generator: trainable expression for generator;
+    :param generator: trainable expression.py for generator;
     :param objective: discriminator + it's loss
     :param kwargs: constants
     """

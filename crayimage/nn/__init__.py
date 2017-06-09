@@ -1,8 +1,13 @@
-from nn import Expression
+from expression import Expression
 from calibration import Calibration
 
-import updates
+
+from . import init
 
 from utils import *
+
+from . import updates
+
 from . import layers
 from . import subnetworks
+from . import networks

@@ -3,7 +3,7 @@ import theano
 import theano.tensor as T
 
 from lasagne import layers, nonlinearities, updates, objectives
-from nn import Expression
+from expression import Expression
 
 class Calibration(Expression):
   def __init__(self, *args, **kwargs):

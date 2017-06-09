@@ -82,7 +82,7 @@ def D_distance(expected, observed, mode='D'):
 @distance
 def KS_distance(expected, observed, mode='D'):
   """
-  A symbolic theano expression for Kolmogorov-Smirnov statistical
+  A symbolic theano expression.py for Kolmogorov-Smirnov statistical
   distance.
 
   Note: this implementation uses `cumsum`.
@@ -95,7 +95,7 @@ def KS_distance(expected, observed, mode='D'):
   :param mode: possible modes:
     D - two-sided KS distance,
     D- and D+ - one sided KS distance.
-  :return: symbolic expression for Kolmogorov-Smirnov distance.
+  :return: symbolic expression.py for Kolmogorov-Smirnov distance.
   """
   expected_ecpf = T.cumsum(expected)
   observed_ecpf = T.cumsum(observed, axis=1)

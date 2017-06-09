@@ -83,7 +83,7 @@ def extract_from_paths(paths, expr_or_list, cast=str):
       ])
   else:
     raise Exception(
-      '`expr_or_list` should be either constant value, list of values or regular expression, got %s' % type(expr_or_list)
+      '`expr_or_list` should be either constant value, list of values or regular expression.py, got %s' % type(expr_or_list)
     )
 
 
