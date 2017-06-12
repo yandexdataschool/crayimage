@@ -10,6 +10,8 @@ class ImgWatcher(object):
                n_rows=3, img_size=(128, 128), cmap1=plt.cm.gray_r, cmap2=plt.cm.gray_r, fig_size=3,
                vmin=None, vmax=None):
     self.fig = plt.figure(figsize=(fig_size * 2 + 1, fig_size * n_rows + n_rows - 1))
+    self.vmin = vmin
+    self.vmax = vmax
 
     def add_image(j, cmap):
       ax = self.fig.add_subplot(n_rows, 2, j)
@@ -32,18 +34,16 @@ class ImgWatcher(object):
     ]
 
   def draw(self, imgs1, imgs2):
-    for i, (im, cb) in enumerate(self.first_column):
-      img = imgs1[i]
-      im.set_data(img)
-      im.set_clim(np.min(img), np.max(img))
-      cb.set_clim(np.min(img), np.max(img))
-      cb.update_normal(im)
+    for col, imgs in zip([self.first_column, self.second_column], [imgs1, imgs2]):
+      for i, (im, cb) in enumerate(col):
+        img = imgs[i]
+        im.set_data(img)
 
-    for i, (im, cb) in enumerate(self.second_column):
-      img = imgs2[i]
-      im.set_data(img)
-      im.set_clim(np.min(img), np.max(img))
-      cb.set_clim(np.min(img), np.max(img))
-      cb.update_normal(im)
+        vmin = self.vmin if self.vmin is not None else np.min(img)
+        vmax = self.vmax if self.vmax is not None else np.max(img)
+
+        im.set_clim(vmin, vmax)
+        cb.set_clim(vmin, vmax)
+        cb.update_normal(im)
 
     self.fig.canvas.draw()
