@@ -11,7 +11,8 @@ __all__ = [
   'make_diff_block',
   'get_diffusion_kernels',
   'transfer_reg',
-  'identity_reg'
+  'identity_reg',
+  'get_redistribution_kernels'
 ]
 
 def get_diffusion_kernels(net):
@@ -20,6 +21,18 @@ def get_diffusion_kernels(net):
   for l in layers.get_all_layers(net):
     try:
       W = l.get_diffusion_kernel()
+      kernels.append(W)
+    except:
+      pass
+
+  return kernels
+
+def get_redistribution_kernels(net):
+  kernels = []
+
+  for l in layers.get_all_layers(net):
+    try:
+      W = l.get_redistribution_kernel()
       kernels.append(W)
     except:
       pass
@@ -88,9 +101,13 @@ def make_diff_chain(
 def make_diff_block(input_layer,
                     depth, length, num_filters,
                     nonlinearity=nonlinearities.elu,
+                    dropout_p = None,
                     **conv_kwargs):
 
   origin = redistribute_channels(input_layer, num_filters)
+
+  if dropout_p is not None:
+    origin = layers.DropoutLayer(origin, dropout_p, rescale=True)
 
   origins = [origin]
   origin = origin

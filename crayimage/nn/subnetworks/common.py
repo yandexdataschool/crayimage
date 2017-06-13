@@ -1,5 +1,7 @@
 from lasagne import *
 
+from ..layers import Redistribution2DLayer
+
 __all__ = [
   'complete_conv_kwargs',
   'complete_deconv_kwargs',
@@ -41,10 +43,8 @@ def redistribute_channels(net, target_channels, nonlinearity=nonlinearities.line
   input_channels = layers.get_output_shape(net)[1]
 
   if input_channels != target_channels:
-    net = layers.Conv2DLayer(
+    net = Redistribution2DLayer(
       net,
-      W=init.GlorotUniform(1.0),
-      filter_size=(1, 1),
       num_filters=target_channels,
       nonlinearity=nonlinearity,
       name='channel redistribution'

@@ -5,13 +5,14 @@ from ..init import Diffusion
 
 __all__ = [
   'Diffusion2DLayer',
+  'Redistribution2DLayer',
   'concat_diff'
 ]
 
 class Diffusion2DLayer(layers.Conv2DLayer):
   def __init__(self, incoming, num_filters, filter_size,
                untie_biases=False,
-               W=Diffusion(0.9) + init.GlorotUniform(0.1),
+               W=Diffusion(0.95) + init.GlorotUniform(0.05),
                b=init.Constant(0.),
                nonlinearity=nonlinearities.rectify, flip_filters=True,
                convolution=T.nnet.conv2d, **kwargs):
@@ -23,6 +24,25 @@ class Diffusion2DLayer(layers.Conv2DLayer):
                                            **kwargs)
 
   def get_diffusion_kernel(self):
+    return self.W
+
+class Redistribution2DLayer(layers.Conv2DLayer):
+  def __init__(self, incoming, num_filters,
+               untie_biases=False,
+               W=Diffusion(0.95) + init.GlorotUniform(0.05),
+               nonlinearity=nonlinearities.linear,
+               convolution=T.nnet.conv2d, **kwargs):
+    stride = (1, 1)
+    pad = 'same'
+    filter_size = (1, 1)
+    flip_filters = True
+    b = None
+    super(Redistribution2DLayer, self).__init__(incoming, num_filters, filter_size,
+                                                stride, pad, untie_biases, W, b,
+                                                nonlinearity, flip_filters, convolution,
+                                                **kwargs)
+
+  def get_redistribution_kernel(self):
     return self.W
 
 def concat_diff(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,

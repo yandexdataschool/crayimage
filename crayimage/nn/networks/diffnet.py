@@ -26,6 +26,7 @@ class DiffusionNet(Expression):
   def __init__(self,
                channels, block_depth, block_length,
                noise_sigma=1.0 / 1024,
+               dropout_p = None,
                img_shape=None, input_layer=None,
                output_nonlinearity = None,
                output_channels = None,
@@ -42,6 +43,7 @@ class DiffusionNet(Expression):
       net = make_diff_block(
         net, depth=block_depth, length=block_length,
         num_filters=n_channels,
+        dropout_p=dropout_p,
         **conv_kwargs
       )
 
@@ -67,6 +69,14 @@ class DiffusionNet(Expression):
 
     for W in get_diffusion_kernels(self.outputs):
       reg += identity_reg(W, penalty=penalty)
+
+    return reg
+
+  def redistribution_reg(self, penalty=regularization.l2):
+    reg = 0.0
+
+    for W in get_redistribution_kernels(self.outputs):
+      reg += penalty(W)
 
     return reg
 
