@@ -1,10 +1,12 @@
 import pyximport
 pyximport.install()
 
+from special import onehot2d
+
 __all__ = [
   'COUNT_T', 'RGB_T', 'RAW_T',
   'ndcount1D', 'ndcount2D', 'ndcount',
-  'slice', 'flatten'
+  'slice', 'flatten', 'onehot2d'
 ]
 
 import numpy as np
