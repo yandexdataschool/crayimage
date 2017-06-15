@@ -20,8 +20,9 @@ class InitializerWithSum(Initializer):
     return SumOfInitializers(self, other)
 
 class Diffusion(InitializerWithSum):
-  def __init__(self, gain=1.0):
+  def __init__(self, gain=1.0, offset=0):
     self.gain = gain
+    self.offset = offset
 
   def sample(self, shape):
     assert len(shape) == 4, 'Diffusion init is only for convolutional layers'
@@ -31,9 +32,10 @@ class Diffusion(InitializerWithSum):
     id_conv[cx, cy] = 1.0
 
     s = np.zeros(shape=shape)
-    dim = min(shape[:2])
+    n_filters = shape[0]
+    n_channels = shape[1]
 
-    for i in range(dim):
-      s[i, i] = id_conv
+    for i in range(n_filters):
+      s[i, ((i + self.offset) % n_channels)] = id_conv
 
     return floatX(s * self.gain)

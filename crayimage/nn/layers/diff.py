@@ -45,22 +45,26 @@ class Redistribution2DLayer(layers.Conv2DLayer):
   def get_redistribution_kernel(self):
     return self.W
 
-def concat_diff(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,
-                W=Diffusion(0.45) + init.GlorotUniform(0.05),
-                W1=None, W2=None,
+def concat_diff(incoming1, incoming2, num_filters, filter_size=(3, 3),
+                nonlinearity=nonlinearities.elu, name=None,
+                W=Diffusion(0.95) + init.GlorotUniform(0.05),
                 *args, **kwargs):
-  if W1 is None:
-    W1 = W
-
-  if W2 is None:
-    W2 = W
 
   if name is None:
     name = 'concat+diffusion'
 
+  in_ch1 = layers.get_output_shape(incoming1)[1]
+  in_ch2 = layers.get_output_shape(incoming2)[1]
+  in_ch = in_ch1 + in_ch2
+
+  W_ = W((num_filters, in_ch,) + filter_size)
+  W1, W2 = W_[:, :in_ch1], W_[:, in_ch1:]
+
   diff1 = Diffusion2DLayer(
     incoming1, nonlinearity=nonlinearities.identity,
     name='%s [part 1]' % name,
+    num_filters=num_filters,
+    filter_size=filter_size,
     W=W1,
     *args, **kwargs
   )
@@ -68,6 +72,8 @@ def concat_diff(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None
   diff2 = Diffusion2DLayer(
     incoming2, nonlinearity=nonlinearities.identity,
     name='%s [part 2]' % name,
+    num_filters=num_filters,
+    filter_size=filter_size,
     W=W2,
     *args, **kwargs
   )
