@@ -32,12 +32,16 @@ class DiffusionNet(Expression):
                output_channels = None,
                **conv_kwargs):
     self.input_layer = get_input_layer(img_shape, input_layer)
+    self.output_channels = output_channels
+
     original_channels = layers.get_output_shape(self.input_layer)[1]
 
     if output_channels is None:
       output_channels = original_channels
 
     net = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma)
+
+    self.blocks = []
 
     for n_channels in channels:
       net = make_diff_block(
@@ -47,8 +51,11 @@ class DiffusionNet(Expression):
         **conv_kwargs
       )
 
+      self.blocks.append(net)
+
     if output_nonlinearity is None:
        output_nonlinearity = conv_kwargs.get('nonlinearity', nonlinearities.linear)
+    self.output_nonlinearity = output_nonlinearity
 
     net = redistribute_channels(
       net, target_channels=output_channels, nonlinearity=output_nonlinearity
@@ -79,6 +86,13 @@ class DiffusionNet(Expression):
       reg += penalty(W)
 
     return reg
+
+  def get_intermediate_outputs(self):
+    return [
+      redistribute_channels(l, self.output_channels, self.output_nonlinearity)
+      for l in self.blocks
+    ]
+
 
 class DiffusionNetClassification(Expression):
   """

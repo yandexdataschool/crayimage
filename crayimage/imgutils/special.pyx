@@ -214,7 +214,7 @@ ctypedef np.uint8_t uint8
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
-def onehot2d(np.ndarray[uint8, ndim=3] y, int n_classes=11):
+def onehot2d(np.ndarray[uint8, ndim=3] y, int n_classes):
   cdef int n_samples = y.shape[0]
   cdef int w = y.shape[1]
   cdef int h = y.shape[2]
