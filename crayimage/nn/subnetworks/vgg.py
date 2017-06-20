@@ -52,7 +52,6 @@ def make_decnn(input_layer, num_filters, **deconv_kwargs):
   return net
 
 def make_cae(input_layer, n_channels, **conv_kwargs):
-
   initial_channels = layers.get_output_shape(input_layer)[1]
 
   conv_kwargs = complete_conv_kwargs(conv_kwargs)
@@ -64,5 +63,6 @@ def make_cae(input_layer, n_channels, **conv_kwargs):
   net = make_decnn(net, deconv_channels, **deconv_kwargs)
 
   return net
+
 
 

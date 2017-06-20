@@ -7,7 +7,6 @@ __all__ = [
   'softmax2d'
 ]
 
-
 def softmax2d(x):
   max_value = T.max(x, axis=1)
   exped = T.exp(x - max_value[:, None, :, :])
