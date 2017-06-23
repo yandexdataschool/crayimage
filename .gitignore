@@ -94,7 +94,6 @@ ENV/
 # IDEA
 .idea
 
-tests/nn/mnist/
-tests/nn/mnist.py
-
 *ipynb
+
+tests/nn/*

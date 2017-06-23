@@ -3,6 +3,7 @@ from lasagne import *
 
 __all__ = [
   'conv_companion',
+  'energy_pooling',
   'concat_conv',
   'softmax2d'
 ]
@@ -22,6 +23,14 @@ def conv_companion(layer, pool_function=T.max, n_units = 1):
     net = layers.DenseLayer(net, num_units=n_units, nonlinearity=nonlinearities.softmax)
 
   return net
+
+def energy_pooling(layer):
+  net = layers.GlobalPoolLayer(layer, pool_function=T.sum)
+
+  return layers.FlattenLayer(
+    layers.DenseLayer(net, num_units=1, nonlinearity=nonlinearities.linear),
+    outdim=1
+  )
 
 ### Instead of conventional concatination of two layers, we remember that convolution is a linear transformation.
 def concat_conv(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,

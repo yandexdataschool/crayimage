@@ -17,6 +17,6 @@ class UNet(Expression):
     self.input_layer = get_input_layer(img_shape, input_layer)
 
     net = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma)
-    net = make_unet(net, channels, **conv_kwargs)
+    net, self.forward, self.backward = make_unet(net, channels, return_groups=True, **conv_kwargs)
 
     super(UNet, self).__init__([self.input_layer], [net])
