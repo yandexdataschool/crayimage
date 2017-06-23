@@ -5,7 +5,7 @@ from crayimage.nn.subnetworks import make_unet
 from crayimage.nn.layers import energy_pooling
 
 __all__ = [
-  'EPreserving'
+  'EPreservingUNet'
 ]
 
 class EPreservingUNet(Expression):
