@@ -60,22 +60,18 @@ def energy_mse(exclude_borders=0, img_shape=None, norm=True, dtype='float32'):
 
     def f(a, b):
       if norm:
-        energy_a = T.sum(a * mask[None, None], axis=(1, 2, 3)) / norm_term
-        energy_b = T.sum(b * mask[None, None], axis=(1, 2, 3)) / norm_term
+        energy_a = T.sum(a * mask[None, None, :, :], axis=(1, 2, 3)) / norm_term
+        energy_b = T.sum(b * mask[None, None, :, :], axis=(1, 2, 3)) / norm_term
       else:
-        energy_a = T.sum(a * mask[None, None], axis=(1, 2, 3))
-        energy_b = T.sum(b * mask[None, None], axis=(1, 2, 3))
+        energy_a = T.sum(a * mask[None, None, :, :], axis=(1, 2, 3))
+        energy_b = T.sum(b * mask[None, None, :, :], axis=(1, 2, 3))
       return (energy_a - energy_b) ** 2
 
     return f
   else:
     def f(a, b):
-      if norm:
-        energy_a = T.mean(a, axis=(1, 2, 3))
-        energy_b = T.mean(b, axis=(1, 2, 3))
-      else:
-        energy_a = T.sum(a, axis=(1, 2, 3))
-        energy_b = T.sum(b, axis=(1, 2, 3))
+      energy_a = T.mean(a, axis=(1, 2, 3)) if norm else T.sum(a, axis=(1, 2, 3))
+      energy_b = T.mean(b, axis=(1, 2, 3)) if norm else T.sum(b, axis=(1, 2, 3))
       return (energy_a - energy_b) ** 2
 
     return f
