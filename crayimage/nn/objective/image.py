@@ -4,7 +4,10 @@ import theano
 import theano.tensor as T
 
 __all__ = [
-  'img_mse', 'plain_mse', 'classification_loss', 'energy_mse'
+  'img_mse',
+  'plain_mse',
+  'classification_loss',
+  'energy_mse'
 ]
 
 def border_mask(exclude_borders, img_shape, dtype='float32'):
@@ -52,6 +55,8 @@ def img_mse(exclude_borders=0, img_shape=None, norm=True, dtype='float32'):
       return lambda a, b: T.mean((a - b) ** 2, axis=(1, 2, 3))
     else:
       return lambda a, b: T.sum((a - b) ** 2, axis=(1, 2, 3))
+
+plain_mse = img_mse(0, norm=False)
 
 def energy_mse(exclude_borders=0, img_shape=None, norm=True, dtype='float32'):
   if exclude_borders != 0:
