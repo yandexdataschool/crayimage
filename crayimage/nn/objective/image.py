@@ -4,7 +4,7 @@ import theano
 import theano.tensor as T
 
 __all__ = [
-  'img_mse', 'plain_mse', 'classification_loss'
+  'img_mse', 'plain_mse', 'classification_loss', 'energy_mse'
 ]
 
 def border_mask(exclude_borders, img_shape, dtype='float32'):
@@ -13,7 +13,7 @@ def border_mask(exclude_borders, img_shape, dtype='float32'):
 
   mask = np.ones(
     shape=tuple(img_shape[-2:]),
-    dtype='float32'
+    dtype=dtype
   )
 
   n = exclude_borders
@@ -53,7 +53,32 @@ def img_mse(exclude_borders=0, img_shape=None, norm=True, dtype='float32'):
     else:
       return lambda a, b: T.sum((a - b) ** 2, axis=(1, 2, 3))
 
-plain_mse = img_mse(exclude_borders=0, norm=False)
+def energy_mse(exclude_borders=0, img_shape=None, norm=True, dtype='float32'):
+  if exclude_borders != 0:
+    mask = border_mask(exclude_borders, img_shape, dtype)
+    norm_term = T.constant(np.sum(mask.get_value(), dtype=dtype))
+
+    def f(a, b):
+      if norm:
+        energy_a = T.sum(a * mask[None, None], axis=(1, 2, 3)) / norm_term
+        energy_b = T.sum(b * mask[None, None], axis=(1, 2, 3)) / norm_term
+      else:
+        energy_a = T.sum(a * mask[None, None], axis=(1, 2, 3))
+        energy_b = T.sum(b * mask[None, None], axis=(1, 2, 3))
+      return (energy_a - energy_b) ** 2
+
+    return f
+  else:
+    def f(a, b):
+      if norm:
+        energy_a = T.mean(a, axis=(1, 2, 3))
+        energy_b = T.mean(b, axis=(1, 2, 3))
+      else:
+        energy_a = T.sum(a, axis=(1, 2, 3))
+        energy_b = T.sum(b, axis=(1, 2, 3))
+      return (energy_a - energy_b) ** 2
+
+    return f
 
 def classification_loss(loss, predictions, targets, n_classes):
   f = predictions - T.mean(predictions, axis=1, keepdims=True)
