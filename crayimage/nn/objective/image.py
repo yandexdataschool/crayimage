@@ -1,4 +1,5 @@
 import numpy as np
+from ..utils import border_mask
 
 import theano
 import theano.tensor as T
