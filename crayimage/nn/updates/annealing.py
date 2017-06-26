@@ -51,7 +51,7 @@ def sa(inputs, loss, params, outputs = (), srng=None, seed=1122334455, iters=32,
     from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
     srng = srng or RandomStreams(seed=seed)
 
-  inputs_cached = [ to_shared(i) for i in inputs ]
+  inputs_cached = [as_shared(i) for i in inputs]
   input_setter = OrderedDict()
   for inpc, inp in zip(inputs_cached, inputs):
     input_setter[inpc] = inp

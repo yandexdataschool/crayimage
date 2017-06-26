@@ -1,11 +1,6 @@
-import theano
-import theano.tensor as T
-
-from collections import OrderedDict
-
 import numpy as np
 
-from crayimage.nn.utils import *
+from .utils import *
 
 __all__ = ['ssgd']
 

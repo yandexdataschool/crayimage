@@ -5,3 +5,5 @@ class ImportTest(unittest.TestCase):
     import crayimage
     import crayimage.nn
     import crayimage.cosmicGAN
+
+    from crayimage.cosmicGAN.gannery import EPreservingUNet

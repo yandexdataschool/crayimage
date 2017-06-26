@@ -10,24 +10,6 @@ __all__ = [
   'energy_mse'
 ]
 
-def border_mask(exclude_borders, img_shape, dtype='float32'):
-  if img_shape is None:
-    raise Exception('With non-zero border exclusion `img_shape` argument must be defined!')
-
-  mask = np.ones(
-    shape=tuple(img_shape[-2:]),
-    dtype=dtype
-  )
-
-  n = exclude_borders
-
-  mask[:n, :] = 0
-  mask[-n:, :] = 0
-  mask[:, :n] = 0
-  mask[:, -n:] = 0
-
-  return theano.shared(mask, name='border_excluding_mask')
-
 def mask(pixel_losses, exclude_borders=0, img_shape=None, norm=True, dtype='float32'):
   if exclude_borders != 0:
     mask = border_mask(exclude_borders, img_shape, dtype)

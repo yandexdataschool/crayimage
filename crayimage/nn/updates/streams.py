@@ -3,7 +3,7 @@ import numpy as np
 import pyximport
 pyximport.install()
 
-from utils import greedy_binning
+from special import greedy_binning
 
 import os
 import os.path as osp
@@ -14,16 +14,26 @@ from Queue import Queue
 
 from crayimage.imgutils import slice
 
-def random_batch_stream(n_samples, batch_size=128,
-                        n_batches=None, replace=True,
-                        priors=None):
+__all__ = [
+  'random',
+  'random_seq',
+  'seq',
+  'inf_random_seq',
+  'hdf5', 'hdf5_from_disk',
+  'np_from_disk',
+  'sampling',
+  'binned',
+  'traverse'
+]
+
+def random(n_samples, batch_size=128, n_batches=None, replace=True, priors=None):
   if n_batches is None:
     n_batches = n_samples / batch_size
 
   for i in xrange(n_batches):
     yield np.random.choice(n_samples, size=batch_size, replace=replace, p=priors)
 
-def seq_batch_stream(n_samples, batch_size=128):
+def seq(n_samples, batch_size=128):
   indx = np.arange(n_samples)
 
   n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
@@ -33,17 +43,17 @@ def seq_batch_stream(n_samples, batch_size=128):
     i_to = i_from + batch_size
     yield indx[i_from:i_to]
 
-def random_seq_batch_stream(n_samples, batch_size=128):
+def random_seq(n_samples, batch_size=128, allow_smaller=False):
   indx = np.random.permutation(n_samples)
 
-  n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
+  n_batches = n_samples / batch_size + (1 if (n_samples % batch_size != 0) and allow_smaller else 0)
 
   for i in xrange(n_batches):
     i_from = i * batch_size
     i_to = i_from + batch_size
     yield indx[i_from:i_to]
 
-def inf_random_seq_batch_stream(n_samples, batch_size=128, allow_smaller=False):
+def inf_random_seq(n_samples, batch_size=128, allow_smaller=False):
   n_batches = n_samples / batch_size + (1 if (n_samples % batch_size != 0) and allow_smaller else 0)
 
   while True:
@@ -57,7 +67,7 @@ def inf_random_seq_batch_stream(n_samples, batch_size=128, allow_smaller=False):
 def traverse(f, X, batch_size=1024):
   return np.vstack([
     f(X[indx])
-    for indx in seq_batch_stream(X.shape[0], batch_size=batch_size)
+    for indx in seq(X.shape[0], batch_size=batch_size)
   ])
 
 def traverse_image(f, img, window = 40, step = 20, batch_size=32):
@@ -66,7 +76,7 @@ def traverse_image(f, img, window = 40, step = 20, batch_size=32):
 
   return traverse(f, patches, batch_size=batch_size).reshape(patches_shape + (-1, ))
 
-def binned_batch_stream(target_statistics, batch_size, n_batches, n_bins=64):
+def binned(target_statistics, batch_size, n_batches, n_bins=64):
   hist, bins = np.histogram(target_statistics, bins=n_bins)
   indx = np.argsort(target_statistics)
   indicies_categories = np.array_split(indx, np.cumsum(hist)[:-1])
@@ -85,7 +95,7 @@ def binned_batch_stream(target_statistics, batch_size, n_batches, n_bins=64):
 
     yield np.hstack(sample), wc
 
-def almost_probability_stream(probs, per_bin, n_batches, n_bins=64):
+def sampling(probs, per_bin, n_batches, n_bins=64):
   groups = greedy_binning(probs, n_bins=n_bins)
   groups_len = np.array([g.shape[0] for g in groups])
 
@@ -119,7 +129,7 @@ def hdf5_batch_worker(path, out_queue, batch_sizes):
     batch_sizes = [batch_sizes] * len(datasets)
 
   indxes_stream = itertools.izip(*[
-    BatchStreams.inf_random_seq_batch_stream(n_samples=dataset.shape[0], batch_size=batch_size)
+    inf_random_seq(n_samples=dataset.shape[0], batch_size=batch_size)
     for dataset, batch_size in zip(datasets, batch_sizes)
   ])
 
@@ -131,7 +141,7 @@ def hdf5_batch_worker(path, out_queue, batch_sizes):
 
     out_queue.put(batch, block=True)
 
-def hdf5_batch_stream(path, batch_sizes=8):
+def hdf5(path, batch_sizes=8):
   import h5py
   import itertools
 
@@ -147,7 +157,7 @@ def hdf5_batch_stream(path, batch_sizes=8):
     batch_sizes = [batch_sizes] * len(datasets)
 
   indxes_stream = itertools.izip(*[
-    BatchStreams.inf_random_seq_batch_stream(n_samples=dataset.shape[0], batch_size=batch_size)
+    inf_random_seq(n_samples=dataset.shape[0], batch_size=batch_size)
     for dataset, batch_size in zip(datasets, batch_sizes)
   ])
 
@@ -159,7 +169,7 @@ def hdf5_batch_stream(path, batch_sizes=8):
 
     yield batch
 
-def hdf5_disk_stream(path, batch_sizes=8, cache_size=16):
+def hdf5_from_disk(path, batch_sizes=8, cache_size=16):
   queue = Queue(maxsize=cache_size)
 
   worker = threading.Thread(
@@ -170,15 +180,15 @@ def hdf5_disk_stream(path, batch_sizes=8, cache_size=16):
   worker.daemon = True
   worker.start()
 
-  return queue_stream(queue)
+  return queue_to_stream(queue)
 
 def np_batch_worker(path, out_queue, batch_size, mmap_mode='r'):
   mmap = np.load(path, mmap_mode=mmap_mode)
 
-  for indx in BatchStreams.inf_random_seq_batch_stream(mmap.shape[0], batch_size=batch_size, allow_smaller=False):
+  for indx in inf_random_seq(mmap.shape[0], batch_size=batch_size, allow_smaller=False):
     out_queue.put(mmap[indx], block=True)
 
-def np_disk_stream(data_root, batch_sizes=8, cache_size=16, mmap_mode='r'):
+def np_from_disk(data_root, batch_sizes=8, cache_size=16, mmap_mode='r'):
   bin_patches = [
     osp.join(data_root, 'bin_%d.npy' % i)
     for i in range(len(os.listdir(data_root)))
@@ -204,13 +214,13 @@ def np_disk_stream(data_root, batch_sizes=8, cache_size=16, mmap_mode='r'):
 
   return queues_stream(queues)
 
-def queue_stream(queue):
+def queue_to_stream(queue):
   while True:
     yield queue.get(block=True)
 
 def queues_stream(queues):
   it = itertools.izip(*[
-    queue_stream(queue) for queue in queues
+    queue_to_stream(queue) for queue in queues
   ])
 
   for xs in it:
