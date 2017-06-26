@@ -1,11 +1,8 @@
 import theano.tensor as T
 from lasagne import *
 
-from ..utils import border_mask
-
 __all__ = [
   'conv_companion',
-  'energy_pooling',
   'concat_conv',
   'softmax2d'
 ]
@@ -26,27 +23,7 @@ def conv_companion(layer, pool_function=T.max, n_units = 1):
 
   return net
 
-def energy_pooling(layer, exclude_borders=None, img_shape=None, norm=True, dtype='float32'):
-  if exclude_borders != 0:
-    mask = border_mask(exclude_borders, img_shape, dtype=dtype)
-
-    if norm:
-      norm_term = T.constant(np.sum(mask.get_value(), dtype=dtype))
-      pool = lambda x: T.sum(mask[None, None, :, :] * x, axis=(1, 2, 3)) / norm_term
-    else:
-      pool = lambda x: T.sum(mask[None, None, :, :] * x, axis=(1, 2, 3))
-  else:
-    if norm:
-      pool = lambda x: T.mean(x, axis=(1, 2, 3))
-    else:
-      pool = lambda x: T.sum(x, axis=(1, 2, 3))
-
-  net = layers.GlobalPoolLayer(layer, pool_function=pool, name='Energy pool')
-
-  return layers.FlattenLayer(
-    layers.DenseLayer(net, num_units=1, nonlinearity=nonlinearities.linear),
-    outdim=1
-  )
+from crayimage.nn.utils import border_mask
 
 ### Instead of conventional concatination of two layers, we remember that convolution is a linear transformation.
 def concat_conv(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,

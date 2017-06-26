@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 class ToyTrueTrackGenerator(Expression):
-  def __init__(self, geant_tracks, input_shape, noise_mean=0.1, saturation=1.0):
+  def __init__(self, geant_tracks, input_shape, noise_mean=0.1, saturation=1.0, pad='valid'):
     noise = self.srng.uniform(size=geant_tracks.shape, ndim=4, low=1.0e-30, high=1.0, dtype='float32')
 
     self.noise_input = layers.InputLayer(
@@ -44,7 +44,7 @@ class ToyTrueTrackGenerator(Expression):
       num_filters=1, filter_size=(3, 3),
       W=init.Constant(self.dissipation_matrix),
       b=init.Constant(0.0),
-      pad='valid',
+      pad=pad,
       nonlinearity=nonlinearities.linear
     )
 
