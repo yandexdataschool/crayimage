@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 class ToyTrackGenerator(Expression):
-  def __init__(self, X_geant, input_shape = (1, 36, 36)):
+  def __init__(self, X_geant, input_shape = (1, 36, 36), pad='valid'):
     X_random = self.srng.uniform(size=X_geant.shape, ndim=4, dtype='float32')
 
     self.random_input = layers.InputLayer(
@@ -45,7 +45,7 @@ class ToyTrackGenerator(Expression):
     self.conv = layers.Conv2DLayer(
       self.energy,
       num_filters=1, filter_size=(3, 3),
-      pad='valid',
+      pad=pad,
       nonlinearity=nonlinearities.linear
     )
 
