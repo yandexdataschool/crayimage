@@ -1,7 +1,11 @@
+from lasagne import layers
+
 from crayimage.nn import Expression
 
 from crayimage.nn.networks.common import get_input_layer
 from crayimage.nn.subnetworks import make_unet
+
+from crayimage.nn.layers import energy_pool
 
 __all__ = [
   'EPreservingUNet'
@@ -9,9 +13,18 @@ __all__ = [
 
 class EPreservingUNet(Expression):
   """Energy preserving U-net"""
-  def __init__(self, channels=None, img_shape=None, input_layer=None, **conv_kwargs):
+  def __init__(self, channels=None, img_shape=None, input_layer=None, exclude_borders=None, **conv_kwargs):
     self.input_layer = get_input_layer(img_shape, input_layer)
 
     net, self.forward, self.backward = make_unet(self.input_layer, channels, return_groups=True, **conv_kwargs)
 
-    super(EPreservingUNet, self).__init__([self.input_layer], [net])
+    channels = layers.get_output_shape(net)[1]
+
+    exclude_borders = 2 ** len(self.backward) if exclude_borders is None else exclude_borders
+
+    self.companions = [
+      energy_pool(l, n_channels=channels, exclude_borders=exclude_borders, norm=True)
+      for l in self.backward
+    ]
+
+    super(EPreservingUNet, self).__init__([self.input_layer], [net] + self.companions)
