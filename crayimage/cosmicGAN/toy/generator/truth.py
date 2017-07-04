@@ -11,12 +11,9 @@ __all__ = [
 ]
 
 class ToyTrueTrackGenerator(Expression):
-  def __init__(self, geant_tracks, input_shape, noise_mean=0.1, saturation=1.0, pad='valid'):
-    noise = self.srng.uniform(size=geant_tracks.shape, ndim=4, low=1.0e-30, high=1.0, dtype='float32')
-
+  def __init__(self, input_shape, noise_mean=0.1, saturation=1.0, pad='valid'):
     self.noise_input = layers.InputLayer(
       shape=(None, ) + input_shape,
-      input_var=noise,
       name = 'uniform noise'
     )
 
@@ -26,7 +23,6 @@ class ToyTrueTrackGenerator(Expression):
 
     self.track_input = layers.InputLayer(
       shape= (None, ) + input_shape,
-      input_var=geant_tracks,
       name="GEANT tracks"
     )
 
@@ -58,3 +54,13 @@ class ToyTrueTrackGenerator(Expression):
     )
 
     super(ToyTrueTrackGenerator, self).__init__([self.track_input], self.saturated)
+
+  def __call__(self, geant_tracks, **kwargs):
+    noise = self.srng.uniform(size=geant_tracks.shape, ndim=geant_tracks.ndim, low=1.0e-30, high=1.0, dtype='float32')
+
+    substitutes = {
+      self.noise_input : noise,
+      self.track_input : geant_tracks
+    }
+
+    return layers.get_output(self.outputs, inputs=substitutes, **kwargs)

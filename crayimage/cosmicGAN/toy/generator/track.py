@@ -11,13 +11,11 @@ __all__ = [
 ]
 
 class ToyTrackGenerator(Expression):
-  def __init__(self, X_geant, input_shape = (1, 36, 36), pad='valid'):
-    X_random = self.srng.uniform(size=X_geant.shape, ndim=4, dtype='float32')
+  def __init__(self, input_shape = (1, 36, 36), pad='valid'):
 
     self.random_input = layers.InputLayer(
       shape=(None, ) + input_shape,
-      input_var=X_random,
-      name = 'uniform noise'
+      name = 'uniform_noise'
     )
 
     self.redist1 = layers.Conv2DLayer(
@@ -36,8 +34,7 @@ class ToyTrackGenerator(Expression):
 
     self.track_input = layers.InputLayer(
       shape=(None, ) + input_shape,
-      input_var=X_geant,
-      name = 'GEANT tracks'
+      name = 'GEANT_tracks'
     )
 
     self.energy = layers.ElemwiseSumLayer([self.track_input, self.redist2])
@@ -62,3 +59,13 @@ class ToyTrackGenerator(Expression):
     )
 
     super(ToyTrackGenerator, self).__init__([self.track_input], self.activation2)
+
+  def __call__(self, X_geant, **kwargs):
+    X_random = self.srng.uniform(size=X_geant.shape, ndim=X_geant.ndim, dtype='float32')
+
+    substitutes = {
+      self.random_input : X_random,
+      self.track_input : X_geant
+    }
+
+    return layers.get_output(self.outputs, inputs=substitutes, **kwargs)
