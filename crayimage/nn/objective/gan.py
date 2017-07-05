@@ -12,4 +12,4 @@ def energy_based(X_original, X_generated, discriminator, margin = 1):
   zero = T.constant(0.0, dtype='float32')
   margin = T.constant(margin, dtype='float32')
 
-  return T.mean(score_original) - T.mean(T.maximum(zero, margin - score_generated))
+  return T.mean(score_original) - T.mean(T.maximum(zero, margin - score_generated)), T.mean(score_generated)
