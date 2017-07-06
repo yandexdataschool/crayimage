@@ -58,7 +58,7 @@ class ToyTrackGenerator(Expression):
       nonlinearity=nonlinearities.sigmoid,
     )
 
-    super(ToyTrackGenerator, self).__init__([self.track_input], self.activation2)
+    super(ToyTrackGenerator, self).__init__([self.track_input], [self.activation2])
 
   def __call__(self, X_geant, **kwargs):
     X_random = self.srng.uniform(size=X_geant.shape, ndim=X_geant.ndim, dtype='float32')

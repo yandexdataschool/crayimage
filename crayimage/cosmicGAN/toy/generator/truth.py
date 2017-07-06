@@ -53,7 +53,7 @@ class ToyTrueTrackGenerator(Expression):
       lambda x: T.minimum(x, np.float32(saturation))
     )
 
-    super(ToyTrueTrackGenerator, self).__init__([self.track_input], self.saturated)
+    super(ToyTrueTrackGenerator, self).__init__([self.track_input], [self.saturated])
 
   def __call__(self, geant_tracks, **kwargs):
     noise = self.srng.uniform(size=geant_tracks.shape, ndim=geant_tracks.ndim, low=1.0e-30, high=1.0, dtype='float32')
