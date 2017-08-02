@@ -1,5 +1,5 @@
 import theano.tensor as T
-from crayimage.nn import joinc
+from crayimage.nn.utils import joinc
 
 def single_cross_entropy(output_real, output_pseudo):
   assert len(output_real) == 1
@@ -32,4 +32,15 @@ def weighted_cross_entropy(output_real, output_pseudo, coefs=None):
   loss_discriminator = 0.5 * (loss_real + loss_pseudo)
 
   return loss_generator, loss_discriminator
+
+def energy_loss(margin):
+  def l(score_real, score_pseudo):
+    zero = T.constant(0.0, dtype='float32')
+    m = T.constant(margin, dtype='float32')
+    loss_discriminator = T.mean(score_real) + T.mean(m - T.maximum(zero, score_pseudo))
+    loss_generator = T.mean(score_pseudo)
+
+    return loss_discriminator, loss_generator
+
+  return l
 

@@ -9,68 +9,34 @@ from lasagne import regularization
 # from theano.sandbox.cuda.rng_curand import CURAND_RandomStreams as RandomStreams
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
-class Expression(object):
-  srng = RandomStreams(seed=np.random.randint(2147483647))
+__all__ = [
+  'Expression',
+  'ExpressionBase'
+]
 
-  def __init__(self, inputs, outputs):
+class ExpressionBase(object):
+  def __init__(self, *args, **kwargs):
     """
-    Constructor should be overridden in every actual implementation.
-    Arguments of this constructor are to enforce specification of inputs and outputs.
-    :param inputs: list of InputLayers
-    :param outputs: list of output layers
+    A base class for savable expressions.
     """
-    self.inputs = inputs
-
-    self._named_inputs = dict([ (l.name, l) for l in self.inputs ])
-
-    self.outputs = outputs
-
-    self._args = ()
-    self._kwargs = {}
+    self._args = args
+    self._kwargs = kwargs
 
     self._snapshot_index = None
     self._dump_dir = None
 
-  def _get_input(self, name):
-    if name in self._named_inputs:
-      return self._named_inputs[name]
-    else:
-      assert getattr(self, name) in self.inputs
-      return getattr(self, name)
-
   def __call__(self, *args, **kwargs):
-    substitutes = dict(
-      zip(self.inputs, args) + [ (self._get_input(k), v) for (k, v) in kwargs.items() ]
-    )
-
-    return layers.get_output(self.outputs, inputs=substitutes)
-
-  def reg_l1(self):
-    return regularization.regularize_network_params(self.outputs, penalty=regularization.l1)
-
-  def reg_l2(self):
-    return regularization.regularize_network_params(self.outputs, penalty=regularization.l2)
+    raise NotImplementedError('The method should be overridden!')
 
   def __str__(self):
-    return "%s(%s, %s)" % (
+    args_str = ', '.join([str(arg) for arg in self._args])
+    kwargs_str = ', '.join(['%s = %s' % (k, v) for k, v in self._kwargs.items()])
+
+    hyperparam_str = ', '.join([args_str, kwargs_str])
+
+    return "%s(%s)" % (
       str(self.__class__),
-      ', '.join([str(arg) for arg in self._args]),
-      ', '.join(['%s = %s' % (k, v) for k, v in self._kwargs.items()])
-    )
-
-  def description(self):
-    def get_number_of_params(l):
-      return np.sum([
-        np.prod(param.get_value().shape)
-        for param in l.get_params()
-      ])
-
-    def describe_layer(l):
-      return '%s\n  output shape:%s\n  number of params: %s' % (l, l.output_shape, get_number_of_params(l))
-
-    return '%s\n%s' % (
-      str(self),
-      '\n'.join([describe_layer(l) for l in layers.get_all_layers(self.outputs)])
+      hyperparam_str
     )
 
   def __repr__(self):
@@ -101,15 +67,25 @@ class Expression(object):
     self._dump_dir = value
 
   def params(self, **tags):
-    return layers.get_all_param_values(self.outputs, **tags)
+    """
+    :param tags: filter by tags (see lasagne docs for details)
+    :return: all symbolic params used for the expression, i.e. all trainable or changable parameters (shareds).
+    """
+    raise NotImplementedError('The method should be overridden!')
 
   @property
   def weights(self):
-    return layers.get_all_param_values(self.outputs)
+    """
+    :return: values for all symbolic params used for the expression, i.e. all trainable or changable parameters (shareds).
+    """
+    raise NotImplementedError('The method should be overridden!')
 
   @weights.setter
   def weights(self, weights):
-    layers.set_all_param_values(self.outputs, weights)
+    """
+    :param weights: sets values of all changable parameters to provided values.
+    """
+    raise NotImplementedError('The method should be overridden!')
 
   @staticmethod
   def get_all_snapshots(dump_dir):
@@ -155,10 +131,7 @@ class Expression(object):
       pickle.dump((self._args, self._kwargs), f)
 
     with open(osp.join(path, 'weights.pickled'), 'w') as f:
-      pickle.dump(
-        layers.get_all_param_values(self.outputs),
-        f
-      )
+      pickle.dump(self.weights, f)
 
   def make_snapshot(self, dump_dir=None, index=None):
     if index is None:
@@ -179,19 +152,16 @@ class Expression(object):
     except:
       import pickle
 
-    try:
-      with open(osp.join(path, 'args.pickled'), 'r') as f:
-        args, kwargs = pickle.load(f)
+    with open(osp.join(path, 'args.pickled'), 'r') as f:
+      args, kwargs = pickle.load(f)
 
-      with open(osp.join(path, 'weights.pickled'), 'r') as f:
-        params = pickle.load(f)
+    with open(osp.join(path, 'weights.pickled'), 'r') as f:
+      params = pickle.load(f)
 
-      net = cls(*args, **kwargs)
-      net.weights = params
+    net = cls(*args, **kwargs)
+    net.weights = params
 
-      return net
-    except:
-      return None
+    return net
 
   def reset_weights(self, path):
     try:
@@ -222,3 +192,73 @@ class Expression(object):
     self.reset_weights(osp.join(dump_dir, 'snapshot_%06d' % self._snapshot_index))
 
     return self
+
+class Expression(ExpressionBase):
+  srng = RandomStreams(seed=np.random.randint(2147483647))
+
+  def __init__(self, inputs, outputs):
+    """
+    Constructor should be overridden in every actual implementation.
+    Arguments of this constructor are to enforce specification of inputs and outputs.
+    :param inputs: list of InputLayers
+    :param outputs: list of output layers
+    """
+    self.inputs = inputs
+
+    self._named_inputs = dict([ (l.name, l) for l in self.inputs ])
+
+    self.outputs = outputs
+
+    self._args = ()
+    self._kwargs = {}
+
+    self._snapshot_index = None
+    self._dump_dir = None
+
+    super(Expression, self).__init__()
+
+  def _get_input(self, name):
+    if name in self._named_inputs:
+      return self._named_inputs[name]
+    else:
+      assert getattr(self, name) in self.inputs
+      return getattr(self, name)
+
+  def __call__(self, *args, **kwargs):
+    substitutes = dict(
+      zip(self.inputs, args) + [ (self._get_input(k), v) for (k, v) in kwargs.items() ]
+    )
+
+    return layers.get_output(self.outputs, inputs=substitutes)
+
+  def reg_l1(self):
+    return regularization.regularize_network_params(self.outputs, penalty=regularization.l1)
+
+  def reg_l2(self):
+    return regularization.regularize_network_params(self.outputs, penalty=regularization.l2)
+
+  def description(self):
+    def get_number_of_params(l):
+      return np.sum([
+        np.prod(param.get_value().shape)
+        for param in l.get_params()
+      ])
+
+    def describe_layer(l):
+      return '%s\n  output shape:%s\n  number of params: %s' % (l, l.output_shape, get_number_of_params(l))
+
+    return '%s\n%s' % (
+      str(self),
+      '\n'.join([describe_layer(l) for l in layers.get_all_layers(self.outputs)])
+    )
+
+  def params(self, **tags):
+    return layers.get_all_param_values(self.outputs, **tags)
+
+  @property
+  def weights(self):
+    return layers.get_all_param_values(self.outputs)
+
+  @weights.setter
+  def weights(self, weights):
+    layers.set_all_param_values(self.outputs, weights)

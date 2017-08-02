@@ -1,4 +1,4 @@
-from expression import Expression
+from expression import Expression, ExpressionBase
 
 from . import utils
 from . import init
