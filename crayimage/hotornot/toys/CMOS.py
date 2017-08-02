@@ -33,12 +33,12 @@ def cmos_sim(
 
     readings = gain * (y + readout_noise + shot_noise)
 
-    if quantization == 'linear':
-      pass
+    if quantization is None or quantization == 'none':
+      yield readings.astype(target_type)
+    elif quantization == 'linear':
+      yield np.clip(np.floor(readings), 0, maximum).astype(target_type)
     elif quantization == 'sqrt':
       readings = np.sqrt(readings)
+      yield np.clip(np.floor(readings), 0, maximum).astype(target_type)
     else:
       raise Exception('Unknown quantization!')
-
-    readings = np.clip(np.floor(readings).astype(target_type), 0,maximum)
-    yield readings
