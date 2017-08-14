@@ -8,6 +8,7 @@ from lasagne import *
 __all__ = [
   'factory',
   'get_input_layer',
+  'get_noise_layer',
   'default_cls'
 ]
 
@@ -26,5 +27,11 @@ def get_input_layer(img_shape, input_layer):
       shape=(None,) + img_shape,
       name='input'
     )
+  else:
+    return input_layer
+
+def get_noise_layer(input_layer, sigma=None):
+  if sigma is not None:
+    return layers.GaussianNoiseLayer(input_layer, sigma=sigma, name='noise')
   else:
     return input_layer

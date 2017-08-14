@@ -1,5 +1,5 @@
 import theano.tensor as T
-from crayimage.nn.utils import joinc
+from crayimage.nn.utils import joinc, join
 
 def single_cross_entropy(output_real, output_pseudo):
   assert len(output_real) == 1
@@ -37,10 +37,28 @@ def energy_loss(margin):
   def l(score_real, score_pseudo):
     zero = T.constant(0.0, dtype='float32')
     m = T.constant(margin, dtype='float32')
-    loss_discriminator = T.mean(score_real) + T.mean(m - T.maximum(zero, score_pseudo))
-    loss_generator = T.mean(score_pseudo)
+    loss_discriminator = score_real + T.maximum(zero, m - score_pseudo)
+    loss_generator = score_pseudo
 
     return loss_discriminator, loss_generator
 
   return l
 
+def image_mse_energy_loss(coefs = None, exclude_borders=None, img_shape=None, norm=True, dtype='float32'):
+  from crayimage.nn.layers import energy_pooling
+
+  def loss(X, Y):
+    energy = energy_pooling(exclude_borders=exclude_borders, img_shape=img_shape, norm=norm, dtype=dtype)
+
+    l = lambda x, y: (energy(x) - energy(y))**2
+
+    if hasattr(X, '__len__'):
+      losses = [l(Y, out) for out in X]
+      if coefs is not None:
+        return joinc(losses, coefs)
+      else:
+        return join(losses)
+    else:
+      return l(Y, X)
+
+  return loss

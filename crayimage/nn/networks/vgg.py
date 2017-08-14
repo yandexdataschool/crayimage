@@ -18,7 +18,7 @@ class VGG(Expression):
                input_layer = None):
     self.input_layer = get_input_layer(img_shape, input_layer)
 
-    net = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma, name='noise')
+    net = get_noise_layer(self.input_layer, sigma=noise_sigma)
 
     net = make_cnn(
       net, n_filters,
@@ -46,7 +46,7 @@ class CAE(Expression):
                **conv_kwargs):
     self.input_layer = get_input_layer(img_shape, input_layer)
 
-    net = layers.GaussianNoiseLayer(self.input_layer, sigma=noise_sigma, name='noise')
+    net = get_noise_layer(self.input_layer, sigma=noise_sigma)
 
     net = make_cae(
       net, n_channels,

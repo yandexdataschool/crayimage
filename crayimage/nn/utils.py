@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 join = lambda xs: reduce(lambda a, b: a + b, xs)
-joinc = lambda xs, cs: join([ x * c for x, c in  zip(xs, cs)])
+joinc = lambda xs, cs = None: join(xs) if cs is None else join([ x * c for x, c in  zip(xs, cs)])
 ldot = lambda xs, ys: join([ T.sum(x * y) for x, y in zip(xs, ys) ])
 
 def get_srng(srng):
