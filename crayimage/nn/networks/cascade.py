@@ -25,11 +25,7 @@ class CascadeNet(Expression):
     self.interests = []
 
     for n_channels in channels:
-      net = make_diff_chain(
-        net, n=block_length,
-        num_filters=n_channels,
-        **conv_kwargs
-      )
+      net = make_diff_chain(net, n=block_length, num_filters=n_channels, **conv_kwargs)
       net = layers.MaxPool2DLayer(net, pool_size=(2, 2))
 
       self.blocks.append(net)

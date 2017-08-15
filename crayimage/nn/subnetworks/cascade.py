@@ -20,7 +20,7 @@ def cascade(net, incoming_interest=None, pool_incoming=None, nonlinearity=nonlin
     if pool_incoming:
       incoming_interest = layers.MaxPool2DLayer(incoming_interest, pool_size=pool_incoming)
 
-    interest = incoming_interest * intermediate_interest
+    interest = layers.ElemwiseMergeLayer([incoming_interest, intermediate_interest], merge_function=lambda x, y: x * y)
   else:
     interest = intermediate_interest
 
