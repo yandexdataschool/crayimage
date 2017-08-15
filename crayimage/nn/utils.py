@@ -10,6 +10,7 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 __all__ = [
   'softmin',
   'join',
+  'lsum',
   'joinc',
   'ldot',
   'log_barrier',
@@ -22,6 +23,7 @@ __all__ = [
 ]
 
 join = lambda xs: reduce(lambda a, b: a + b, xs)
+lsum = join
 joinc = lambda xs, cs = None: join(xs) if cs is None else join([ x * c for x, c in  zip(xs, cs)])
 ldot = lambda xs, ys: join([ T.sum(x * y) for x, y in zip(xs, ys) ])
 

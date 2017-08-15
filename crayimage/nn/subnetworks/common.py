@@ -6,7 +6,8 @@ __all__ = [
   'complete_conv_kwargs',
   'complete_deconv_kwargs',
   'get_deconv_kwargs',
-  'redistribute_channels'
+  'redistribute_channels',
+  'get_kernels'
 ]
 
 def complete_conv_kwargs(conv_kwargs):
@@ -52,3 +53,15 @@ def redistribute_channels(net, target_channels, nonlinearity=nonlinearities.line
     return net
   else:
     return net
+
+def get_kernels(net, kernel_type):
+  kernels = []
+
+  for l in layers.get_all_layers(net):
+    try:
+      W = getattr(l, kernel_type)()
+      kernels.append(W)
+    except:
+      pass
+
+  return kernels

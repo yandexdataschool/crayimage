@@ -23,7 +23,7 @@ class Diffusion2DLayer(layers.Conv2DLayer):
                                            nonlinearity, flip_filters, convolution,
                                            **kwargs)
 
-  def get_diffusion_kernel(self):
+  def diffusion_kernel(self):
     return self.W
 
 class Redistribution2DLayer(layers.Conv2DLayer):
@@ -42,7 +42,7 @@ class Redistribution2DLayer(layers.Conv2DLayer):
                                                 nonlinearity, flip_filters, convolution,
                                                 **kwargs)
 
-  def get_redistribution_kernel(self):
+  def redistribution_kernel(self):
     return self.W
 
 def concat_diff(incoming1, incoming2, num_filters, filter_size=(3, 3),

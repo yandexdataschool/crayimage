@@ -4,40 +4,19 @@ import theano.tensor as T
 from lasagne import *
 
 from .. import layers as clayers
-from .common import redistribute_channels
+from .common import redistribute_channels, get_kernels
 
 __all__ = [
   'make_diff_chain',
   'make_diff_block',
   'get_diffusion_kernels',
+  'get_redistribution_kernels',
   'transfer_reg',
-  'identity_reg',
-  'get_redistribution_kernels'
+  'identity_reg'
 ]
 
-def get_diffusion_kernels(net):
-  kernels = []
-
-  for l in layers.get_all_layers(net):
-    try:
-      W = l.get_diffusion_kernel()
-      kernels.append(W)
-    except:
-      pass
-
-  return kernels
-
-def get_redistribution_kernels(net):
-  kernels = []
-
-  for l in layers.get_all_layers(net):
-    try:
-      W = l.get_redistribution_kernel()
-      kernels.append(W)
-    except:
-      pass
-
-  return kernels
+get_diffusion_kernels = lambda net: get_kernels(net, 'diffusion_kernel')
+get_redistribution_kernels = lambda net: get_kernels(net, 'redistribution_kernel')
 
 def make_transfer_reg_mask(shape, alpha=1.0e-1, dtype='float32'):
   mask = np.ones(shape, dtype=dtype)
