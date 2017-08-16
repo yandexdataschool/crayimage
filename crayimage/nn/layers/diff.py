@@ -33,7 +33,7 @@ class Redistribution2DLayer(layers.Conv2DLayer):
                nonlinearity=nonlinearities.linear,
                convolution=T.nnet.conv2d, **kwargs):
     stride = (1, 1)
-    pad = 'same'
+    pad = 'valid'
     filter_size = (1, 1)
     flip_filters = True
     b = None
