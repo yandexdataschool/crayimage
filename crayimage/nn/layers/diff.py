@@ -12,7 +12,7 @@ __all__ = [
 class Diffusion2DLayer(layers.Conv2DLayer):
   def __init__(self, incoming, num_filters, filter_size,
                untie_biases=False,
-               W=Diffusion(0.95) + init.GlorotUniform(0.05),
+               W=Diffusion(0.8) + init.GlorotUniform(0.2),
                b=init.Constant(0.),
                nonlinearity=nonlinearities.rectify, flip_filters=True,
                convolution=T.nnet.conv2d, **kwargs):

@@ -76,3 +76,8 @@ class CosmicGAN(object):
 
     self.loss_generator_real = T.mean(loss_generator_real)
     self.loss_generator_geant = T.mean(loss_generator_geant)
+
+    self.X_geant_pseudo = X_geant_pseudo
+    self.X_real_pseudo = X_real_pseudo
+    self.X_real_reversed = X_real_reversed
+    self.X_geant_reversed = X_geant_reversed
