@@ -253,7 +253,7 @@ class Expression(ExpressionBase):
     )
 
   def params(self, **tags):
-    return layers.get_all_param_values(self.outputs, **tags)
+    return layers.get_all_params(self.outputs, **tags)
 
   @property
   def weights(self):
