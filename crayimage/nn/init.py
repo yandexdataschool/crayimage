@@ -29,7 +29,7 @@ class Diffusion(InitializerWithSum):
 
     id_conv = np.zeros(shape=shape[2:])
     cx, cy = shape[2] / 2, shape[3] / 2
-    id_conv[cx, cy] = 1.0
+    id_conv[cx, cy] = 1.0 / shape[0] * shape[1]
 
     s = np.zeros(shape=shape)
     n_filters = shape[0]
