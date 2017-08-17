@@ -53,22 +53,26 @@ class CosmicGAN(object):
     loss_discriminator_real = gan_loss_real_discriminator
     loss_discriminator_geant = gan_loss_geant_discriminator
 
-    gan_loss_generators = gan_loss_real_generator + gan_loss_geant_generator
-    cycles_loss = real_geant_real_cycle_loss + geant_real_geant_cycle_loss
-    loss_generators = gan_loss_generators + cycle_loss_coef * cycles_loss
-
-    full_generator_loss = loss_generators
+    loss_generator_real = gan_loss_real_generator
+    loss_generator_geant = gan_loss_geant_generator
 
     if aux_loss_generator is not None:
-      full_generator_loss += aux_loss_coef * aux_loss_generator(out_real_reversed, X_real)
+      loss_generator_real += aux_loss_coef * aux_loss_generator(out_real_reversed, X_real)
 
     if aux_loss_reverse is not None:
-      full_generator_loss += aux_loss_coef * aux_loss_reverse(out_geant_reversed, X_geant)
+      loss_generator_geant += aux_loss_coef * aux_loss_reverse(out_geant_reversed, X_geant)
+
+    self.gan_loss_generators = gan_loss_real_generator + gan_loss_geant_generator
+
+    cycles_loss = real_geant_real_cycle_loss + geant_real_geant_cycle_loss
+    loss_generators = loss_generator_real + loss_generator_geant + cycle_loss_coef * cycles_loss
+
+    full_generator_loss = loss_generators
 
     self.full_generator_loss = T.mean(full_generator_loss)
 
     self.loss_discriminator_real = T.mean(loss_discriminator_real)
     self.loss_discriminator_geant = T.mean(loss_discriminator_geant)
 
-    self.gan_loss_generator = T.mean(gan_loss_real_generator)
-    self.gan_loss_reverse = T.mean(gan_loss_geant_generator)
+    self.loss_generator_real = T.mean(loss_generator_real)
+    self.loss_generator_geant = T.mean(loss_generator_geant)
