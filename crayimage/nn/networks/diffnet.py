@@ -27,6 +27,7 @@ class DiffusionNet(Expression):
                channels, block_depth, block_length,
                noise_sigma=1.0 / 1024,
                dropout_p = None,
+               batch_norm=True,
                img_shape=None, input_layer=None,
                output_nonlinearity = None,
                output_channels = None,
@@ -44,6 +45,9 @@ class DiffusionNet(Expression):
     self.blocks = []
 
     for n_channels in channels:
+      if batch_norm:
+        net = layers.BatchNormLayer(net)
+
       net = make_diff_block(
         net, depth=block_depth, length=block_length,
         num_filters=n_channels,
