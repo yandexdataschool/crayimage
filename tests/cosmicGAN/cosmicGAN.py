@@ -59,7 +59,7 @@ class CosmicGANTest(unittest.TestCase):
 
     from lasagne import updates
 
-    upd = updates.adamax(gan.full_generator_loss, generator.params(learnable=True) + reverse.params(learnable=True))
+    upd = updates.adamax(gan.full_generator_loss, generator.params(trainable=True) + reverse.params(trainable=True))
     train_generators = theano.function([X, Y], gan.full_generator_loss, updates=upd)
 
 if __name__ == '__main__':
