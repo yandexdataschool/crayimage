@@ -29,7 +29,7 @@ class Diffusion2DLayer(layers.Conv2DLayer):
 class Redistribution2DLayer(layers.Conv2DLayer):
   def __init__(self, incoming, num_filters,
                untie_biases=False,
-               W=Diffusion(0.8) + init.GlorotUniform(0.2),
+               W=init.GlorotUniform(1.0),
                nonlinearity=nonlinearities.linear,
                convolution=T.nnet.conv2d, **kwargs):
     stride = (1, 1)
