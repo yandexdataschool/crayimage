@@ -3,8 +3,7 @@ from crayimage.nn.objective import plain_mse
 
 from lasagne import *
 
-import theano
-import theano.tensor as T
+from ..layers import Energy2DLayer
 
 __all__ = [
   'EnergyBased'
@@ -21,16 +20,11 @@ class EnergyBased(Expression):
       self.input_layer = input_layer
 
     outputs = [
-      layers.ExpressionLayer(
-        layers.ElemwiseMergeLayer(
+        Energy2DLayer(
           [self.input_layer, net],
-          merge_function=mse,
-          name='square error'
-        ),
-        function = lambda x: T.mean(x, axis=(1, 2, 3)),
-        name = 'mean',
-        output_shape=(None, )
-      )
+          energy_function=mse,
+          name='MSE'
+        )
       for net in img2img.outputs
     ]
 

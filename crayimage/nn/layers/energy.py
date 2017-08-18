@@ -5,7 +5,8 @@ from lasagne import *
 
 __all__ = [
   'energy_pooling',
-  'energy_pool'
+  'energy_pool',
+  'Energy2DLayer'
 ]
 
 from ..utils import border_mask
@@ -31,3 +32,21 @@ def energy_pool(layer, n_channels = 1, exclude_borders=None, norm=True, dtype='f
   net = layers.ExpressionLayer(layer, pool, output_shape=img_shape[:2], name='Energy pool')
 
   return layers.DenseLayer(net, num_units=n_channels, nonlinearity=nonlinearities.linear, name = 'Energy')
+
+from ..objective import plain_mse
+
+class Energy2DLayer(layers.MergeLayer):
+  def __init__(self, incomings, energy_function = plain_mse, *args, **kwargs):
+    self.energy_function = energy_function
+    super(Energy2DLayer, self).__init__(incomings, *args, **kwargs)
+
+  def get_output_shape_for(self, input_shapes):
+    match = lambda shape1, shape2: all([ s2 == s2 for s1, s2 in  zip(shape1, shape2)])
+    assert len(input_shapes) == 2, 'This layer can only have 2 incoming layers!'
+    assert match(input_shapes[0], input_shapes[1]), 'Shapes of input layers must match!'
+
+    return input_shapes[0][:1]
+
+  def get_output_for(self, inputs, **kwargs):
+    a, b = inputs
+    return self.energy_function(a, b)
