@@ -47,12 +47,12 @@ class CosmicGANTest(unittest.TestCase):
       X, Y,
       generator=generator,
       reverse=reverse,
-      discriminator_real=discriminator1,
-      discriminator_geant=discriminator2,
-      loss_real=energy_loss(0.2),
-      loss_geant=energy_loss(0.2),
-      cycle_loss_real=img_mse(exclude_borders=4, img_shape=(1, 32, 32)),
-      cycle_loss_geant=img_mse(exclude_borders=4, img_shape=(1, 32, 32)),
+      discriminator_Y=discriminator1,
+      discriminator_X=discriminator2,
+      loss_Y=energy_loss(0.2),
+      loss_X=energy_loss(0.2),
+      cycle_loss_Y=img_mse(exclude_borders=4, img_shape=(1, 32, 32)),
+      cycle_loss_X=img_mse(exclude_borders=4, img_shape=(1, 32, 32)),
       aux_loss_generator=None,
       aux_loss_reverse=image_mse_energy_loss(exclude_borders=4, img_shape=(1, 32, 32))
     )
