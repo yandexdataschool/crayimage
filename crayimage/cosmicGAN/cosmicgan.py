@@ -44,7 +44,7 @@ class CosmicGAN(object):
 
     ### GEANT -> real -> GEANT cycle loss
 
-    out_X_cycled = reverse(X_pseudo)
+    out_X_cycled = reverse(Y_pseudo)
     X_cycled = out_X_cycled[0]
 
     cycle_loss_X = T.mean(cycle_loss_X(X, X_cycled))
@@ -74,6 +74,9 @@ class CosmicGAN(object):
 
     self.cycles_loss = cycle_loss_coef_Y * cycle_loss_Y + cycle_loss_coef_X * cycle_loss_X
     self.loss_transformations = self.loss_generator + self.loss_reverse + self.cycles_loss
+
+    self.loss_discriminator_X = self.gan_loss_discriminator_X
+    self.loss_discriminator_Y = self.gan_loss_discriminator_Y
 
     self.X_pseudo = X_pseudo
     self.Y_pseudo = Y_pseudo
