@@ -61,13 +61,13 @@ class CosmicGAN(object):
     self.loss_generator = (
       gan_loss_generator
       if aux_loss_generator is None else
-      gan_loss_generator + aux_loss_coef_generator * T.mean(aux_loss_generator(out_Y_cycled, Y))
+      (gan_loss_generator + aux_loss_coef_generator * T.mean(aux_loss_generator(out_Y_cycled, Y)))
     )
 
     self.loss_reverse = (
       gan_loss_reverse
-      if aux_loss_coef_generator is None else
-      gan_loss_reverse + aux_loss_coef_reverse * T.mean(aux_loss_reverse(out_X_cycled, X))
+      if aux_loss_reverse is None else
+      (gan_loss_reverse + aux_loss_coef_reverse * T.mean(aux_loss_reverse(out_X_cycled, X)))
     )
 
     self.gan_loss_transformations = gan_loss_generator + gan_loss_reverse
