@@ -31,7 +31,7 @@ class CosmicGAN(object):
     score_Y, = discriminator_Y(Y)
     score_Y_pseudo, = discriminator_Y(Y_pseudo)
 
-    self.gan_loss_discriminator_Y, gan_loss_generator = loss_Y(score_Y, score_Y_pseudo)
+    self.gan_loss_discriminator_Y, self.gan_loss_generator = loss_Y(score_Y, score_Y_pseudo)
 
     ### GAN losses in GEANT domain
     out_X_pseudo = reverse(Y)
@@ -40,39 +40,39 @@ class CosmicGAN(object):
     score_X, = discriminator_X(X)
     score_X_pseudo, = discriminator_X(X_pseudo)
 
-    self.gan_loss_discriminator_X, gan_loss_reverse = loss_X(score_X, score_X_pseudo)
+    self.gan_loss_discriminator_X, self.gan_loss_reverse = loss_X(score_X, score_X_pseudo)
 
     ### GEANT -> real -> GEANT cycle loss
 
     out_X_cycled = reverse(Y_pseudo)
     X_cycled = out_X_cycled[0]
 
-    cycle_loss_X = T.mean(cycle_loss_X(X, X_cycled))
+    self.cycle_loss_X = T.mean(cycle_loss_X(X, X_cycled))
 
     ### Real -> GEANT -> real cycle loss
 
     out_Y_cycled = generator(X_pseudo)
     Y_cycled = out_Y_cycled[0]
 
-    cycle_loss_Y = T.mean(cycle_loss_Y(Y, Y_cycled))
+    self.cycle_loss_Y = T.mean(cycle_loss_Y(Y, Y_cycled))
 
     ### complete loss
 
     self.loss_generator = (
-      gan_loss_generator
+      (self.gan_loss_generator + self.cycle_loss_Y)
       if aux_loss_generator is None else
-      (gan_loss_generator + aux_loss_coef_generator * T.mean(aux_loss_generator(out_Y_cycled, Y)))
+      (self.gan_loss_generator + self.cycle_loss_Y + aux_loss_coef_generator * T.mean(aux_loss_generator(out_Y_cycled, Y)))
     )
 
     self.loss_reverse = (
-      gan_loss_reverse
+      (self.gan_loss_reverse + self.cycle_loss_X)
       if aux_loss_reverse is None else
-      (gan_loss_reverse + aux_loss_coef_reverse * T.mean(aux_loss_reverse(out_X_cycled, X)))
+      (self.gan_loss_reverse + self.cycle_loss_X + aux_loss_coef_reverse * T.mean(aux_loss_reverse(out_X_cycled, X)))
     )
 
-    self.gan_loss_transformations = gan_loss_generator + gan_loss_reverse
+    self.gan_loss_transformations = self.gan_loss_generator + self.gan_loss_reverse
 
-    self.cycles_loss = cycle_loss_coef_Y * cycle_loss_Y + cycle_loss_coef_X * cycle_loss_X
+    self.cycles_loss = cycle_loss_coef_Y * self.cycle_loss_Y + cycle_loss_coef_X * self.cycle_loss_X
     self.loss_transformations = self.loss_generator + self.loss_reverse + self.cycles_loss
 
     self.loss_discriminator_X = self.gan_loss_discriminator_X

@@ -36,7 +36,7 @@ def weighted_cross_entropy(output_real, output_pseudo, coefs=None):
 def energy_loss(margin):
   def l(score_real, score_pseudo):
     zero = T.constant(0.0, dtype='float32')
-    m = T.constant(margin, dtype='float32')
+    m = margin
     loss_discriminator = T.mean(score_real) + T.mean(T.maximum(zero, m - score_pseudo))
     loss_generator = T.mean(score_pseudo)
 
