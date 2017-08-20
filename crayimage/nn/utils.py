@@ -7,12 +7,15 @@ from collections import OrderedDict
 from functools import reduce
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
+from lasagne.utils import floatX
+
 __all__ = [
   'softmin',
   'join',
   'lsum',
   'joinc',
   'ldot',
+  'lmean',
   'log_barrier',
   'make_copy',
   'as_shared',
@@ -24,8 +27,23 @@ __all__ = [
 
 join = lambda xs: reduce(lambda a, b: a + b, xs)
 lsum = join
-joinc = lambda xs, cs = None: join(xs) if cs is None else join([ x * c for x, c in  zip(xs, cs)])
 ldot = lambda xs, ys: join([ T.sum(x * y) for x, y in zip(xs, ys) ])
+
+def joinc(xs, cs=None):
+  if cs is None and len(xs) == 1:
+    return xs[0]
+  elif cs is None:
+    return join(xs)
+  else:
+    return join([x * c for x, c in zip(xs, cs)])
+
+def lmean(xs, cs = None):
+  if len(xs) is 1:
+    return xs[0]
+  elif cs is None:
+    return join(xs) / len(xs)
+  else:
+    return joinc(xs, cs)
 
 def get_srng(srng):
   if srng is None:

@@ -1,7 +1,7 @@
 import numpy as np
 
 import theano.tensor as T
-from crayimage.nn.utils import joinc, join
+from crayimage.nn.utils import joinc, join, lmean
 from lasagne.utils import floatX
 
 def single_cross_entropy(output_real, output_pseudo):
@@ -41,47 +41,50 @@ def energy_loss(margin, coefs=None):
     if scores_pseudo_det is None:
       scores_pseudo_det = scores_pseudo
 
-    coefs_ = coefs
-    if coefs_ is None:
-      coefs_ = floatX(np.ones(shape=len(scores_real)) / len(scores_real))
-
     zero = T.constant(0.0, dtype='float32')
     m = margin
-    loss_discriminator = joinc(coefs_, [
+
+    loss_discriminator = lmean([
       T.mean(score_real) + T.mean(T.maximum(zero, m - score_pseudo))
       for score_real, score_pseudo in zip(scores_real, scores_pseudo)
-    ])
+    ], coefs)
 
-    loss_generator = join(coefs_, [
+    loss_generator = lmean([
       T.mean(score_pseudo)
       for score_pseudo in scores_pseudo_det
-    ])
+    ], coefs)
 
     return loss_discriminator, loss_generator
 
   return l
 
 def cross_entropy_linear(coefs = None):
+  '''
+  Sigmoid nonlinearity is assimilated into the loss for computational stability.
+  Note: the reason for this is the stable implementation of softplus.
+  :param coefs:
+  :return:
+  '''
   def l(scores_real, scores_pseudo, scores_pseudo_det=None):
     if scores_pseudo_det is None:
       scores_pseudo_det = scores_pseudo
 
-    coefs_ = coefs
-
-    if coefs_ is None:
-      coefs_ = floatX(np.ones(shape=len(scores_real)) / len(scores_real))
-
-    log_real = joinc(coefs, [
-      -T.mean(T.log1p(T.exp(-s)))
+    nlog_real = lmean([
+      T.mean(T.nnet.softplus(-s))
       for s in scores_real
-    ])
+    ], coefs)
 
-    log_pseudo = joinc(coefs, [
-      -T.mean(s + T.log1p(T.exp(-s)))
+    nlog_pseudo = lmean([
+      T.mean(T.nnet.softplus(s))
       for s in scores_pseudo
-    ])
+    ], coefs)
 
-    return 0.5 * log_real + 0.5 * log_pseudo, log_pseudo
+    log_pseudo_det = lmean([
+      -T.mean(T.nnet.softplus(s))
+      for s in scores_pseudo_det
+    ], coefs)
+
+    return 0.5 * nlog_real + 0.5 * nlog_pseudo, log_pseudo_det
   return l
 
 def image_mse_energy_loss(coefs = None, exclude_borders=None, img_shape=None, norm=True, dtype='float32'):
