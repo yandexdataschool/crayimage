@@ -15,6 +15,7 @@ class VGG(Expression):
   def __init__(self, n_filters,
                img_shape=(1, 128, 128),
                noise_sigma=1.0 / (2 ** 11),
+               output_nonlinearity=nonlinearities.sigmoid,
                input_layer = None):
     self.input_layer = get_input_layer(img_shape, input_layer)
 
@@ -27,8 +28,8 @@ class VGG(Expression):
       pad='same'
     )
 
-    net = layers.GlobalPoolLayer(net, pool_function=T.max)
-    net = layers.DenseLayer(net, num_units=1, nonlinearity=nonlinearities.sigmoid)
+    net = layers.GlobalPoolLayer(net, pool_function=T.mean)
+    net = layers.DenseLayer(net, num_units=1, nonlinearity=output_nonlinearity)
     net = layers.FlattenLayer(net, outdim=1)
 
     super(VGG, self).__init__([self.input_layer], [net])
