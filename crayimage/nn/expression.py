@@ -225,11 +225,12 @@ class Expression(ExpressionBase):
       return getattr(self, name)
 
   def __call__(self, *args, **kwargs):
-    substitutes = dict(
-      zip(self.inputs, args) + [ (self._get_input(k), v) for (k, v) in kwargs.items() ]
-    )
+    #substitutes = dict(
+    #  zip(self.inputs, args) + [ (self._get_input(k), v) for (k, v) in kwargs.items() ]
+    #)
 
-    return layers.get_output(self.outputs, inputs=substitutes)
+    #return layers.get_output(self.outputs, inputs=substitutes)
+    return layers.get_output(self.outputs, *args, **kwargs)
 
   def reg_l1(self):
     return regularization.regularize_network_params(self.outputs, penalty=regularization.l1)
