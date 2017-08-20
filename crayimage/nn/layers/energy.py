@@ -33,6 +33,8 @@ def energy_pool(layer, n_channels = 1, exclude_borders=None, norm=True, dtype='f
   if img_shape[1] != n_channels:
     layer = Redistribution2DLayer(layer, num_filters=n_channels, nonlinearity=nonlinearities.linear)
 
+  img_shape = layers.get_output_shape(layer)
+
   pool = energy_pooling(exclude_borders=exclude_borders, norm=norm, img_shape=img_shape, dtype=dtype)
   net = layers.ExpressionLayer(layer, pool, output_shape=img_shape[:2], name='Energy pool')
 
