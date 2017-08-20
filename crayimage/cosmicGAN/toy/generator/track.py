@@ -55,7 +55,7 @@ class ToyTrackGenerator(Expression):
     self.activation2 = layers.Conv2DLayer(
       self.activation1,
       num_filters=1, filter_size=(1, 1),
-      nonlinearity=nonlinearities.sigmoid,
+      nonlinearity=nonlinearities.linear,
     )
 
     super(ToyTrackGenerator, self).__init__([self.track_input], [self.activation2])
