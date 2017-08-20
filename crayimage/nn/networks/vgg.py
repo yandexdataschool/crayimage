@@ -28,7 +28,7 @@ class VGG(Expression):
       pad='same'
     )
 
-    net = layers.GlobalPoolLayer(net, pool_function=T.mean)
+    net = layers.GlobalPoolLayer(net, pool_function=T.max)
     net = layers.DenseLayer(net, num_units=1, nonlinearity=output_nonlinearity)
     net = layers.FlattenLayer(net, outdim=1)
 
