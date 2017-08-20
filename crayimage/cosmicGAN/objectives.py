@@ -87,17 +87,18 @@ def cross_entropy_linear(coefs = None):
     return 0.5 * nlog_real + 0.5 * nlog_pseudo, log_pseudo_det
   return l
 
-def image_mse_energy_loss(coefs = None):
+def image_mse_energy_loss(pool, coefs = None):
   def loss(X, Y):
-    l = lambda x, y: T.mean((x - y) ** 2)
+    y_energy = pool(Y)
+    l = lambda x: T.mean((x - y_energy) ** 2)
 
     if hasattr(X, '__len__'):
-      losses = [l(Y, out) for out in X]
+      losses = [l(out) for out in X]
       if coefs is not None:
         return joinc(losses, coefs)
       else:
         return join(losses)
     else:
-      return l(Y, X)
+      return l(X)
 
   return loss
