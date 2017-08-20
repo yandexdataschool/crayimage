@@ -58,19 +58,21 @@ class CosmicGAN(object):
 
     self.cycle_loss_Y = T.mean(cycle_loss_Y(Y, Y_cycled))
 
-    ### complete loss
-
-    self.loss_generator = (
-      (self.gan_loss_generator + self.cycle_loss_Y)
+    self.loss_generator_Y = (
+      self.cycle_loss_Y
       if aux_loss_generator is None else
-      (self.gan_loss_generator + self.cycle_loss_Y + aux_loss_coef_generator * T.mean(aux_loss_generator(out_Y_cycled, Y)))
+      (self.cycle_loss_Y + aux_loss_coef_generator * T.mean(aux_loss_generator(out_Y_cycled, Y)))
     )
 
-    self.loss_reverse = (
-      (self.gan_loss_reverse + self.cycle_loss_X)
+    self.loss_generator = self.gan_loss_generator + cycle_loss_coef_Y * self.loss_generator_Y
+
+    self.loss_reverse_X = (
+      self.cycle_loss_X
       if aux_loss_reverse is None else
-      (self.gan_loss_reverse + self.cycle_loss_X + aux_loss_coef_reverse * T.mean(aux_loss_reverse(out_X_cycled, X)))
+      (self.cycle_loss_X + aux_loss_coef_reverse * T.mean(aux_loss_reverse(out_X_cycled, X)))
     )
+
+    self.loss_reverse = self.gan_loss_reverse + cycle_loss_coef_X * self.loss_reverse_X
 
     self.gan_loss_transformations = self.gan_loss_generator + self.gan_loss_reverse
 
