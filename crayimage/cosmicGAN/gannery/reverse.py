@@ -24,7 +24,7 @@ class EPreservingUNet(Expression):
       (
         Redistribution2DLayer(l, num_filters=channels, nonlinearity=nonlinearities.linear)
         if layers.get_output_shape(l)[1] > 1 else
-        l.
+        l
       )
 
       for l in self.backward[:-1]
