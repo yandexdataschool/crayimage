@@ -1,11 +1,11 @@
 from lasagne import layers
+from lasagne import nonlinearities
 
 from crayimage.nn import Expression
 
 from crayimage.nn.networks.common import get_input_layer
 from crayimage.nn.subnetworks import make_unet
-
-from crayimage.nn.layers import energy_pool
+from crayimage.nn.layers import Redistribution2DLayer
 
 __all__ = [
   'EPreservingUNet'
@@ -20,10 +20,8 @@ class EPreservingUNet(Expression):
 
     channels = layers.get_output_shape(net)[1]
 
-    exclude_borders = 2 ** len(self.backward) if exclude_borders is None else exclude_borders
-
     self.companions = [
-      energy_pool(l, n_channels=channels, exclude_borders=exclude_borders, norm=True)
+      Redistribution2DLayer(l, n_channels=channels, nonlinearity=nonlinearities.linear)
       for l in self.backward
     ]
 
