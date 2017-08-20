@@ -87,13 +87,9 @@ def cross_entropy_linear(coefs = None):
     return 0.5 * nlog_real + 0.5 * nlog_pseudo, log_pseudo_det
   return l
 
-def image_mse_energy_loss(coefs = None, exclude_borders=None, img_shape=None, norm=True, dtype='float32'):
-  from crayimage.nn.layers import energy_pooling
-
+def image_mse_energy_loss(coefs = None):
   def loss(X, Y):
-    energy = energy_pooling(exclude_borders=exclude_borders, img_shape=img_shape, norm=norm, dtype=dtype)
-
-    l = lambda x, y: (energy(x) - energy(y))**2
+    l = lambda x, y: T.mean((x - y) ** 2)
 
     if hasattr(X, '__len__'):
       losses = [l(Y, out) for out in X]

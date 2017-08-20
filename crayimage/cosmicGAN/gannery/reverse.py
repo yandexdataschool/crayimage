@@ -5,7 +5,7 @@ from crayimage.nn import Expression
 
 from crayimage.nn.networks.common import get_input_layer
 from crayimage.nn.subnetworks import make_unet
-from crayimage.nn.layers import Redistribution2DLayer
+from crayimage.nn.layers import energy_pool
 
 __all__ = [
   'EPreservingUNet'
@@ -21,14 +21,8 @@ class EPreservingUNet(Expression):
     channels = layers.get_output_shape(net)[1]
 
     self.companions = [
-      (
-        Redistribution2DLayer(l, num_filters=channels, nonlinearity=nonlinearities.linear)
-        if layers.get_output_shape(l)[1] > 1 else
-        l
-      )
-
-      for l in self.backward[:-1]
-
+      energy_pool(l, n_channels=channels,exclude_borders=exclude_borders)
+      for l in self.backward
     ]
 
     super(EPreservingUNet, self).__init__([self.input_layer], [net] + self.companions)
