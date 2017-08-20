@@ -48,7 +48,7 @@ class ToyTrackGenerator(Expression):
 
     self.activation1 = layers.Conv2DLayer(
       self.conv,
-      num_filters=8, filter_size=(1, 1),
+      num_filters=32, filter_size=(1, 1),
       nonlinearity=nonlinearities.sigmoid,
     )
 
