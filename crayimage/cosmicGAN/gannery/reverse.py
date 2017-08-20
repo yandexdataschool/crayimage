@@ -21,7 +21,7 @@ class EPreservingUNet(Expression):
     channels = layers.get_output_shape(net)[1]
 
     self.companions = [
-      Redistribution2DLayer(l, n_channels=channels, nonlinearity=nonlinearities.linear)
+      Redistribution2DLayer(l, num_filters=1, nonlinearity=nonlinearities.linear)
       for l in self.backward
     ]
 
