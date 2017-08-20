@@ -21,8 +21,14 @@ class EPreservingUNet(Expression):
     channels = layers.get_output_shape(net)[1]
 
     self.companions = [
-      Redistribution2DLayer(l, num_filters=1, nonlinearity=nonlinearities.linear)
-      for l in self.backward
+      (
+        Redistribution2DLayer(l, num_filters=channels, nonlinearity=nonlinearities.linear)
+        if layers.get_output_shape(l)[1] > 1 else
+        l.
+      )
+
+      for l in self.backward[:-1]
+
     ]
 
     super(EPreservingUNet, self).__init__([self.input_layer], [net] + self.companions)
