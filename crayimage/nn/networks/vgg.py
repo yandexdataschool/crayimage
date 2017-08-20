@@ -23,7 +23,7 @@ class VGG(Expression):
     net = make_cnn(
       net, n_filters,
       filter_size=(3, 3),
-      nonlinearity=nonlinearities.elu,
+      nonlinearity=nonlinearities.LeakyRectify(0.1),
       pad='same'
     )
 

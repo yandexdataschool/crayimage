@@ -28,19 +28,21 @@ class CosmicGAN(object):
     out_Y_pseudo = generator(X)
     Y_pseudo = out_Y_pseudo[0]
 
-    score_Y, = discriminator_Y(Y)
-    score_Y_pseudo, = discriminator_Y(Y_pseudo)
+    score_Y = discriminator_Y(Y)
+    score_Y_pseudo_noisy = discriminator_Y(Y_pseudo)
+    score_Y_pseudo_det = discriminator_Y(Y_pseudo, deterministic=True)
 
-    self.gan_loss_discriminator_Y, self.gan_loss_generator = loss_Y(score_Y, score_Y_pseudo)
+    self.gan_loss_discriminator_Y, self.gan_loss_generator = loss_Y(score_Y, score_Y_pseudo_noisy, score_Y_pseudo_det)
 
     ### GAN losses in GEANT domain
     out_X_pseudo = reverse(Y)
     X_pseudo = out_X_pseudo[0]
 
-    score_X, = discriminator_X(X)
-    score_X_pseudo, = discriminator_X(X_pseudo)
+    score_X = discriminator_X(X)
+    score_X_pseudo_noisy = discriminator_X(X_pseudo)
+    score_X_pseudo_det = discriminator_X(X_pseudo, deterministic=True)
 
-    self.gan_loss_discriminator_X, self.gan_loss_reverse = loss_X(score_X, score_X_pseudo)
+    self.gan_loss_discriminator_X, self.gan_loss_reverse = loss_X(score_X, score_X_pseudo_noisy, score_X_pseudo_det)
 
     ### GEANT -> real -> GEANT cycle loss
 
