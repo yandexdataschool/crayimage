@@ -20,7 +20,7 @@ class ToyTrackGenerator(Expression):
 
     self.redist1 = layers.Conv2DLayer(
       self.random_input,
-      num_filters=8,
+      num_filters=32,
       filter_size=(1, 1),
       nonlinearity=nonlinearities.sigmoid
     )
