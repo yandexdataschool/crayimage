@@ -1,17 +1,15 @@
 import theano.tensor as T
 from lasagne import *
 
+from .common import *
+
 __all__ = [
+  'conv',
   'conv_companion',
-  'concat_conv',
-  'softmax2d'
+  'concat_conv'
 ]
 
-def softmax2d(x):
-  max_value = T.max(x, axis=1)
-  exped = T.exp(x - max_value[:, None, :, :])
-  sums = T.sum(exped, axis=1)
-  return exped / sums[:, None, :, :]
+conv = flayer(layers.Conv2DLayer)
 
 def conv_companion(layer, pool_function=T.max, n_units = 1):
   net = layers.GlobalPoolLayer(layer, pool_function=pool_function)
@@ -22,8 +20,6 @@ def conv_companion(layer, pool_function=T.max, n_units = 1):
     net = layers.DenseLayer(net, num_units=n_units, nonlinearity=nonlinearities.softmax)
 
   return net
-
-from crayimage.nn.utils import border_mask
 
 ### Instead of conventional concatination of two layers, we remember that convolution is a linear transformation.
 def concat_conv(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,
