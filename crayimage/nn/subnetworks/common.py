@@ -65,3 +65,24 @@ def get_kernels(net, kernel_type):
       pass
 
   return kernels
+
+def make_seq(layer, length, **kwargs):
+  return [
+    layer(dict([(k, v[i]) for k, v in kwargs.items()]))
+    for i in range(length)
+  ]
+
+def make_chain(incoming, layers_or_layer, length=None, **kwargs):
+  if length is not None:
+    layers = make_seq(layers_or_layer, length=length, **kwargs)
+  else:
+    layers  = layers_or_layer
+
+  outputs = []
+  net = incoming
+
+  for l in layers:
+    net = l(net)
+    outputs.append(net)
+
+  return outputs

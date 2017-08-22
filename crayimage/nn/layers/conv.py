@@ -11,6 +11,7 @@ __all__ = [
 
 conv = flayer(layers.Conv2DLayer)
 
+@flayer
 def conv_companion(layer, pool_function=T.max, n_units = 1):
   net = layers.GlobalPoolLayer(layer, pool_function=pool_function)
 
@@ -21,7 +22,7 @@ def conv_companion(layer, pool_function=T.max, n_units = 1):
 
   return net
 
-### Instead of conventional concatination of two layers, we remember that convolution is a linear transformation.
+@flayer2
 def concat_conv(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,
                 W=init.GlorotUniform(0.5),
                 avoid_concat=False, *args, **kwargs):

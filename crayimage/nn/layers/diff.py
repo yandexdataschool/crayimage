@@ -1,11 +1,14 @@
 from lasagne import *
 import theano.tensor as T
 
+from .common import *
 from ..init import Diffusion
 
 __all__ = [
   'Diffusion2DLayer',
   'Redistribution2DLayer',
+  'diff',
+  'redist',
   'concat_diff'
 ]
 
@@ -26,6 +29,8 @@ class Diffusion2DLayer(layers.Conv2DLayer):
   def diffusion_kernel(self):
     return self.W
 
+diff = flayer(Diffusion2DLayer)
+
 class Redistribution2DLayer(layers.Conv2DLayer):
   def __init__(self, incoming, num_filters,
                untie_biases=False,
@@ -45,6 +50,9 @@ class Redistribution2DLayer(layers.Conv2DLayer):
   def redistribution_kernel(self):
     return self.W
 
+redist = flayer(Redistribution2DLayer)
+
+@flayer2
 def concat_diff(incoming1, incoming2, num_filters, filter_size=(3, 3),
                 nonlinearity=nonlinearities.elu, name=None,
                 W=Diffusion(0.8) + init.GlorotUniform(0.2),
