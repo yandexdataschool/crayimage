@@ -16,7 +16,7 @@ __all__ = [
 
 conv = flayer(layers.Conv2DLayer, filter_size=(3, 3))
 max_pool = flayer(layers.MaxPool2DLayer, pool_size=(2, 2))
-pool = flayer(layers.Pool2DLayer, ool_size=(2, 2))
+pool = flayer(layers.Pool2DLayer, pool_size=(2, 2))
 global_pool = flayer(layers.GlobalPoolLayer)
 upscale = flayer(layers.Upscale2DLayer, scale_factor=(2, 2))
 
