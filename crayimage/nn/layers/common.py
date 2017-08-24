@@ -2,43 +2,54 @@ from lasagne import *
 
 __all__ = [
   'flayer',
-  'flayer1',
-  'flayer2'
+  'expand'
 ]
 
-def get(args, i, default=None):
-  try:
-    return args[i]
-  except:
-    return default
 
-def check_layers(n_incoming=1, *args, **kwargs):
-  return all([
-    isinstance(
-      get(args, i, kwargs.get('incoming%d' % (i + 1), None)),
-      layers.Layer
-    ) for i in range(n_incoming)
-  ])
-
-def _updated(d1, d2):
+def _updated(*ds):
   d = dict()
-  d.update(d1)
-  d.update(d2)
+
+  for d_ in ds:
+    d.update(d_)
+
   return d
 
-def flayer_generic(n_incoming=1):
-  def fl(layer_builder):
-    def g(*args, **kwargs):
-      if check_layers(n_incoming, *args, **kwargs):
-        return layer_builder(*args, **kwargs)
-      else:
-        return lambda *args2, **kwargs2: g(*args2, **_updated(kwargs, kwargs2))
+def flayer(layer, *default_args, **default_kwargs):
+  try:
+    ### if layer is class
+    if isinstance(layer, layers.Layer):
+      default_kwargs['name'] = layer.__name__
+  except:
+    pass
 
-    return g
+  def constructor(*constructor_args, **constructor_kwargs):
+    return lambda *args, **kwargs: layer(
+      *(args + constructor_args + default_args),
+      **_updated(default_kwargs, constructor_kwargs, kwargs)
+    )
 
-  return fl
+  return constructor
 
-flayer = flayer_generic(n_incoming=1)
+def expand(layer, **kwargs):
+  """
+  Produces a sequence of flayer, each with different parameters specified via ``**kwargs``.
 
-flayer1 = flayer
-flayer2 = flayer_generic(n_incoming=2)
+  :param layer: :flayer:, an layer to be expanded.
+  :param chain_length: length of the sequence, if None length is inferred from ``**kwargs``
+  :param kwargs: additional arguments to `layer`, each argument must be a list.
+  :return:
+  """
+
+  if hasattr(layer, '__len__'):
+    return layer
+
+  if len(kwargs) == 0:
+    raise Exception('Can not infer length of the chain.')
+
+  return [
+    lambda *args, **kwargs: layer(
+      *args,
+      **_updated(dict([(k, v[i]) for k, v in kwargs.items()]), kwargs)
+    )
+    for i in range(len(kwargs[kwargs.keys()[0]]))
+  ]

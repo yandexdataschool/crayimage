@@ -1,13 +1,15 @@
 from lasagne import *
 
-from ..layers import Redistribution2DLayer
+from ..layers.common import *
+from ..layers import Redistribution2DLayer, redist
 
 __all__ = [
+  'chain', 'seq', 'expand',
   'complete_conv_kwargs',
   'complete_deconv_kwargs',
   'get_deconv_kwargs',
-  'redistribute_channels',
-  'get_kernels'
+  'adjust_channels',
+  'get_kernels_by_type'
 ]
 
 def complete_conv_kwargs(conv_kwargs):
@@ -40,21 +42,20 @@ def get_deconv_kwargs(conv_kwargs):
 
   return deconv_kwargs
 
-def redistribute_channels(net, target_channels, nonlinearity=nonlinearities.linear):
-  input_channels = layers.get_output_shape(net)[1]
+@flayer
+def adjust_channels(incoming, target_channels, redist=redist):
+  input_channels = layers.get_output_shape(incoming)[1]
 
   if input_channels != target_channels:
-    net = Redistribution2DLayer(
-      net,
+    return redist(
+      incoming=incoming,
       num_filters=target_channels,
-      nonlinearity=nonlinearity,
       name='channel redistribution'
     )
-    return net
   else:
-    return net
+    return incoming
 
-def get_kernels(net, kernel_type):
+def get_kernels_by_type(net, kernel_type):
   kernels = []
 
   for l in layers.get_all_layers(net):
@@ -66,23 +67,42 @@ def get_kernels(net, kernel_type):
 
   return kernels
 
-def make_seq(layer, length, **kwargs):
-  return [
-    layer(dict([(k, v[i]) for k, v in kwargs.items()]))
-    for i in range(length)
-  ]
+fsubnetwork = flayer
 
-def make_chain(incoming, layers_or_layer, length=None, **kwargs):
-  if length is not None:
-    layers = make_seq(layers_or_layer, length=length, **kwargs)
+@fsubnetwork
+def chain(incoming, layers, length=None, **kwargs):
+  """
+  Recursively applies expanded sequence layer to ``incoming``.
+  see ``expand_chain``.
+
+    :returns list of all layers produced.
+  """
+  if hasattr(incoming, '__len__'):
+    net = incoming[-1]
   else:
-    layers  = layers_or_layer
+    net = incoming
 
-  outputs = []
-  net = incoming
+  ls = []
+
+  if hasattr(layers, '__len__'):
+    assert len(kwargs) == 0, 'kwargs does not make sense in this case!'
+  else:
+    layers = expand(layers, length, **kwargs)
 
   for l in layers:
     net = l(net)
-    outputs.append(net)
 
-  return outputs
+    if hasattr(net, '__len__'):
+      ls.extend(net)
+      net = net[-1]
+    else:
+      ls.append(net)
+
+  return ls
+
+@fsubnetwork
+def seq(incoming, layers, length=None, **kwargs):
+  """
+  Similar to `chain` but returns only the last layer.
+  """
+  return chain(incoming, layers, length, **kwargs)[-1]

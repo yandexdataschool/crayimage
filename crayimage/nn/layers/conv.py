@@ -5,11 +5,27 @@ from .common import *
 
 __all__ = [
   'conv',
+  'max_pool', 'upscale',
+  'pool',
+  'global_pool',
+  'sum', 'merge', 'concat',
+  'min', 'max', 'prod',
   'conv_companion',
   'concat_conv'
 ]
 
-conv = flayer(layers.Conv2DLayer)
+conv = flayer(layers.Conv2DLayer, filter_size=(3, 3))
+max_pool = flayer(layers.MaxPool2DLayer, pool_size=(2, 2))
+pool = flayer(layers.Pool2DLayer, ool_size=(2, 2))
+global_pool = flayer(layers.GlobalPoolLayer)
+upscale = flayer(layers.Upscale2DLayer, scale_factor=(2, 2))
+
+sum = flayer(layers.ElemwiseSumLayer)
+merge = flayer(layers.ElemwiseMergeLayer)
+min = flayer(layers.ElemwiseMergeLayer, merge_function=T.minimum, name='minimum')
+max = flayer(layers.ElemwiseMergeLayer, merge_function=T.maximum, name='maximum')
+prod = flayer(layers.ElemwiseMergeLayer, merge_function=lambda a, b: a * b, name='product')
+concat = flayer(layers.ConcatLayer)
 
 @flayer
 def conv_companion(layer, pool_function=T.max, n_units = 1):
@@ -22,7 +38,7 @@ def conv_companion(layer, pool_function=T.max, n_units = 1):
 
   return net
 
-@flayer2
+@flayer
 def concat_conv(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,
                 W=init.GlorotUniform(0.5),
                 avoid_concat=False, *args, **kwargs):

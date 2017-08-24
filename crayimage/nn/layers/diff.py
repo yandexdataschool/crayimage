@@ -52,7 +52,7 @@ class Redistribution2DLayer(layers.Conv2DLayer):
 
 redist = flayer(Redistribution2DLayer)
 
-@flayer2
+@flayer
 def concat_diff(incoming1, incoming2, num_filters, filter_size=(3, 3),
                 nonlinearity=nonlinearities.elu, name=None,
                 W=Diffusion(0.8) + init.GlorotUniform(0.2),

@@ -4,104 +4,86 @@ import theano.tensor as T
 from lasagne import *
 
 from .. import layers as clayers
-from ..nonlinearities import log_sigmoid
-from .common import get_kernels
+from .common import get_kernels_by_type
+from ..layers.common import *
 
 __all__ = [
   'cascade',
+  'cascade_chain',
+  'cascade_block',
+  'cascade_merge',
   'get_interest_kernels'
 ]
 
-get_interest_kernels = lambda net: get_kernels(net, 'interest_kernel')
+get_interest_kernels = lambda net: get_kernels_by_type(net, 'interest_kernel')
 
-def make_cascade_chain(
-        input_layer, n, num_filters,
-        incoming_interest=None, pool_incoming=True, pool_mode = 'max',
-        interest_nonlinearity=nonlinearities.softplus,
-        **conv_kwargs
+@flayer
+def cascade_merge(incomings, merge=clayers.min()):
+  a, b = incomings
+  b = clayers.scale_to(a)(b)
+  return merge([a, b])
+
+@flayer
+def cascade(
+  incoming, mid_interests=None, interests=None,
+  layer=clayers.conv(filter_size=(3, 3), num_filters=4),
+  interest = clayers.interest(),
+  merge=cascade_merge()
 ):
-  net = input_layer
+  net = layer(incoming)
+  mid_interest = interest(net)
 
-  mid_interests = []
-  interests = []
+  mid_interests = [] if mid_interests is None else mid_interests
+  interests = [] if interests is None else interests
 
-  for i in range(n):
-    net = clayers.Diffusion2DLayer(
-      net,
-      num_filters=num_filters,
-      **conv_kwargs
-    )
-
-    interest, mid_interest = cascade(
-      net, incoming_interest,
-      pool_incoming=True, pool_mode=pool_mode, nonlinearity=interest_nonlinearity
-    )
-    interests.append(interest)
+  if len(interests) > 0:
+    inter = merge([interests[-1], mid_interest])
     mid_interests.append(mid_interest)
-
-  return net, interests, mid_interests
-
-
-def make_cascade_block(input_layer,
-                       depth, length, num_filters,
-                       nonlinearity=nonlinearities.LeakyRectify(0.05),
-                       incoming_interest=None,
-                       pool_mode = 'max',
-                       dropout_p=None,
-                       **conv_kwargs):
-    origin = input_layer
-
-    if dropout_p is not None:
-      origin = layers.DropoutLayer(origin, dropout_p, rescale=True)
-
-    origins = [origin]
-    origin = origin
-
-    interests = []
-    mid_interests = []
-
-    for i in range(1, depth):
-      origin = layers.Pool2DLayer(
-        origin, pool_size=(2, 2),
-        mode=pool_mode,
-        name='down %d' % i
-      )
-      origins.append(origin)
-
-    net = origins[-1]
-
-    for i, origin in enumerate(origins[::-1]):
-      if i == 0:
-        net = make_cascade_chain(
-          origin, length,
-          num_filters=num_filters, name='chain %d' % i,
-          **conv_kwargs
-        )
-      else:
-        net = layers.Upscale2DLayer(net, scale_factor=(2, 2), name='up %d' % i)
-
-        net = clayers.concat_diff(
-          origin, net,
-          nonlinearity=nonlinearity, num_filters=num_filters,
-          name='concat diff %d' % i, **conv_kwargs
-        )
-
-        net = make_cascade_chain(
-          net, length - 1,
-          num_filters=num_filters, nonlinearity=nonlinearity,
-          name='chain %d' % i, **conv_kwargs
-        )
-    return net
-
-def cascade(net, incoming_interest=None, pool_incoming=None, pool_mode='max', nonlinearity=nonlinearities.softplus):
-  intermediate_interest = clayers.Interest2DLayer(net, nonlinearity=nonlinearity)
-
-  if incoming_interest is not None:
-    if pool_incoming is not None:
-      incoming_interest = layers.Pool2DLayer(incoming_interest, pool_size=pool_incoming, mode=pool_mode)
-
-    interest = layers.ElemwiseSumLayer([incoming_interest, intermediate_interest])
+    interests.append(inter)
   else:
-    interest = intermediate_interest
+    inter = mid_interest
+    interests.append(inter)
 
-  return intermediate_interest, interest
+  return net, mid_interests, interests
+
+@flayer
+def cascade_chain(
+  incoming, mid_interests=None, interests=None, layers = ()
+):
+  net = incoming
+
+  for l in layers:
+    net, mid_interests, interests  = l(net, mid_interests, interests)
+
+  return net, mid_interests, interests
+
+@flayer
+def cascade_block(
+  incoming, mid_interests=None, interests=None,
+  cascades=(), down=clayers.max_pool(), up=clayers.upscale(), concat = clayers.concat()
+):
+  origin = incoming
+
+  mid_interests = [] if mid_interests is None else mid_interests
+  interests = [] if interests is None else interests
+
+  origins = [origin]
+  origin = origin
+
+  depth = len(cascades)
+
+  for i in range(1, depth):
+    origin = down(origin)
+    origins.append(origin)
+
+  net = origins[-1]
+
+  for i, (cas, origin) in enumerate(zip(cascades, origins[::-1])):
+    if i == 0:
+      net, mid_interests, interests = cas(origin, mid_interests, interests)
+    else:
+      upped = up(net)
+      concated = concat([origin, upped])
+      net, mid_interests, interests = cas(concated, mid_interests, interests)
+
+  return net, mid_interests, interests
