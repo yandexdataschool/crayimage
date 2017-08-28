@@ -1,33 +1,25 @@
 import theano.tensor as T
 from lasagne import *
 
-from .common import *
-
 __all__ = [
-  'conv',
-  'max_pool', 'upscale',
-  'pool',
-  'global_pool',
-  'sum', 'merge', 'concat',
-  'min', 'max', 'prod',
+  'conv', 'max_pool', 'upscale', 'mean_pool',
+  'min', 'max', 'concat',
   'conv_companion',
   'concat_conv'
 ]
 
-conv = flayer(layers.Conv2DLayer, filter_size=(3, 3))
-max_pool = flayer(layers.MaxPool2DLayer, pool_size=(2, 2))
-pool = flayer(layers.Pool2DLayer, pool_size=(2, 2))
-global_pool = flayer(layers.GlobalPoolLayer)
-upscale = flayer(layers.Upscale2DLayer, scale_factor=(2, 2))
+conv = lambda incoming, num_filters: layers.Conv2DLayer(
+  incoming,
+  num_filters=num_filters, filter_size=(3, 3),
+  nonlinearity=nonlinearities.LeakyRectify(0.05)
+)
+max_pool = lambda incoming, pool_size=(2, 2): layers.MaxPool2DLayer(incoming, pool_size=pool_size)
+upscale = lambda incoming, scale_factor=(2, 2): layers.Upscale2DLayer(incoming, scale_factor=scale_factor)
+mean_pool = lambda incoming, pool_size=(2, 2): layers.Pool2DLayer(incoming, pool_size=pool_size, mode='average_inc_pad')
+min = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.minimum)
+max = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.maximum)
+concat = lambda incomings: layers.ConcatLayer(incomings)
 
-sum = flayer(layers.ElemwiseSumLayer)
-merge = flayer(layers.ElemwiseMergeLayer)
-min = flayer(layers.ElemwiseMergeLayer, merge_function=T.minimum, name='minimum')
-max = flayer(layers.ElemwiseMergeLayer, merge_function=T.maximum, name='maximum')
-prod = flayer(layers.ElemwiseMergeLayer, merge_function=lambda a, b: a * b, name='product')
-concat = flayer(layers.ConcatLayer)
-
-@flayer
 def conv_companion(layer, pool_function=T.max, n_units = 1):
   net = layers.GlobalPoolLayer(layer, pool_function=pool_function)
 
@@ -38,7 +30,6 @@ def conv_companion(layer, pool_function=T.max, n_units = 1):
 
   return net
 
-@flayer
 def concat_conv(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,
                 W=init.GlorotUniform(0.5),
                 avoid_concat=False, *args, **kwargs):

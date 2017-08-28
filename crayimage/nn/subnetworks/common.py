@@ -1,10 +1,7 @@
 from lasagne import *
-
-from ..layers.common import *
-from ..layers import Redistribution2DLayer, redist
+from ..layers import redist
 
 __all__ = [
-  'chain', 'seq', 'expand',
   'complete_conv_kwargs',
   'complete_deconv_kwargs',
   'get_deconv_kwargs',
@@ -42,19 +39,6 @@ def get_deconv_kwargs(conv_kwargs):
 
   return deconv_kwargs
 
-@flayer
-def adjust_channels(incoming, target_channels, redist=redist):
-  input_channels = layers.get_output_shape(incoming)[1]
-
-  if input_channels != target_channels:
-    return redist(
-      incoming=incoming,
-      num_filters=target_channels,
-      name='channel redistribution'
-    )
-  else:
-    return incoming
-
 def get_kernels_by_type(net, kernel_type):
   kernels = []
 
@@ -67,42 +51,14 @@ def get_kernels_by_type(net, kernel_type):
 
   return kernels
 
-fsubnetwork = flayer
+def adjust_channels(incoming, target_channels, redist=redist):
+  input_channels = layers.get_output_shape(incoming)[1]
 
-@fsubnetwork
-def chain(incoming, layers, length=None, **kwargs):
-  """
-  Recursively applies expanded sequence layer to ``incoming``.
-  see ``expand_chain``.
-
-    :returns list of all layers produced.
-  """
-  if hasattr(incoming, '__len__'):
-    net = incoming[-1]
+  if input_channels != target_channels:
+    return redist(
+      incoming=incoming,
+      num_filters=target_channels,
+      name='channel redistribution'
+    )
   else:
-    net = incoming
-
-  ls = []
-
-  if hasattr(layers, '__len__'):
-    assert len(kwargs) == 0, 'kwargs does not make sense in this case!'
-  else:
-    layers = expand(layers, length, **kwargs)
-
-  for l in layers:
-    net = l(net)
-
-    if hasattr(net, '__len__'):
-      ls.extend(net)
-      net = net[-1]
-    else:
-      ls.append(net)
-
-  return ls
-
-@fsubnetwork
-def seq(incoming, layers, length=None, **kwargs):
-  """
-  Similar to `chain` but returns only the last layer.
-  """
-  return chain(incoming, layers, length, **kwargs)[-1]
+    return incoming

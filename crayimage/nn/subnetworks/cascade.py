@@ -5,7 +5,6 @@ from lasagne import *
 
 from .. import layers as clayers
 from .common import get_kernels_by_type
-from ..layers.common import *
 
 __all__ = [
   'cascade',
@@ -17,18 +16,16 @@ __all__ = [
 
 get_interest_kernels = lambda net: get_kernels_by_type(net, 'interest_kernel')
 
-@flayer
-def cascade_merge(incomings, merge=clayers.min()):
+def cascade_merge(incomings, merge=clayers.min, scale=clayers.scale_to):
   a, b = incomings
-  b = clayers.scale_to(a)(b)
+  b = scale(a, b)
   return merge([a, b])
 
-@flayer
 def cascade(
   incoming, mid_interests=None, interests=None,
-  layer=clayers.conv(filter_size=(3, 3), num_filters=4),
-  interest = clayers.interest(),
-  merge=cascade_merge()
+  layer=lambda i: clayers.conv(i, num_filters=4),
+  interest = clayers.interest,
+  merge=cascade_merge
 ):
   net = layer(incoming)
   mid_interest = interest(net)
@@ -46,10 +43,7 @@ def cascade(
 
   return net, mid_interests, interests
 
-@flayer
-def cascade_chain(
-  incoming, mid_interests=None, interests=None, layers = ()
-):
+def cascade_chain(incoming, mid_interests=None, interests=None, layers = ()):
   net = incoming
 
   for l in layers:
@@ -57,10 +51,9 @@ def cascade_chain(
 
   return net, mid_interests, interests
 
-@flayer
 def cascade_block(
   incoming, mid_interests=None, interests=None,
-  cascades=(), down=clayers.max_pool(), up=clayers.upscale(), concat = clayers.concat()
+  cascades=(), down=clayers.max_pool, up=clayers.upscale, concat = clayers.concat
 ):
   origin = incoming
 

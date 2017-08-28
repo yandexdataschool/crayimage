@@ -1,7 +1,6 @@
 from lasagne import *
 import theano.tensor as T
 
-from .common import *
 from ..init import Diffusion
 
 __all__ = [
@@ -17,7 +16,7 @@ class Diffusion2DLayer(layers.Conv2DLayer):
                untie_biases=False,
                W=Diffusion(0.8) + init.GlorotUniform(0.2),
                b=init.Constant(0.),
-               nonlinearity=nonlinearities.rectify, flip_filters=True,
+               nonlinearity=nonlinearities.LeakyRectify(0.05), flip_filters=True,
                convolution=T.nnet.conv2d, **kwargs):
     stride = (1, 1)
     pad = 'same'
@@ -29,7 +28,12 @@ class Diffusion2DLayer(layers.Conv2DLayer):
   def diffusion_kernel(self):
     return self.W
 
-diff = flayer(Diffusion2DLayer)
+diff = lambda incoming, num_filters: Diffusion2DLayer(
+  incoming=incoming,
+  num_filters=num_filters,
+  filter_size=(3, 3),
+  nonlinearity=nonlinearities.LeakyRectify(0.05),
+)
 
 class Redistribution2DLayer(layers.Conv2DLayer):
   def __init__(self, incoming, num_filters,
@@ -50,9 +54,12 @@ class Redistribution2DLayer(layers.Conv2DLayer):
   def redistribution_kernel(self):
     return self.W
 
-redist = flayer(Redistribution2DLayer)
+redist = lambda incoming, num_filters: Redistribution2DLayer(
+  incoming=incoming,
+  num_filters=num_filters,
+  nonlinearity=nonlinearities.linear,
+)
 
-@flayer
 def concat_diff(incoming1, incoming2, num_filters, filter_size=(3, 3),
                 nonlinearity=nonlinearities.elu, name=None,
                 W=Diffusion(0.8) + init.GlorotUniform(0.2),

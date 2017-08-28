@@ -1,12 +1,11 @@
 from lasagne import *
-from .common import flayer
-from . import max_pool, upscale
+
+from .conv import max_pool, upscale
 
 __all__ = [
   'scale_to'
 ]
 
-@flayer
 def scale_to(net, target, pool=max_pool, upscale=upscale):
   ow, oh = layers.get_output_shape(net)[-2:]
   try:

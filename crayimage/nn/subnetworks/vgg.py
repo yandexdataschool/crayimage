@@ -3,8 +3,6 @@ from lasagne import *
 
 from ..layers import *
 
-from .common import *
-
 __all__ = [
   'make_cnn',
   'make_decnn',
