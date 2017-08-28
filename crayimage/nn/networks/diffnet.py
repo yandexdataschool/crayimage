@@ -6,7 +6,7 @@ from .. import Expression
 from ..layers import conv_companion
 
 from ..subnetworks import *
-from ..subnetworks.common import redistribute_channels
+from ..subnetworks.common import adjust_channels
 
 from common import *
 
@@ -61,7 +61,7 @@ class DiffusionNet(Expression):
        output_nonlinearity = conv_kwargs.get('nonlinearity', nonlinearities.linear)
     self.output_nonlinearity = output_nonlinearity
 
-    net = redistribute_channels(
+    net = adjust_channels(
       net, target_channels=output_channels, nonlinearity=output_nonlinearity
     )
 
@@ -93,7 +93,7 @@ class DiffusionNet(Expression):
 
   def get_intermediate_outputs(self):
     return [
-      redistribute_channels(l, self.output_channels, self.output_nonlinearity)
+      adjust_channels(l, self.output_channels, self.output_nonlinearity)
       for l in self.blocks
     ]
 

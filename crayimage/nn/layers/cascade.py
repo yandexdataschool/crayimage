@@ -2,6 +2,7 @@ from lasagne import *
 import theano.tensor as T
 
 __all__ = [
+  'interest',
   'Interest2DLayer'
 ]
 
@@ -23,3 +24,5 @@ class Interest2DLayer(layers.Conv2DLayer):
 
   def interest_kernel(self):
     return self.W
+
+interest = lambda incoming: Interest2DLayer(incoming, nonlinearity=nonlinearities.linear)

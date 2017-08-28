@@ -1,13 +1,12 @@
 from lasagne import *
-
-from ..layers import Redistribution2DLayer
+from ..layers import redist
 
 __all__ = [
   'complete_conv_kwargs',
   'complete_deconv_kwargs',
   'get_deconv_kwargs',
-  'redistribute_channels',
-  'get_kernels'
+  'adjust_channels',
+  'get_kernels_by_type'
 ]
 
 def complete_conv_kwargs(conv_kwargs):
@@ -40,21 +39,7 @@ def get_deconv_kwargs(conv_kwargs):
 
   return deconv_kwargs
 
-def redistribute_channels(net, target_channels, nonlinearity=nonlinearities.linear):
-  input_channels = layers.get_output_shape(net)[1]
-
-  if input_channels != target_channels:
-    net = Redistribution2DLayer(
-      net,
-      num_filters=target_channels,
-      nonlinearity=nonlinearity,
-      name='channel redistribution'
-    )
-    return net
-  else:
-    return net
-
-def get_kernels(net, kernel_type):
+def get_kernels_by_type(net, kernel_type):
   kernels = []
 
   for l in layers.get_all_layers(net):
@@ -65,3 +50,15 @@ def get_kernels(net, kernel_type):
       pass
 
   return kernels
+
+def adjust_channels(incoming, target_channels, redist=redist):
+  input_channels = layers.get_output_shape(incoming)[1]
+
+  if input_channels != target_channels:
+    return redist(
+      incoming=incoming,
+      num_filters=target_channels,
+      name='channel redistribution'
+    )
+  else:
+    return incoming

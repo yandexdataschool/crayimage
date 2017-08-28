@@ -2,16 +2,23 @@ import theano.tensor as T
 from lasagne import *
 
 __all__ = [
+  'conv', 'max_pool', 'upscale', 'mean_pool',
+  'min', 'max', 'concat',
   'conv_companion',
-  'concat_conv',
-  'softmax2d'
+  'concat_conv'
 ]
 
-def softmax2d(x):
-  max_value = T.max(x, axis=1)
-  exped = T.exp(x - max_value[:, None, :, :])
-  sums = T.sum(exped, axis=1)
-  return exped / sums[:, None, :, :]
+conv = lambda incoming, num_filters: layers.Conv2DLayer(
+  incoming,
+  num_filters=num_filters, filter_size=(3, 3),
+  nonlinearity=nonlinearities.LeakyRectify(0.05)
+)
+max_pool = lambda incoming, pool_size=(2, 2): layers.MaxPool2DLayer(incoming, pool_size=pool_size)
+upscale = lambda incoming, scale_factor=(2, 2): layers.Upscale2DLayer(incoming, scale_factor=scale_factor)
+mean_pool = lambda incoming, pool_size=(2, 2): layers.Pool2DLayer(incoming, pool_size=pool_size, mode='average_inc_pad')
+min = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.minimum)
+max = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.maximum)
+concat = lambda incomings: layers.ConcatLayer(incomings)
 
 def conv_companion(layer, pool_function=T.max, n_units = 1):
   net = layers.GlobalPoolLayer(layer, pool_function=pool_function)
@@ -23,9 +30,6 @@ def conv_companion(layer, pool_function=T.max, n_units = 1):
 
   return net
 
-from crayimage.nn.utils import border_mask
-
-### Instead of conventional concatination of two layers, we remember that convolution is a linear transformation.
 def concat_conv(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,
                 W=init.GlorotUniform(0.5),
                 avoid_concat=False, *args, **kwargs):

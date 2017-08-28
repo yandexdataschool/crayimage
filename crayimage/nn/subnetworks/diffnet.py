@@ -4,7 +4,7 @@ import theano.tensor as T
 from lasagne import *
 
 from .. import layers as clayers
-from .common import redistribute_channels, get_kernels
+from .common import adjust_channels, get_kernels_by_type
 
 __all__ = [
   'make_diff_chain',
@@ -15,8 +15,8 @@ __all__ = [
   'identity_reg'
 ]
 
-get_diffusion_kernels = lambda net: get_kernels(net, 'diffusion_kernel')
-get_redistribution_kernels = lambda net: get_kernels(net, 'redistribution_kernel')
+get_diffusion_kernels = lambda net: get_kernels_by_type(net, 'diffusion_kernel')
+get_redistribution_kernels = lambda net: get_kernels_by_type(net, 'redistribution_kernel')
 
 def make_transfer_reg_mask(shape, alpha=1.0e-1, dtype='float32'):
   mask = np.ones(shape, dtype=dtype)
@@ -66,7 +66,7 @@ def identity_reg(W, penalty=regularization.l2):
 def make_diff_chain(
         input_layer, n, num_filters,
         **conv_kwargs):
-  net = redistribute_channels(input_layer, num_filters)
+  net = adjust_channels(input_layer, num_filters)
 
   for i in range(n):
     net = clayers.Diffusion2DLayer(
@@ -83,7 +83,7 @@ def make_diff_block(input_layer,
                     dropout_p = None,
                     **conv_kwargs):
 
-  origin = redistribute_channels(input_layer, num_filters)
+  origin = adjust_channels(input_layer, num_filters)
 
   if dropout_p is not None:
     origin = layers.DropoutLayer(origin, dropout_p, rescale=True)
