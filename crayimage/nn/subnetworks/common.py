@@ -6,7 +6,8 @@ __all__ = [
   'complete_deconv_kwargs',
   'get_deconv_kwargs',
   'adjust_channels',
-  'get_kernels_by_type'
+  'get_kernels_by_type',
+  'chain', 'seq'
 ]
 
 def complete_conv_kwargs(conv_kwargs):
@@ -62,3 +63,32 @@ def adjust_channels(incoming, target_channels, redist=redist):
     )
   else:
     return incoming
+
+def seq(incoming, layer_ops):
+  net = incoming
+  layers = []
+
+  for layer in layer_ops:
+    if hasattr(layer, '__iter__'):
+      ls = seq(net, layer)
+      layers.extend(ls)
+      net = ls[-1]
+    elif layer is None:
+      pass
+    else:
+      layers.append(net)
+
+  return layers
+
+def chain(incoming, layer_ops):
+  net = incoming
+
+  for layer in layer_ops:
+    if hasattr(layer, '__iter__'):
+      net = chain(net, layer)
+    elif layer is None:
+      pass
+    else:
+      net = layer(net)
+
+  return net

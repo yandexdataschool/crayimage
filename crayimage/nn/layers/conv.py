@@ -3,7 +3,7 @@ from lasagne import *
 
 __all__ = [
   'conv', 'max_pool', 'upscale', 'mean_pool',
-  'min', 'max', 'concat',
+  'min', 'max', 'concat', 'noise', 'nothing',
   'conv_companion',
   'concat_conv'
 ]
@@ -19,6 +19,8 @@ mean_pool = lambda incoming, pool_size=(2, 2): layers.Pool2DLayer(incoming, pool
 min = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.minimum)
 max = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.maximum)
 concat = lambda incomings: layers.ConcatLayer(incomings)
+noise = lambda incoming, sigma=0.1: layers.GaussianNoiseLayer(incoming, sigma=sigma)
+nothing = lambda incoming: incoming
 
 def conv_companion(layer, pool_function=T.max, n_units = 1):
   net = layers.GlobalPoolLayer(layer, pool_function=pool_function)
