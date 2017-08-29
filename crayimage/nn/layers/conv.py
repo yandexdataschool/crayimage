@@ -4,7 +4,7 @@ from lasagne import *
 __all__ = [
   'conv', 'max_pool', 'upscale', 'mean_pool',
   'min', 'max', 'concat', 'noise', 'nothing',
-  'conv_companion',
+  'conv_companion', 'max_conv_companion', 'mean_conv_companion',
   'concat_conv'
 ]
 
@@ -22,15 +22,21 @@ concat = lambda incomings: layers.ConcatLayer(incomings)
 noise = lambda incoming, sigma=0.1: layers.GaussianNoiseLayer(incoming, sigma=sigma)
 nothing = lambda incoming: incoming
 
-def conv_companion(layer, pool_function=T.max, n_units = 1):
+def conv_companion(layer, pool_function=T.max, n_units = 1, nonlinearity=None):
   net = layers.GlobalPoolLayer(layer, pool_function=pool_function)
 
   if n_units == 1:
-    net = layers.DenseLayer(net, num_units=1, nonlinearity=nonlinearities.sigmoid)
+    nonlinearity = nonlinearity if nonlinearity is not None else nonlinearities.sigmoid
+    net = layers.DenseLayer(net, num_units=1, nonlinearity=nonlinearity)
+    net = layers.FlattenLayer(net, outdim=1)
   else:
-    net = layers.DenseLayer(net, num_units=n_units, nonlinearity=nonlinearities.softmax)
+    nonlinearity = nonlinearity if nonlinearity is not None else nonlinearities.softmax
+    net = layers.DenseLayer(net, num_units=n_units, nonlinearity=nonlinearity)
 
   return net
+
+max_conv_companion = lambda i: conv_companion(i, pool_function=T.max)
+mean_conv_companion = lambda i: conv_companion(i, pool_function=T.mean)
 
 def concat_conv(incoming1, incoming2, nonlinearity=nonlinearities.elu, name=None,
                 W=init.GlorotUniform(0.5),

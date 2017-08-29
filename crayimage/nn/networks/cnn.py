@@ -18,15 +18,13 @@ class CNN(Expression):
                preprocessing=nothing,
                block=conv,
                pool=mean_pool,
+               postprocessing = max_conv_companion,
                input_layer = None):
     self.input_layer = get_input_layer(img_shape, input_layer)
+
     net = preprocessing(self.input_layer)
-
-    net = cnn(net, n_filters,conv_op=block, pool_op=pool, last_pool=False)
-
-    net = layers.GlobalPoolLayer(net, pool_function=T.max)
-    net = layers.DenseLayer(net, num_units=1, nonlinearity=output_nonlinearity)
-    net = layers.FlattenLayer(net, outdim=1)
+    net = cnn(net, n_filters, conv_op=block, pool_op=pool, last_pool=False)
+    net = postprocessing(net)
 
     super(CNN, self).__init__([self.input_layer], [net])
 
