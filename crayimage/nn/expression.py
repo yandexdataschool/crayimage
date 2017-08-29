@@ -127,8 +127,12 @@ class ExpressionBase(object):
     except:
       pass
 
-    with open(osp.join(path, 'args.pickled'), 'w') as f:
-      pickle.dump((self._args, self._kwargs), f)
+    try:
+      with open(osp.join(path, 'args.pickled'), 'w') as f:
+        pickle.dump((self._args, self._kwargs), f)
+    except:
+      import warnings
+      warnings.warn('Could not save arguments!')
 
     with open(osp.join(path, 'weights.pickled'), 'w') as f:
       pickle.dump(self.weights, f)
