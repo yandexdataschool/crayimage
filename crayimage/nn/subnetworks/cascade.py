@@ -53,7 +53,7 @@ def cascade_chain(incoming, mid_interests=None, interests=None, layers = ()):
 
 def cascade_block(
   incoming, mid_interests=None, interests=None,
-  cascades=(), down=clayers.max_pool, up=clayers.upscale, concat = clayers.concat
+  cascades=(), down=clayers.max_pool, up=clayers.upscale, concat=clayers.concat
 ):
   origin = incoming
 
@@ -71,12 +71,12 @@ def cascade_block(
 
   net = origins[-1]
 
-  for i, (cas, origin) in enumerate(zip(cascades, origins[::-1])):
+  for i, (cascade_op, origin) in enumerate(zip(cascades, origins[::-1])):
     if i == 0:
-      net, mid_interests, interests = cas(origin, mid_interests, interests)
+      net, mid_interests, interests = cascade_op(origin, mid_interests, interests)
     else:
       upped = up(net)
       concated = concat([origin, upped])
-      net, mid_interests, interests = cas(concated, mid_interests, interests)
+      net, mid_interests, interests = cascade_op(concated, mid_interests, interests)
 
   return net, mid_interests, interests

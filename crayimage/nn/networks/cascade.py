@@ -17,7 +17,7 @@ class CascadeNet(Expression):
     self.input_layer = get_input_layer(img_shape, input_layer)
     net = self.input_layer
 
-    self.net, self.mid_interests, self.interests = cascade_chain(layers=cascade_blocks)(net, None, None)
+    self.net, self.mid_interests, self.interests = cascade_chain(net, None, None, layers=cascade_blocks)
 
     super(CascadeNet, self).__init__([self.input_layer], self.interests)
 

@@ -19,7 +19,7 @@ def scale_to(net, target, pool=max_pool, upscale=upscale):
       raise Exception('Impossible to upscale (%d, %d) to (%d, %d)' % (ow, oh, tw, th))
 
     scale = (tw / ow, th / oh)
-    return upscale(scale_factor=scale)(net)
+    return upscale(net, scale_factor=scale)
   elif ow == th or oh == th:
     return net
   else:
@@ -29,4 +29,4 @@ def scale_to(net, target, pool=max_pool, upscale=upscale):
 
     pool_size = (ow / tw, oh / th)
 
-    return pool(pool_size=pool_size)(net)
+    return pool(net, pool_size=pool_size)
