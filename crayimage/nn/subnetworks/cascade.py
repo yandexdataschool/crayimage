@@ -18,13 +18,13 @@ get_interest_kernels = lambda net: get_kernels_by_type(net, 'interest_kernel')
 
 def cascade_merge(incomings, merge=clayers.min, scale=clayers.scale_to):
   a, b = incomings
-  b = scale(a, b)
+  b = scale(b, a)
   return merge([a, b])
 
 def cascade(
   incoming, mid_interests=None, interests=None,
   layer=lambda i: clayers.conv(i, num_filters=4),
-  interest = clayers.interest,
+  interest=clayers.interest,
   merge=cascade_merge
 ):
   net = layer(incoming)
