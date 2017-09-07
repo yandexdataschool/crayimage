@@ -14,7 +14,7 @@ __all__ = [
 class Diffusion2DLayer(layers.Conv2DLayer):
   def __init__(self, incoming, num_filters, filter_size,
                untie_biases=False,
-               W=Diffusion(0.8) + init.GlorotUniform(0.2),
+               W=Diffusion(0.5) + init.GlorotUniform(0.5),
                b=init.Constant(0.),
                nonlinearity=nonlinearities.LeakyRectify(0.05), flip_filters=True,
                convolution=T.nnet.conv2d, **kwargs):
