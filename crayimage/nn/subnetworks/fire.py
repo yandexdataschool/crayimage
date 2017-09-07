@@ -5,6 +5,10 @@ from lasagne import *
 
 from .. import layers as clayers
 
+__all__ = [
+  'fire_module'
+]
+
 def fire_module(
   incoming,
   n_filters = 64,
