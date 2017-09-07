@@ -31,4 +31,4 @@ def freeze_module(
 ):
   expanded = [exp(incoming, n_filters) for exp in expand]
   net = merge(expanded)
-  return squeeze(net)
+  return squeeze(net, n_filters / 4)
