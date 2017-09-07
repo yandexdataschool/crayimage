@@ -16,11 +16,22 @@ conv = lambda incoming, num_filters: layers.Conv2DLayer(
 )
 
 max_pool = lambda incoming, pool_size=(2, 2): layers.MaxPool2DLayer(incoming, pool_size=pool_size)
-floating_maxpool = lambda incoming: layers.MaxPool2DLayer(incoming, pool_size=(3, 3), stride=(2, 2), pad=(1, 1))
+floating_maxpool = lambda incoming, pool_size=(2, 2): layers.MaxPool2DLayer(
+  incoming,
+  pool_size=(pool_size[0] / 2 * 3, pool_size[0] / 2 * 3),
+  stride=pool_size,
+  pad=(pool_size[0] / 2, pool_size[1] / 2)
+)
 
 upscale = lambda incoming, scale_factor=(2, 2): layers.Upscale2DLayer(incoming, scale_factor=scale_factor)
 mean_pool = lambda incoming, pool_size=(2, 2): layers.Pool2DLayer(incoming, pool_size=pool_size, mode='average_inc_pad')
-floating_meanpool = lambda incoming: layers.Pool2DLayer(incoming, pool_size=(3, 3), stride=(2, 2), mode='average_inc_pad', pad=(1, 1))
+floating_meanpool = lambda incoming, pool_size=(2, 2): layers.Pool2DLayer(
+  incoming,
+  pool_size=(pool_size[0] / 2 * 3, pool_size[0] / 2 * 3),
+  stride=pool_size,
+  pad=(pool_size[0] / 2, pool_size[1] / 2),
+  mode='average_inc_pad')
+)
 
 min = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.minimum)
 max = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.maximum)
