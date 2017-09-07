@@ -1,9 +1,10 @@
 from lasagne import *
 
-from .conv import max_pool, upscale
+from .conv import max_pool, upscale, floating_maxpool
 
 __all__ = [
-  'scale_to'
+  'scale_to',
+  'floating_scale_to'
 ]
 
 def scale_to(net, target, pool=max_pool, upscale=upscale):
@@ -30,3 +31,6 @@ def scale_to(net, target, pool=max_pool, upscale=upscale):
     pool_size = (ow / tw, oh / th)
 
     return pool(net, pool_size=pool_size)
+
+
+floating_scale_to = lambda net, target: scale_to(net, target, pool=floating_maxpool, upscale=upscale)

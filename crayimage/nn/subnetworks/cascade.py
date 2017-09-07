@@ -12,6 +12,7 @@ __all__ = [
   'cascade_block',
   'decremental_cascade_block',
   'cascade_merge',
+  'cascade_merge_rev',
   'get_interest_kernels'
 ]
 
