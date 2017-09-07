@@ -13,7 +13,7 @@ def fire_module(
   incoming,
   n_filters = 64,
   squeeze=clayers.squeeze,
-  expand=(clayers.squeeze, clayers.diff1x1),
+  expand=(clayers.diff, clayers.diff1x1),
   merge=clayers.concat
 ):
 
