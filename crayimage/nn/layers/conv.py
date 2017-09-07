@@ -30,7 +30,7 @@ floating_meanpool = lambda incoming, pool_size=(2, 2): layers.Pool2DLayer(
   pool_size=(pool_size[0] / 2 * 3, pool_size[0] / 2 * 3),
   stride=pool_size,
   pad=(pool_size[0] / 2, pool_size[1] / 2),
-  mode='average_inc_pad')
+  mode='average_inc_pad'
 )
 
 min = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.minimum)
