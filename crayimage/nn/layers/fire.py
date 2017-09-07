@@ -19,7 +19,7 @@ class SqueezeLayer(layers.Conv2DLayer):
                convolution=T.nnet.conv2d, **kwargs):
     filter_size = (1, 1)
     stride = (1, 1)
-    pad = 'vaid'
+    pad = 'valid'
     super(SqueezeLayer, self).__init__(incoming, num_filters, filter_size,
                                        stride, pad, untie_biases, W, b,
                                        nonlinearity, flip_filters, convolution,
