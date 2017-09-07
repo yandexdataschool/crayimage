@@ -1,12 +1,10 @@
 import theano.tensor as T
 from lasagne import *
 
-from scale import scale_to
-
 __all__ = [
   'conv', 'max_pool', 'upscale', 'mean_pool',
   'floating_maxpool', 'floating_meanpool',
-  'min', 'max', 'concat', 'scale_concat', 'scale_concat_rev',
+  'min', 'max', 'concat',
   'noise', 'nothing',
   'conv_companion', 'max_conv_companion', 'mean_conv_companion',
   'concat_conv'
@@ -39,20 +37,6 @@ floating_meanpool = lambda incoming, pool_size=(2, 2): layers.Pool2DLayer(
 min = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.minimum)
 max = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.maximum)
 concat = lambda incomings: layers.ConcatLayer(incomings)
-
-def scale_concat(incoming, scale_to=scale_to):
-  net, target = incoming
-  return concat([
-    scale_to(net, target),
-    target
-  ])
-
-def scale_concat_rev(incoming, scale_to=scale_to):
-  target, net = incoming
-  return concat([
-    scale_to(net, target),
-    target
-  ])
 
 
 noise = lambda incoming, sigma=0.1: layers.GaussianNoiseLayer(incoming, sigma=sigma)

@@ -1,10 +1,12 @@
 from lasagne import *
 
-from .conv import max_pool, upscale, floating_maxpool
+from .conv import max_pool, upscale, floating_maxpool, concat
 
 __all__ = [
   'scale_to',
-  'floating_scale_to'
+  'floating_scale_to',
+  'scale_concat',
+  'scale_concat_rev'
 ]
 
 def scale_to(net, target, pool=max_pool, upscale=upscale):
@@ -34,3 +36,17 @@ def scale_to(net, target, pool=max_pool, upscale=upscale):
 
 
 floating_scale_to = lambda net, target: scale_to(net, target, pool=floating_maxpool, upscale=upscale)
+
+def scale_concat(incoming, scale_to=scale_to):
+  net, target = incoming
+  return concat([
+    scale_to(net, target),
+    target
+  ])
+
+def scale_concat_rev(incoming, scale_to=scale_to):
+  target, net = incoming
+  return concat([
+    scale_to(net, target),
+    target
+  ])
