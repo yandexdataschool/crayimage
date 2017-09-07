@@ -7,6 +7,7 @@ __all__ = [
   'Diffusion2DLayer',
   'Redistribution2DLayer',
   'diff',
+  'diff1x1',
   'redist',
   'concat_diff'
 ]
@@ -32,6 +33,13 @@ diff = lambda incoming, num_filters: Diffusion2DLayer(
   incoming=incoming,
   num_filters=num_filters,
   filter_size=(3, 3),
+  nonlinearity=nonlinearities.LeakyRectify(0.05),
+)
+
+diff1x1 = lambda incoming, num_filters: Diffusion2DLayer(
+  incoming=incoming,
+  num_filters=num_filters,
+  filter_size=(1, 1),
   nonlinearity=nonlinearities.LeakyRectify(0.05),
 )
 

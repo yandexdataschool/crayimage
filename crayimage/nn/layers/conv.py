@@ -3,6 +3,7 @@ from lasagne import *
 
 __all__ = [
   'conv', 'max_pool', 'upscale', 'mean_pool',
+  'floating_maxpool', 'floating_meanpool',
   'min', 'max', 'concat', 'noise', 'nothing',
   'conv_companion', 'max_conv_companion', 'mean_conv_companion',
   'concat_conv'
@@ -15,10 +16,12 @@ conv = lambda incoming, num_filters: layers.Conv2DLayer(
 )
 
 max_pool = lambda incoming, pool_size=(2, 2): layers.MaxPool2DLayer(incoming, pool_size=pool_size)
-floating_maxpool = lambda incoming: layers.MaxPool2DLayer(incoming, pool_size=(3, 3), stride=(2, 2))
+floating_maxpool = lambda incoming: layers.MaxPool2DLayer(incoming, pool_size=(3, 3), stride=(2, 2), pad=(1, 1))
 
 upscale = lambda incoming, scale_factor=(2, 2): layers.Upscale2DLayer(incoming, scale_factor=scale_factor)
 mean_pool = lambda incoming, pool_size=(2, 2): layers.Pool2DLayer(incoming, pool_size=pool_size, mode='average_inc_pad')
+floating_meanpool = lambda incoming: layers.Pool2DLayer(incoming, pool_size=(3, 3), stride=(2, 2), mode='average_inc_pad', pad=(1, 1))
+
 min = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.minimum)
 max = lambda incomings: layers.ElemwiseMergeLayer(incomings, merge_function=T.maximum)
 concat = lambda incomings: layers.ConcatLayer(incomings)

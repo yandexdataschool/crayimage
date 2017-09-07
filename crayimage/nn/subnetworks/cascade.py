@@ -10,6 +10,7 @@ __all__ = [
   'cascade',
   'cascade_chain',
   'cascade_block',
+  'decremental_cascade_block',
   'cascade_merge',
   'get_interest_kernels'
 ]
@@ -19,6 +20,11 @@ get_interest_kernels = lambda net: get_kernels_by_type(net, 'interest_kernel')
 def cascade_merge(incomings, merge=clayers.min, scale=clayers.scale_to):
   a, b = incomings
   b = scale(b, a)
+  return merge([a, b])
+
+def cascade_merge_rev(incomings, merge=clayers.min, scale=clayers.scale_to):
+  a, b = incomings
+  a = scale(a, b)
   return merge([a, b])
 
 def cascade(
