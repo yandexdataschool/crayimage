@@ -1,5 +1,5 @@
-from em_utils import ks_distance, expectation
-from crayimage.imgutils import *
+from .em_utils import ks_distance, expectation
+from ..imgutils import *
 import numpy as np
 
 def one_class_em(counts, kernel='ks', max_iter=10):
@@ -43,4 +43,3 @@ def one_class_em_areas(counts, area_size=100, kernel='ks', max_iter=10):
                                                     kernel=kernel, max_iter=max_iter)
 
   return mask
-

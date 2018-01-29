@@ -6,16 +6,47 @@ CRAYimage - a toolkit for processing images from a mobile phones' cameras
 """
 
 from setuptools import setup, find_packages, Extension
-from codecs import open
+import os
 import os.path as osp
 import numpy as np
 
+from codecs import open
 from Cython.Build import cythonize
 
 here = osp.abspath(osp.dirname(__file__))
+source = osp.join(here, 'crayimage')
+
+def search_pyx():
+  def walk(path):
+    if not osp.isdir(path):
+      pass
+    else:
+      items = [ osp.join(path, item) for item in os.listdir(path) ]
+      dirs = [ item for item in items if osp.isdir(item) ]
+      files = [ item for item in items if osp.isfile(item) and not osp.isdir(item) ]
+
+      for f in files:
+        yield f
+
+      for d in dirs:
+        for f in walk(d):
+          yield f
+
+  return [ path for path in walk(source) if path.endswith('.pyx') ]
+
+def pyx_ext(path):
+  if not path.endswith('.pyx'):
+    raise Exception('Trying to make cython extension from [%s]' % path)
+
+  abs_module_path = osp.relpath(osp.realpath(path), osp.realpath(here))
+  modules = abs_module_path.split('/')
+  modules[-1] = modules[-1][:-4]
+  return path, '.'.join(modules)
 
 with open(osp.join(here, 'README.rst'), encoding='utf-8') as f:
   long_description = f.read()
+
+extra_compile_args = [ '-Ofast', '-frename-registers', '-fno-signed-zeros', '-fno-trapping-math', '-march=native' ]
 
 setup(
   name = 'crayimage',
@@ -28,11 +59,11 @@ setup(
 
   url='https://github.com/maxim-borisyak/crayimage',
 
-  author='CRAYFIS collaboration, Yandex School of Data Analysis and contributors.',
-  author_email='mborisyak at yandex-team dot ru',
+  author='CRAYFIS collaboration and contributors.',
+  author_email='mborisyak at hse dot ru',
 
   maintainer = 'Maxim Borisyak',
-  maintainer_email = 'mborisyak at yandex-team dot ru',
+  maintainer_email = 'mborisyak at hse dot ru',
 
   license='MIT',
 
@@ -47,9 +78,8 @@ setup(
 
     'License :: OSI Approved :: MIT License',
 
-    'Programming Language :: Python :: 2',
-    'Programming Language :: Python :: 2.6',
-    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.6',
   ],
 
   keywords='CRAYFIS image toolkit',
@@ -82,22 +112,17 @@ setup(
     ]
   },
 
-  ext_modules = [
-    module
+  ext_modules=cythonize([
+    Extension(
+      target_module, [target_file],
+      include_dirs=[np.get_include()],
+      extra_compile_args=extra_compile_args
+    )
 
-    for target in [
-      'crayimage/imgutils/*.pyx',
-      'crayimage/hotornot/bayesian/*.pyx',
-      'crayimage/hotornot/em/*.pyx',
-      'crayimage/tracking/generation/*.pyx',
-      'crayimage/simulation/particle/*.pyx',
-      'crayimage/nn/updates/*.pyx'
+    for target_file, target_module in [
+      pyx_ext(path) for path in search_pyx()
     ]
-
-    for module in cythonize(target)
-  ],
+  ]),
 
   include_dirs = [np.get_include()]
 )
-
-

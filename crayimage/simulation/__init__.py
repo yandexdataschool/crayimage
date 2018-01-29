@@ -1,1 +1,1 @@
-from particle import *
+from .geant import *

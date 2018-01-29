@@ -1,10 +1,8 @@
 import numpy as np
 
-from joblib import Parallel, delayed
+from ..imgutils import slice, flatten, get_reader
 
-from crayimage.imgutils import slice, flatten, get_reader
-
-def read_image(path, image_type): 
+def read_image(path, image_type):
   return np.ascontiguousarray(get_reader(image_type)(path))
 
 def read_apply(f, function_kwargs, path, img_type):

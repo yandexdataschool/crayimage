@@ -73,4 +73,3 @@ for em_family in ems:
   print('Best: %s' % em_family[best])
   print('AUC = %.3f +- %.3f' % (np.mean(results[best]), np.std(results[best])))
   sys.stdout.flush()
-

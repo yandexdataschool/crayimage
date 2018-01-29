@@ -2,7 +2,7 @@ import os
 import os.path as osp
 import numpy as np
 
-from run import Run
+from .run import Run
 
 def get_index_file(path, data_root):
   import json

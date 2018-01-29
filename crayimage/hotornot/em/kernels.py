@@ -5,8 +5,6 @@ import theano.tensor as T
 
 from lasagne import *
 
-from crayimage.nn import ExpressionBase
-
 import scipy.stats as stats
 
 import logging as log
@@ -28,7 +26,7 @@ __all__ = [
   'KS_2sample_pvalue_cached'
 ]
 
-class Kernel(ExpressionBase):
+class Kernel(object):
   pass
 
 class KSKernel(Kernel):
@@ -79,7 +77,7 @@ class KSKernel(Kernel):
 
     self.W2 = theano.shared(np.random.uniform(-1, 1, size=n_units).astype('float32'))
     self.b2 = theano.shared(np.random.uniform(-1, 1, size=()).astype('float32'))
-    
+
     super(KSKernel, self).__init__(n, n_units=n_units, mode=mode)
 
   def _p_val(self, D):
@@ -122,10 +120,10 @@ def kernel(k):
       d = distance_function(expected, observed)
       return k(d, *args, **kwargs)
 
-    d_str = '%s' % distance_function.func_name
+    d_str = '%s' % distance_function.__name__
     args_str = ', '.join([str(arg) for arg in args])
     kwargs_str = ', '.join(['%s=%s' % (kw, arg) for kw, arg in kwargs.items()])
-    pkernel.func_name = '%s(distance=%s, %s)' % (k.func_name, d_str, ', '.join([x for x in [args_str, kwargs_str] if len(x) > 0]))
+    pkernel.__name__ = '%s(distance=%s, %s)' % (k.__name__, d_str, ', '.join([x for x in [args_str, kwargs_str] if len(x) > 0]))
     return pkernel
 
   return distance_to_kernel
@@ -137,7 +135,7 @@ def distance(d):
 
     args_str = ', '.join([ str(arg) for arg in args ])
     kwargs_str = ', '.join(['%s=%s' % (k, v) for k, v in kwargs.items()])
-    pkernel.func_name = '%s(%s)' % (d.func_name, ', '.join([ x for x in [args_str, kwargs_str] if len(x) > 0]))
+    pkernel.__name__ = '%s(%s)' % (d.__name__, ', '.join([ x for x in [args_str, kwargs_str] if len(x) > 0]))
     return pkernel
   return f
 
@@ -188,7 +186,7 @@ def KS_2sample_pvalue_cached(cache_size=128, n_observations=600, mode='D'):
     bins = T.cast(T.minimum(T.ceil(Ds * cache_size), cache_size - 1), 'int64')
     return cache[bins]
 
-  pkernel.func_name = 'KS_2sample_pvalue_cached(chache_size=%s, n_obser=%d, mode=%s)' % (
+  pkernel.__name__ = 'KS_2sample_pvalue_cached(chache_size=%s, n_obser=%d, mode=%s)' % (
     cache_size,
     n_observations,
     mode

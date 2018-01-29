@@ -5,7 +5,7 @@ import os.path as osp
 import itertools
 
 import threading
-from Queue import Queue
+from queue import Queue
 
 from crayimage.imgutils import slice
 
