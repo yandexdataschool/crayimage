@@ -41,7 +41,12 @@ def pyx_ext(path):
   abs_module_path = osp.relpath(osp.realpath(path), osp.realpath(here))
   modules = abs_module_path.split('/')
   modules[-1] = modules[-1][:-4]
-  return path, '.'.join(modules)
+  return abs_module_path, '.'.join(modules)
+
+print('The following cython extensions was found:')
+print('\n'.join([
+  "%s %s" % pyx_ext(path) for path in search_pyx()
+]))
 
 with open(osp.join(here, 'README.rst'), encoding='utf-8') as f:
   long_description = f.read()
