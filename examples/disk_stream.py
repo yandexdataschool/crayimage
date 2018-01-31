@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
   arr = stream.next()
 
-  print arr.shape
+  print(arr.shape)
 
   import time
   r = range(5000)
@@ -25,4 +25,4 @@ if __name__ == '__main__':
     stream.next()
   end_t = time.time()
 
-  print 'Time: %.1f millisec per batch' % ((end_t - start_t) / len(r) * 1000)
+  print('Time: %.1f millisec per batch' % ((end_t - start_t) / len(r) * 1000))

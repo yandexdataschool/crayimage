@@ -46,7 +46,7 @@ class CameraMC(object):
 
     params = list()
 
-    for i in xrange(self.n_pixels):
+    for i in range(self.n_pixels):
       p, sample[:, i] = self.compounds[categories[i]].rvs(size=self.n_frames)
       params.append(p)
 
@@ -58,7 +58,7 @@ class CameraMC(object):
     categories = np.ndarray(shape=(size, self.n_pixels), dtype='uint16')
     params = list()
 
-    for i in xrange(size):
+    for i in range(size):
       categories[i], ps, samples[i] = self.get_sample()
       params.append(ps)
 

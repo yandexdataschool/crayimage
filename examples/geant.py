@@ -1,6 +1,7 @@
 import numpy as np
 
-from crayimage.simulation.particle.geant import SimulationStream
+from crayimage.simulation.geant import SimulationStream
+from builtins import range
 
 if __name__ == '__main__':
   np.random.seed(1234)
@@ -20,40 +21,40 @@ if __name__ == '__main__':
   import time
 
   start = time.time()
-  for i in xrange(n_iters):
+  for i in range(n_iters):
     np.random.poisson(size=(main_job_n, 128, 128))
 
   end = time.time()
   delta_main = end - start
 
-  print 'Main job alone, %.3f millisec / batch' % (
+  print('Main job alone, %.3f millisec / batch' % (
     delta_main * 1000.0 / n_iters
-  )
+  ))
 
   stream = SimulationStream(xs, ys, vals, sizes=sizes, cache=-1)
 
   start = time.time()
-  for i in xrange(n_iters):
+  for i in range(n_iters):
     np.random.poisson(size=(main_job_n, 128, 128))
     stream.next()
 
   end = time.time()
   delta = end - start
 
-  print 'Both, %.3f millisec / batch, %.3f microsec per example' % (
+  print('Both, %.3f millisec / batch, %.3f microsec per example' % (
     delta * 1000.0 / n_iters, delta * 10.0 ** 6 / n_iters / sum(sizes)
-  )
+  ))
 
   start = time.time()
-  for i in xrange(n_iters):
+  for i in range(n_iters):
     arr = stream.next()
 
   end = time.time()
   delta = end - start
 
-  print 'Stream alone, %.3f millisec / batch, %.3f microsec per example' % (
+  print('Stream alone, %.3f millisec / batch, %.3f microsec per example' % (
     delta * 1000.0 / n_iters, delta * 10.0 ** 6 / n_iters / sum(sizes)
-  )
+  ))
 
   import matplotlib.pyplot as plt
 
@@ -62,5 +63,3 @@ if __name__ == '__main__':
     plt.title('Sample %d (%d tracks)' % (i, j))
     plt.imshow(arr[i], interpolation='none', cmap=plt.cm.gray_r)
     plt.show()
-
-    #print 'Speed gain: %.3f millisec / batch' % (((delta_main + delta_stream) - delta ) / n_iters)

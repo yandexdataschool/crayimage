@@ -106,7 +106,8 @@ setup(
     'lasagne',
     'cython',
     'scikit-learn',
-    'pydot'
+    'pydot',
+    'future'
   ],
 
   include_package_data=True,
