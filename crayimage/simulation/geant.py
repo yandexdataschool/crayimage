@@ -10,7 +10,7 @@ from crayimage.runutils import queue_stream
 import threading
 
 from .generation import simulation_samples, center_tracks_mean, center_tracks_mass, center_tracks_box, center_tracks_source
-from .io import IndexedSparseImages, root_to_sparse
+from .io import IndexedSparseImages, root_to_sparse, border_crossing, filter_border_crossing
 
 __all__ = [
   'root_to_sparse', 'IndexedSparseImages',

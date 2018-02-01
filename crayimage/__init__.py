@@ -8,16 +8,40 @@ CRAYimage - a toolkit for processing images from a mobile phones' cameras
 from __future__ import print_function, absolute_import, division
 from __future__ import unicode_literals
 
-#from .runutils import Run
+try:
+  from .runutils import Run
+except:
+  pass
 
-#from . import imgutils
-#from . import runutils
-#from . import statutils
+try:
+  from . import imgutils
+except:
+  pass
 
-#from . import hotornot
+try:
+  from . import runutils
+except:
+  pass
 
-from . import simulation
-#from . import cosmicGAN
+try:
+  from . import statutils
+except:
+  pass
+
+try:
+  from . import hotornot
+except:
+  pass
+
+try:
+  from . import simulation
+except:
+  pass
+
+try:
+  from . import cosmicGAN
+except:
+  pass
 
 __version__ = '0.1.0'
 __author__ = 'CRAYFIS collaboration, Yandex School of Data Analysis and contributors.'

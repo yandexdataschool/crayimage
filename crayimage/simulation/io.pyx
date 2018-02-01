@@ -29,6 +29,13 @@ def root_to_sparse(path):
       ))
   return images
 
+def border_crossing(sparse_img, border_x, border_y=None):
+  if border_y is None:
+    border_y = border_x
+
+  xs, ys, _ = sparse_img
+  return (np.max(xs) < border_x - 1) and (np.min(xs) > 0) and (np.max(ys) < border_y - 1) and (np.min(ys) > 0)
+
 def filter_border_crossing(sparse_images, border_x, border_y=None):
   if border_y is None:
     border_y = border_x
