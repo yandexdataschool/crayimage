@@ -118,7 +118,7 @@ cdef class IndexedSparseImages:
   cpdef list to_list(self):
     cdef int i, j, k, l
     cdef float32 [:] vals
-    cdef npc.ndarray[int16, ndim=1] xs, ys
+    cdef int16[:] xs, ys
 
     cdef list images = list()
 
@@ -178,3 +178,26 @@ cdef class IndexedSparseImages:
           background[i, cx, cy] += self.vals[j]
 
     return background
+
+  def track(self, int indx):
+    cdef int i, j, k
+
+    if indx + 1 >= self.offsets.shape[0] or indx < 0:
+      return (
+        np.ndarray(shape=(0, ), dtype='int16'),
+        np.ndarray(shape=(0, ), dtype='int16'),
+        np.ndarray(shape=(0, ), dtype='float32'),
+      )
+
+    cdef int length = self.offsets[indx + 1] - self.offsets[indx]
+    cdef npc.ndarray[npc.int16_t, ndim=1] xs = np.ndarray(shape=(length, ), dtype='int16')
+    cdef npc.ndarray[npc.int16_t, ndim=1] ys = np.ndarray(shape=(length, ), dtype='int16')
+    cdef npc.ndarray[npc.float32_t, ndim=1] vals = np.ndarray(shape=(length, ), dtype='float32')
+
+    k = 0
+    for j in range(self.offsets[indx], self.offsets[indx + 1]):
+      xs[k] = self.xs[j]
+      ys[k] = self.ys[j]
+      vals[k] = self.vals[j]
+
+    return (xs, ys, vals)

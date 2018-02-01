@@ -14,7 +14,8 @@ from .io import IndexedSparseImages, root_to_sparse, border_crossing, filter_bor
 
 __all__ = [
   'root_to_sparse', 'IndexedSparseImages',
-  'center_tracks_box', 'center_tracks_mean', 'center_tracks_mass', 'center_tracks_source'
+  'center_tracks_box', 'center_tracks_mean', 'center_tracks_mass', 'center_tracks_source',
+  'filter_border_crossing', 'border_crossing'
 ]
 
 def simulate(n_samples, tracks_xs, tracks_ys, tracks_vals,
