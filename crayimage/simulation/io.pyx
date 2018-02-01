@@ -199,5 +199,6 @@ cdef class IndexedSparseImages:
       xs[k] = self.xs[j]
       ys[k] = self.ys[j]
       vals[k] = self.vals[j]
+      k += 1
 
     return (xs, ys, vals)
