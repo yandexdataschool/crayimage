@@ -58,6 +58,81 @@ cdef class IndexedSparseImages:
       np.copy(self.vals)
     )
 
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cpdef int64[:] lengths(self):
+    cdef int i
+    cdef int64[:] ls = np.ndarray(shape=(self.size(), ), dtype='int64')
+
+    for i in range(self.size()):
+      ls[i] = self.offsets[i + 1] - self.offsets[i]
+
+    return ls
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cpdef int max_length(self):
+    cdef int i, l = 0
+
+    for i in range(self.size()):
+      l = max_int(l, self.offsets[i + 1] - self.offsets[i])
+
+    return l
+
+  def to_semisparse(self, indx=None, length_cutoff=None):
+    if length_cutoff is None:
+      length_cutoff = self.max_length()
+
+    if indx is None:
+      return self._to_semisparse_all(length_cutoff)
+    else:
+      return self._to_semisparse(np.array(indx, copy=False, dtype='int64'), length_cutoff)
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef float32[:, :, :] _to_semisparse_all(self, int length_cutoff):
+    cdef float32[:, :, :] buffer = np.zeros(shape=(self.size(), 3, length_cutoff), dtype='float32')
+    cdef int i, j, k
+    cdef tstart, tend
+
+    for i in range(self.size()):
+      tstart = self.offsets[i]
+      tend = self.offsets[i + 1]
+
+      k = 0
+      for j in range(tstart, tend):
+        if k >= length_cutoff:
+          break
+        buffer[i, 0, k] = self.xs[j]
+        buffer[i, 1, k] = self.ys[j]
+        buffer[i, 2, k] = self.vals[j]
+        k += 1
+
+
+    return buffer
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef float32[:, :, :] _to_semisparse(self, int64[:] indx, int length_cutoff):
+    cdef int i, j, k
+    cdef tstart, tend
+
+    cdef float32[:, :, :]  buffer = np.zeros(shape=(indx.shape[0], 3, length_cutoff), dtype='float32')
+    for i in range(indx.shape[0]):
+      tstart = self.offsets[indx[i]]
+      tend = self.offsets[indx[i] + 1]
+
+      k = 0
+      for j in range(tstart, tend):
+        if k >= length_cutoff:
+          break
+        buffer[i, 0, k] = self.xs[j]
+        buffer[i, 1, k] = self.ys[j]
+        buffer[i, 2, k] = self.vals[j]
+        k += 1
+
+    return buffer
+
   def get_offsets(self):
     return np.array(self.offsets)
 

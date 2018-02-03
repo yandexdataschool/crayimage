@@ -11,11 +11,12 @@ import threading
 
 from .generation import simulation_samples, center_tracks_mean, center_tracks_mass, center_tracks_box, center_tracks_source
 from .io import IndexedSparseImages, root_to_sparse, border_crossing, filter_border_crossing
+from .utils import order_tracks, order_sparse_images
 
 __all__ = [
   'root_to_sparse', 'IndexedSparseImages',
   'center_tracks_box', 'center_tracks_mean', 'center_tracks_mass', 'center_tracks_source',
-  'filter_border_crossing', 'border_crossing'
+  'filter_border_crossing', 'border_crossing', 'order_tracks', 'order_sparse_images'
 ]
 
 def simulate(n_samples, tracks_xs, tracks_ys, tracks_vals,
