@@ -6,8 +6,8 @@ import sys
 
 sys.path.append('./')
 
-from crayimage import simulation
-from crayimage.simulation.geant import root_to_sparse, IndexedSparseImages, order_sparse_images
+import crayimage
+from crayimage.simulation import root_to_sparse, IndexedSparseImages, order_sparse_images
 
 def rand_deltas(length):
   p1 = np.random.uniform(0.0, 1.0)
@@ -39,7 +39,7 @@ def get_random_track2(scale=100):
 def get_random_tracks2():
   return [
     get_random_track2()
-    for i in range(np.random.randint(1, 100))
+    for i in range(np.random.randint(50, 100))
   ]
 
 def get_random_track(scale = 100):
@@ -122,20 +122,42 @@ def test_semisparse():
     n = len(tracks)
 
     isi = IndexedSparseImages.from_list(tracks)
-    t = isi.to_semisparse()
-    assert t.shape == (isi.size(), 3, np.max(isi.lengths()))
+    (tx, ty, tv) = isi.to_semisparse()
+    assert tx.shape == (isi.size(), isi.max_length())
+    assert ty.shape == (isi.size(), isi.max_length())
+    assert tv.shape == (isi.size(), isi.max_length())
 
     isi = IndexedSparseImages.from_list(tracks)
-    t = isi.to_semisparse(None, 5)
-    assert t.shape == (isi.size(), 3, 5)
+    (tx, ty, tv) = isi.to_semisparse(max_len=5)
+    assert tx.shape == (isi.size(), 5)
+    assert ty.shape == (isi.size(), 5)
+    assert tv.shape == (isi.size(), 5)
 
     indx = np.arange(len(tracks)).astype('int64')
-    t = isi.to_semisparse(indx)
-    assert t.shape == (indx.shape[0], 3, np.max(isi.lengths()))
+    (tx, ty, tv) = isi.to_semisparse(indx)
+    assert tx.shape == (indx.shape[0], isi.max_length())
+    assert ty.shape == (indx.shape[0], isi.max_length())
+    assert tv.shape == (indx.shape[0], isi.max_length())
 
-    indx = np.arange(len(tracks)).astype('int64')
-    t = isi.to_semisparse(indx, 4)
-    assert t.shape == (indx.shape[0], 3, 4)
+    n = 40
+    k = 13
+    bx = np.ndarray(shape=(n, k), dtype='int16')
+    by = np.ndarray(shape=(n, k), dtype='int16')
+    bv = np.ndarray(shape=(n, k), dtype='float32')
+    (tx, ty, tv) = isi.to_semisparse(buffer_x=bx, buffer_y=by, buffer_vals=bv)
+    assert tx.shape == bx.shape
+    assert ty.shape == by.shape
+    assert tv.shape == bv.shape
+
+    n = 40
+    k = 13
+    bx = np.ndarray(shape=(n, k), dtype='int16')
+    by = np.ndarray(shape=(n, k), dtype='int16')
+    bv = np.ndarray(shape=(n, k), dtype='float32')
+    (tx, ty, tv) = isi.to_semisparse(indx=np.arange(n), buffer_x=bx, buffer_y=by, buffer_vals=bv)
+    assert tx.shape == bx.shape
+    assert ty.shape == by.shape
+    assert tv.shape == bv.shape
 
 def test_ordering():
   for i in range(100):

@@ -79,59 +79,69 @@ cdef class IndexedSparseImages:
 
     return l
 
-  def to_semisparse(self, indx=None, length_cutoff=None):
-    if length_cutoff is None:
-      length_cutoff = self.max_length()
+  cpdef int max_len(self):
+    return self.max_length()
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef inline void _fill_track(self, int index, int16[:] buffer_x, int16[:] buffer_y, float32[:] buffer_vals, float32 zero) nogil:
+    cdef int i, j, k
+    cdef int tlen = min_int(buffer_x.shape[0],  self.offsets[index + 1] - self.offsets[index])
+
+    if tlen == 0:
+      for k in range(buffer_x.shape[0]):
+        buffer_x[k] = 0
+        buffer_y[k] = 0
+        buffer_vals[k] = zero
+      return
+
+    i = self.offsets[index]
+    for k in range(tlen):
+      buffer_x[k] = self.xs[i]
+      buffer_y[k] = self.ys[i]
+      buffer_vals[k] = self.vals[i]
+
+      i += 1
+
+    for k in range(tlen, buffer_vals.shape[0]):
+      buffer_x[k] = buffer_x[k - 1]
+      buffer_y[k] = buffer_y[k - 1]
+      buffer_vals[k] = zero
+
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef void _to_semisparse_all(self, int16[:, :] buffer_x, int16[:, :] buffer_y, float32[:, :] buffer_vals, float32 zero) nogil:
+    cdef int i
+    for i in range(min_int(self._size(), buffer_x.shape[0])):
+      self._fill_track(i, buffer_x[i], buffer_y[i], buffer_vals[i], zero)
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef void _to_semisparse(self, int64[:] indx, int16[:, :] buffer_x, int16[:, :] buffer_y, float32[:, :] buffer_vals, float32 zero) nogil:
+    cdef int i
+    for i in range(indx.shape[0]):
+      self._fill_track(indx[i], buffer_x[i], buffer_y[i], buffer_vals[i], zero)
+
+  def to_semisparse(self, indx=None, buffer_x=None, buffer_y=None, buffer_vals=None, zero=0.0, max_len=None):
+    cdef int n = indx.shape[0] if indx is not None else self.size()
+    cdef int l = self.max_len() if max_len is None else max_len
+
+    if buffer_x is None:
+      buffer_x = np.ndarray(shape=(n, l), dtype='int16')
+
+    if buffer_y is None:
+      buffer_y = np.ndarray(shape=(n, l), dtype='int16')
+
+    if buffer_vals is None:
+      buffer_vals = np.ndarray(shape=(n, l), dtype='float32')
 
     if indx is None:
-      return self._to_semisparse_all(length_cutoff)
+      self._to_semisparse_all(buffer_x, buffer_y, buffer_vals, zero)
     else:
-      return self._to_semisparse(np.array(indx, copy=False, dtype='int64'), length_cutoff)
+      self._to_semisparse(indx, buffer_x, buffer_y, buffer_vals, zero)
 
-  @cython.wraparound(False)
-  @cython.boundscheck(False)
-  cdef float32[:, :, :] _to_semisparse_all(self, int length_cutoff):
-    cdef float32[:, :, :] buffer = np.zeros(shape=(self.size(), 3, length_cutoff), dtype='float32')
-    cdef int i, j, k
-    cdef tstart, tend
-
-    for i in range(self.size()):
-      tstart = self.offsets[i]
-      tend = self.offsets[i + 1]
-
-      k = 0
-      for j in range(tstart, tend):
-        if k >= length_cutoff:
-          break
-        buffer[i, 0, k] = self.xs[j]
-        buffer[i, 1, k] = self.ys[j]
-        buffer[i, 2, k] = self.vals[j]
-        k += 1
-
-
-    return buffer
-
-  @cython.wraparound(False)
-  @cython.boundscheck(False)
-  cdef float32[:, :, :] _to_semisparse(self, int64[:] indx, int length_cutoff):
-    cdef int i, j, k
-    cdef tstart, tend
-
-    cdef float32[:, :, :]  buffer = np.zeros(shape=(indx.shape[0], 3, length_cutoff), dtype='float32')
-    for i in range(indx.shape[0]):
-      tstart = self.offsets[indx[i]]
-      tend = self.offsets[indx[i] + 1]
-
-      k = 0
-      for j in range(tstart, tend):
-        if k >= length_cutoff:
-          break
-        buffer[i, 0, k] = self.xs[j]
-        buffer[i, 1, k] = self.ys[j]
-        buffer[i, 2, k] = self.vals[j]
-        k += 1
-
-    return buffer
+    return (buffer_x, buffer_y, buffer_vals)
 
   def get_offsets(self):
     return np.array(self.offsets)
@@ -146,6 +156,11 @@ cdef class IndexedSparseImages:
     return np.array(self.vals)
 
   cpdef int size(self):
+    return self.offsets.shape[0] - 1
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef inline int _size(self) nogil:
     return self.offsets.shape[0] - 1
 
   def __init__(self, offsets, xs, ys, vals):

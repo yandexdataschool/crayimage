@@ -35,15 +35,7 @@ try:
 except ImportError as e:
   warnings.warn(str(e))
 
-try:
-  from . import simulation
-except ImportError as e:
-  warnings.warn(str(e))
-
-try:
-  from . import cosmicGAN
-except ImportError as e:
-  warnings.warn(str(e))
+from . import simulation
 
 __version__ = '0.1.0'
 __author__ = 'CRAYFIS collaboration, Yandex School of Data Analysis and contributors.'
