@@ -2,7 +2,7 @@ import os
 import os.path as osp
 import numpy as np
 
-from run import Run
+from .run import Run
 
 def get_index_file(path, data_root):
   import json
@@ -83,7 +83,7 @@ def extract_from_paths(paths, expr_or_list, cast=str):
       ])
   else:
     raise Exception(
-      '`expr_or_list` should be either constant value, list of values or regular expression, got %s' % type(expr_or_list)
+      '`expr_or_list` should be either constant value, list of values or regular expression.py, got %s' % type(expr_or_list)
     )
 
 

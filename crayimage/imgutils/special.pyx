@@ -208,3 +208,25 @@ def binning_rgb(np.ndarray[RGB_t, ndim=2] img,
             out[i, j, value] += 1
 
     return out
+
+ctypedef np.float32_t float32
+ctypedef np.uint8_t uint8
+
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def onehot2d(np.ndarray[uint8, ndim=3] y, int n_classes):
+  cdef int n_samples = y.shape[0]
+  cdef int w = y.shape[1]
+  cdef int h = y.shape[2]
+
+  cdef int i, j, k, c
+
+  cdef np.ndarray[uint8, ndim=4] y_ = np.zeros(shape=(n_samples, n_classes, w, h), dtype='uint8')
+
+  for k in range(n_samples):
+    for i in range(w):
+      for j in range(h):
+        c = y[k, i, j]
+        y_[k, c, i, j] = 1
+
+  return y_

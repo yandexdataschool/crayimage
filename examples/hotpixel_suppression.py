@@ -20,13 +20,13 @@ def main():
     dtype='uint16'
   )
 
-  print counts.shape
+  print(counts.shape)
 
   for img in run[:10]:
     bins = img / per_bin
     counts[:, :, :, bins] += 1
 
-  print counts
+  print(counts)
 
 
 if __name__ == '__main__':

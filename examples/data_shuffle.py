@@ -3,6 +3,7 @@
 """
 
 import gc
+from builtins import range
 
 if __name__ == '__main__':
   import sys
@@ -87,7 +88,7 @@ if __name__ == '__main__':
         import warnings
         warnings.warn(str(e))
 
-    for cat in xrange(BINS):
+    for cat in range(BINS):
       print('Category %d' % cat)
       samples = read_category(runs[k][::50], mapping, category=cat, window=WINDOW, step=STEP, n_jobs=3)
       indx = np.random.permutation(samples.shape[0])

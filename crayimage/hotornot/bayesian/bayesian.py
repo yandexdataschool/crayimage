@@ -1,6 +1,5 @@
 import numpy as np
-
-from bayesian_utils import posterior
+from .bayesian_utils import posterior
 
 def _get_cache_tables(compound, parameter_grid):
   parameter_distribution = compound.parameter_distribution.pdf(parameter_grid)
@@ -37,10 +36,3 @@ class FastBayesianClassifier(object):
 
     y /= np.sum(y, axis = 1)
     return y
-
-
-
-
-
-
-

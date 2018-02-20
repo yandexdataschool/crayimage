@@ -5,6 +5,8 @@ from crayimage.imgutils import *
 
 import time
 
+from builtins import range
+
 class BayesianUtilsTest(unittest.TestCase):
   def test_ndcount(self):
     n_images = 5
@@ -27,7 +29,7 @@ class BayesianUtilsTest(unittest.TestCase):
     print('ndcount_rgb: %.3e sec per image' % ((end - start) / iters / n_images))
 
     start = time.time()
-    for _ in xrange(iters):
+    for _ in range(iters):
       ndcount(imgs2D, out=out2d)
     end = time.time()
 

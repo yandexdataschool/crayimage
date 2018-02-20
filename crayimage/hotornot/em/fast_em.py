@@ -118,3 +118,14 @@ class OneClassEm(object):
           mask[channel, x_from:x_to, y_from:y_to] = self.predict(data, W_init=mask[channel, x_from:x_to, y_from:y_to])
 
     return mask
+
+  def __str__(self):
+    args = ', '.join([
+      x for x in [
+        'kernel = %s' % self.kernel.func_name,
+        ('max_iter = %d' % self.max_iter) if self.max_iter is not None else None,
+        ('eps = %.1e' % self.max_diff) if self.max_diff is not None else None
+      ]
+      if x is not None
+    ])
+    return 'OneClassEM(%s)' % args

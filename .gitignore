@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+*.c
 
 # Distribution / packaging
 .Python
@@ -94,5 +95,6 @@ ENV/
 # IDEA
 .idea
 
-tests/nn/mnist/
-tests/nn/mnist.py
+*ipynb
+
+tests/nn/*

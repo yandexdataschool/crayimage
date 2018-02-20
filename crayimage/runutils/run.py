@@ -232,7 +232,7 @@ class Run(object):
     return self.read_run_iter()
 
   def read_run_iter(self):
-    for i in xrange(len(self)):
+    for i in range(len(self)):
       yield self.get_img(i)
 
   def cached(self):
