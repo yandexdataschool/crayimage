@@ -107,7 +107,8 @@ setup(
     'cython',
     'scikit-learn',
     'pydot',
-    'future'
+    'future',
+    'six'
   ],
 
   include_package_data=True,

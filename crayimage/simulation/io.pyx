@@ -2,6 +2,8 @@ cimport cython
 cimport numpy as npc
 import numpy as np
 
+import six
+
 @cython.wraparound(False)
 @cython.boundscheck(False)
 def root_to_sparse(path):
@@ -55,7 +57,10 @@ cdef class IndexedSparseImages:
       np.copy(self.offsets),
       np.copy(self.xs),
       np.copy(self.ys),
-      np.copy(self.vals)
+      np.copy(self.vals),
+      np.copy(self.incident_energy),
+      np.copy(self.particle_type),
+      np.copy(self.phi)
     )
 
   @cython.wraparound(False)
@@ -107,7 +112,6 @@ cdef class IndexedSparseImages:
       buffer_x[k] = buffer_x[k - 1]
       buffer_y[k] = buffer_y[k - 1]
       buffer_vals[k] = zero
-
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
@@ -163,16 +167,30 @@ cdef class IndexedSparseImages:
   cdef inline int _size(self) nogil:
     return self.offsets.shape[0] - 1
 
-  def __init__(self, offsets, xs, ys, vals):
+  def __init__(self,
+    offsets, xs, ys, vals,
+    incident_energy=None, particle_type=None, phi=None, total=None
+  ):
     self.offsets = offsets
     self.xs = xs
     self.ys = ys
     self.vals = vals
 
-    if incident_energy is not None:
-      self.incident_energy = incident_energy
+    if incident_energy is None:
+      self.incident_energy = np.zeros(shape=self.size(), dtype='float32')
     else:
-      self.incident_energy = np.array(0.0, )
+      self.incident_energy = incident_energy
+
+    if particle_type is None:
+      self.particle_type = np.zeros(shape=self.size(), dtype='int16')
+    else:
+      self.particle_type = particle_type
+
+    if phi is None:
+      self.phi = np.zeros(shape=self.size(), dtype='float32')
+    else:
+      self.phi = phi
+
 
   @classmethod
   @cython.wraparound(False)
