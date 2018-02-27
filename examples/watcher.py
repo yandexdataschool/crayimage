@@ -19,8 +19,8 @@ time.sleep(1.0)
 losses = np.ndarray(shape=(100, 100), dtype='float32')
 regs = np.ndarray(shape=(100, 100), dtype='float32')
 
-for epoch in xrange(10):
-  print epoch
+for epoch in range(10):
+  print(epoch)
   tl = np.exp(-epoch)
   losses[epoch, :] = np.random.normal(size=100) + tl
   regs[epoch, :] = losses[epoch, :] + np.random.exponential(1.0, size=100)

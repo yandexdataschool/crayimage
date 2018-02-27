@@ -35,7 +35,7 @@ def plot_grid(imgs, plot_title = '', img_title='', img_scores=None,
   plt.subplots(nrows=n_rows, ncols=n_columns, squeeze=False, figsize=(fig_width, fig_height), **fig_kw)
   plt.suptitle(plot_title)
 
-  for i in xrange(imgs.shape[0]):
+  for i in range(imgs.shape[0]):
     plt.subplot(n_rows, n_columns, i + 1)
     plt.imshow(imgs[i], interpolation = 'None', cmap=cmap)
 
@@ -74,7 +74,7 @@ def plot_diversify(imgs, img_scores,
   plt.subplots(nrows=n_rows, ncols=n_columns, squeeze=False, figsize=(fig_width, fig_height), **fig_kw)
   plt.suptitle(plot_title)
 
-  for i in xrange(n_bins):
+  for i in range(n_bins):
     bin_min = smin + i * step
     bin_max = bin_min + step
 
@@ -84,7 +84,7 @@ def plot_diversify(imgs, img_scores,
       indx = np.random.choice(indx, size=n_columns, replace=False)
 
 
-    for j in xrange(indx.shape[0]):
+    for j in range(indx.shape[0]):
       k = i * n_columns + j
 
       plt.subplot(n_rows, n_columns, k)

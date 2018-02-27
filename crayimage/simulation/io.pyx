@@ -29,6 +29,13 @@ def root_to_sparse(path):
       ))
   return images
 
+def border_crossing(sparse_img, border_x, border_y=None):
+  if border_y is None:
+    border_y = border_x
+
+  xs, ys, _ = sparse_img
+  return (np.max(xs) < border_x - 1) and (np.min(xs) > 0) and (np.max(ys) < border_y - 1) and (np.min(ys) > 0)
+
 def filter_border_crossing(sparse_images, border_x, border_y=None):
   if border_y is None:
     border_y = border_x
@@ -51,6 +58,91 @@ cdef class IndexedSparseImages:
       np.copy(self.vals)
     )
 
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cpdef int64[:] lengths(self):
+    cdef int i
+    cdef int64[:] ls = np.ndarray(shape=(self.size(), ), dtype='int64')
+
+    for i in range(self.size()):
+      ls[i] = self.offsets[i + 1] - self.offsets[i]
+
+    return ls
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cpdef int max_length(self):
+    cdef int i, l = 0
+
+    for i in range(self.size()):
+      l = max_int(l, self.offsets[i + 1] - self.offsets[i])
+
+    return l
+
+  cpdef int max_len(self):
+    return self.max_length()
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef inline void _fill_track(self, int index, int16[:] buffer_x, int16[:] buffer_y, float32[:] buffer_vals, float32 zero) nogil:
+    cdef int i, j, k
+    cdef int tlen = min_int(buffer_x.shape[0],  self.offsets[index + 1] - self.offsets[index])
+
+    if tlen == 0:
+      for k in range(buffer_x.shape[0]):
+        buffer_x[k] = 0
+        buffer_y[k] = 0
+        buffer_vals[k] = zero
+      return
+
+    i = self.offsets[index]
+    for k in range(tlen):
+      buffer_x[k] = self.xs[i]
+      buffer_y[k] = self.ys[i]
+      buffer_vals[k] = self.vals[i]
+
+      i += 1
+
+    for k in range(tlen, buffer_vals.shape[0]):
+      buffer_x[k] = buffer_x[k - 1]
+      buffer_y[k] = buffer_y[k - 1]
+      buffer_vals[k] = zero
+
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef void _to_semisparse_all(self, int16[:, :] buffer_x, int16[:, :] buffer_y, float32[:, :] buffer_vals, float32 zero) nogil:
+    cdef int i
+    for i in range(min_int(self._size(), buffer_x.shape[0])):
+      self._fill_track(i, buffer_x[i], buffer_y[i], buffer_vals[i], zero)
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef void _to_semisparse(self, int64[:] indx, int16[:, :] buffer_x, int16[:, :] buffer_y, float32[:, :] buffer_vals, float32 zero) nogil:
+    cdef int i
+    for i in range(indx.shape[0]):
+      self._fill_track(indx[i], buffer_x[i], buffer_y[i], buffer_vals[i], zero)
+
+  def to_semisparse(self, indx=None, buffer_x=None, buffer_y=None, buffer_vals=None, zero=0.0, max_len=None):
+    cdef int n = indx.shape[0] if indx is not None else self.size()
+    cdef int l = self.max_len() if max_len is None else max_len
+
+    if buffer_x is None:
+      buffer_x = np.ndarray(shape=(n, l), dtype='int16')
+
+    if buffer_y is None:
+      buffer_y = np.ndarray(shape=(n, l), dtype='int16')
+
+    if buffer_vals is None:
+      buffer_vals = np.ndarray(shape=(n, l), dtype='float32')
+
+    if indx is None:
+      self._to_semisparse_all(buffer_x, buffer_y, buffer_vals, zero)
+    else:
+      self._to_semisparse(indx, buffer_x, buffer_y, buffer_vals, zero)
+
+    return (buffer_x, buffer_y, buffer_vals)
+
   def get_offsets(self):
     return np.array(self.offsets)
 
@@ -66,7 +158,12 @@ cdef class IndexedSparseImages:
   cpdef int size(self):
     return self.offsets.shape[0] - 1
 
-  def __init__(self, offsets, xs, ys, vals, incident_energy=None, particle_type=None, phi=None, total=None):
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  cdef inline int _size(self) nogil:
+    return self.offsets.shape[0] - 1
+
+  def __init__(self, offsets, xs, ys, vals):
     self.offsets = offsets
     self.xs = xs
     self.ys = ys
@@ -116,7 +213,7 @@ cdef class IndexedSparseImages:
   cpdef list to_list(self):
     cdef int i, j, k, l
     cdef float32 [:] vals
-    cdef npc.ndarray[int16, ndim=1] xs, ys
+    cdef int16[:] xs, ys
 
     cdef list images = list()
 
@@ -176,3 +273,27 @@ cdef class IndexedSparseImages:
           background[i, cx, cy] += self.vals[j]
 
     return background
+
+  def track(self, int indx):
+    cdef int i, j, k
+
+    if indx + 1 >= self.offsets.shape[0] or indx < 0:
+      return (
+        np.ndarray(shape=(0, ), dtype='int16'),
+        np.ndarray(shape=(0, ), dtype='int16'),
+        np.ndarray(shape=(0, ), dtype='float32'),
+      )
+
+    cdef int length = self.offsets[indx + 1] - self.offsets[indx]
+    cdef npc.ndarray[npc.int16_t, ndim=1] xs = np.ndarray(shape=(length, ), dtype='int16')
+    cdef npc.ndarray[npc.int16_t, ndim=1] ys = np.ndarray(shape=(length, ), dtype='int16')
+    cdef npc.ndarray[npc.float32_t, ndim=1] vals = np.ndarray(shape=(length, ), dtype='float32')
+
+    k = 0
+    for j in range(self.offsets[indx], self.offsets[indx + 1]):
+      xs[k] = self.xs[j]
+      ys[k] = self.ys[j]
+      vals[k] = self.vals[j]
+      k += 1
+
+    return (xs, ys, vals)

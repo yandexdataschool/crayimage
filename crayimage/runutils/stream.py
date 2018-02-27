@@ -5,6 +5,7 @@ import os.path as osp
 import itertools
 
 import threading
+
 try:
   from queue import Queue
 except ImportError:
@@ -20,7 +21,7 @@ class BatchStreams(object):
     if n_batches is None:
       n_batches = n_samples / batch_size
 
-    for i in xrange(n_batches):
+    for i in range(n_batches):
       yield np.random.choice(n_samples, size=batch_size, replace=replace, p=priors)
 
   @staticmethod
@@ -29,7 +30,7 @@ class BatchStreams(object):
 
     n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
 
-    for i in xrange(n_batches):
+    for i in range(n_batches):
       i_from = i * batch_size
       i_to = i_from + batch_size
       yield indx[i_from:i_to]
@@ -40,7 +41,7 @@ class BatchStreams(object):
 
     n_batches = n_samples / batch_size + (1 if n_samples % batch_size != 0 else 0)
 
-    for i in xrange(n_batches):
+    for i in range(n_batches):
       i_from = i * batch_size
       i_to = i_from + batch_size
       yield indx[i_from:i_to]
@@ -52,7 +53,7 @@ class BatchStreams(object):
     while True:
       indx = np.random.permutation(n_samples)
 
-      for i in xrange(n_batches):
+      for i in range(n_batches):
         i_from = i * batch_size
         i_to = i_from + batch_size
         yield indx[i_from:i_to]
@@ -95,7 +96,7 @@ class BatchStreams(object):
     weight_correction = (np.float64(hist) / per_category).astype('float32')
     wc = np.repeat(weight_correction, per_category)
 
-    for i in xrange(n_batches):
+    for i in range(n_batches):
       sample = [
         np.random.choice(ind, size=per_category, replace=True)
         for ind in indicies_categories

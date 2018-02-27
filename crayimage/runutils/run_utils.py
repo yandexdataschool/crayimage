@@ -133,7 +133,7 @@ def slice_filter_run(run, predicates, fractions, window = 40, step = 20, n_jobs=
   n_images = run.abs_paths.shape[0]
 
   scaled_fractions = [
-    (long(np.ceil(float(f) / n_images)) if type(f) is long or type(f) is int else f)
+    (int(np.ceil(float(f) / n_images)) if type(f) is long else f)
     for f in fractions
   ]
 
@@ -154,7 +154,7 @@ def slice_fmap_run(run, functions, fractions = None, window = 40, step = 20, n_j
     fractions = [1.0] * len(functions)
 
   scaled_fractions = [
-    (long(np.ceil(float(f) / n_images)) if type(f) is long or type(f) is int else f)
+    (int(np.ceil(float(f) / n_images)) if type(f) is long else f)
     for f in fractions
   ]
 
