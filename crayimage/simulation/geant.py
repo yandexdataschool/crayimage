@@ -1,5 +1,9 @@
 import numpy as np
-from queue import Queue
+try:
+  from queue import Queue
+except ImportError:
+  from Queue import Queue
+
 from crayimage.runutils import queue_stream
 
 import threading

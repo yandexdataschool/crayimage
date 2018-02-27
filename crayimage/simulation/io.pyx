@@ -66,11 +66,16 @@ cdef class IndexedSparseImages:
   cpdef int size(self):
     return self.offsets.shape[0] - 1
 
-  def __init__(self, offsets, xs, ys, vals):
+  def __init__(self, offsets, xs, ys, vals, incident_energy=None, particle_type=None, phi=None, total=None):
     self.offsets = offsets
     self.xs = xs
     self.ys = ys
     self.vals = vals
+
+    if incident_energy is not None:
+      self.incident_energy = incident_energy
+    else:
+      self.incident_energy = np.array(0.0, )
 
   @classmethod
   @cython.wraparound(False)
