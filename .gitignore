@@ -98,3 +98,4 @@ ENV/
 *ipynb
 
 tests/nn/*
+data-test/

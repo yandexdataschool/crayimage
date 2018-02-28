@@ -10,7 +10,11 @@ from .geant import read_root, read_numpy
 from .npy import read_npz, read_array, read_sparse
 
 
-from .plot import plot_grid, plot_diversify
+try:
+  from .plot import plot_grid, plot_diversify
+except ImportError as e:
+  import warnings
+  warnings.warn(str(e))
 
 _type_reader_mapping = {
   'jpg' : read_jpg,

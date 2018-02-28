@@ -100,6 +100,7 @@ setup(
     'tqdm',
     'numpy',
     'scipy',
+    'pillow',
     'joblib',
     'matplotlib',
     'theano',

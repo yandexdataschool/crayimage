@@ -1,8 +1,12 @@
+
 cimport cython
 cimport numpy as npc
 import numpy as np
 
 import six
+from glob import iglob
+
+from particles import *
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
@@ -46,6 +50,39 @@ def filter_border_crossing(sparse_images, border_x, border_y=None):
     (xs, ys, vals) for xs, ys, vals in sparse_images
     if (np.max(xs) < border_x - 1) and (np.min(xs) > 0) and (np.max(ys) < border_y - 1) and (np.min(ys) > 0)
   ]
+
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def indexed(list sparse_images):
+  cdef int n = len(sparse_images)
+  cdef int i
+
+  cdef int total_pixels = 0
+  for i in range(n):
+    total_pixels += sparse_images[i][0].shape[0]
+
+  cdef int64[:] offsets = np.ndarray(shape=(n + 1, ), dtype='int64')
+
+  cdef int16[:] xs = np.ndarray(shape=(total_pixels, ), dtype='int16')
+  cdef int16[:] ys = np.ndarray(shape=(total_pixels, ), dtype='int16')
+  cdef float32[:] vals = np.ndarray(shape=(total_pixels, ), dtype='float32')
+
+  cdef int16[:] xs_ref, ys_ref
+  cdef float32[:] vals_ref
+
+  cdef int m
+
+  offsets[0] = 0
+  for i in range(n):
+    xs_ref, ys_ref, vals_ref = sparse_images[i]
+    m = xs_ref.shape[0]
+    offsets[i + 1] = offsets[i] + m
+
+    xs[offsets[i]:offsets[i + 1]] = xs_ref[:]
+    ys[offsets[i]:offsets[i + 1]] = ys_ref[:]
+    vals[offsets[i]:offsets[i + 1]] = vals_ref[:]
+
+  return offsets, xs, ys, vals
 
 cdef class IndexedSparseImages:
   """
@@ -169,7 +206,7 @@ cdef class IndexedSparseImages:
 
   def __init__(self,
     offsets, xs, ys, vals,
-    incident_energy=None, particle_type=None, phi=None, total=None
+    incident_energy=None, phi=None, total=None
   ):
     self.offsets = offsets
     self.xs = xs
@@ -181,50 +218,84 @@ cdef class IndexedSparseImages:
     else:
       self.incident_energy = incident_energy
 
-    if particle_type is None:
-      self.particle_type = np.zeros(shape=self.size(), dtype='int16')
-    else:
-      self.particle_type = particle_type
-
     if phi is None:
       self.phi = np.zeros(shape=self.size(), dtype='float32')
     else:
       self.phi = phi
+
+    if total is None:
+      self.total = -1
+    else:
+      self.total = total
+
+  @classmethod
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  def from_root(cls, root_files):
+    """
+      Reads a collection of ROOT file specified by `root_files`.
+      Particle type is deduced from the file name.
+
+      Accepts glob expressions.
+    """
+
+    if isinstance(root_files, six.string_types):
+      root_files = iglob(root_files)
+    else:
+      ### assuming iterable
+      root_files = ( path for item in root_files for g in iglob(item) )
+
+
+    import ROOT as r
+    cdef list energies = []
+    cdef list phi = []
+    cdef list images = []
+    cdef int64 total = 0
+
+    cdef int n_images
+    cdef int i
+
+    for path in root_files:
+      try:
+        f = r.TFile(path)
+        cuts = f.Get('cuts')
+        total += cuts.GetBinContent(1)
+
+        t = r.TChain("pixels")
+        t.Add(path)
+
+        n_images = t.GetEntries()
+
+        for i in range(n_images):
+          t.GetEntry(i)
+          energies.append(t.energy)
+          phi.append(t.phi)
+
+          images.append((
+            np.array(t.pix_x, dtype='int16'),
+            np.array(t.pix_y, dtype='int16'),
+            np.array(t.pix_val, dtype='float32'),
+          ))
+      except Exception as e:
+        import warnings
+        warnings.warn('Error while processing %s [%s]!' % (path, str(e)))
+
+    offsets, xs, ys, vals = indexed(images)
+
+    return IndexedSparseImages(
+      offsets, xs, ys, vals,
+      np.array(energies, dtype='float32'),
+      np.array(phi, dtype='float32'),
+      total
+    )
 
 
   @classmethod
   @cython.wraparound(False)
   @cython.boundscheck(False)
   def from_list(cls, list sparse_images):
-    cdef int n = len(sparse_images)
-    cdef int i
-
-    cdef int total_pixels = 0
-    for i in range(n):
-      total_pixels += sparse_images[i][0].shape[0]
-
-    cdef int64[:] offsets = np.ndarray(shape=(n + 1, ), dtype='int64')
-
-    cdef int16[:] xs = np.ndarray(shape=(total_pixels, ), dtype='int16')
-    cdef int16[:] ys = np.ndarray(shape=(total_pixels, ), dtype='int16')
-    cdef float32[:] vals = np.ndarray(shape=(total_pixels, ), dtype='float32')
-
-    cdef int16[:] xs_ref, ys_ref
-    cdef float32[:] vals_ref
-
-    cdef int m
-
-    offsets[0] = 0
-    for i in range(n):
-      xs_ref, ys_ref, vals_ref = sparse_images[i]
-      m = xs_ref.shape[0]
-      offsets[i + 1] = offsets[i] + m
-
-      xs[offsets[i]:offsets[i + 1]] = xs_ref[:]
-      ys[offsets[i]:offsets[i + 1]] = ys_ref[:]
-      vals[offsets[i]:offsets[i + 1]] = vals_ref[:]
-
-    return IndexedSparseImages(offsets, xs, ys, vals)
+    offsets, xs, ys, vals = indexed(sparse_images)
+    return cls(offsets, xs, ys, vals)
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
