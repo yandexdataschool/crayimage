@@ -9,7 +9,10 @@ sys.path.append('./')
 import crayimage
 from crayimage.simulation import IndexedSparseImages
 
-def test_from_root():
+def test_from_root(tmpdir):
+  d = tmpdir.mkdir('saves')
+  path = str(d.join('save.npz'))
+
   if not os.path.exists('./data-test/events-1000/'):
     import warnings
     warnings.warn('Skipping test, no data to test.')
@@ -19,14 +22,14 @@ def test_from_root():
 
 
 
-  si = IndexedSparseImages.from_root('./data-test/events-*/proton*.root')
+  si = IndexedSparseImages.from_root('./data-test/events-*/gamma*.root')
   print(si.size())
   print(si.total)
 
-  import matplotlib.pyplot as plt
+  si.save(path)
+  si2 = IndexedSparseImages.load(path)
+  print(np.array(si.incident_energy))
+  print(np.array(si2.incident_energy))
 
-  plt.hist(si.incident_energy, bins=100, histtype='step', log=True)
-  plt.show()
-
-  print(np.unique(si.incident_energy))
-  print(np.unique(si.incident_energy).shape)
+  assert np.allclose(si.incident_energy, si2.incident_energy)
+  assert si.total == si2.total

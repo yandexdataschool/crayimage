@@ -324,7 +324,16 @@ cdef class IndexedSparseImages:
     return images
 
   def save(self, path):
-    np.savez(path, offsets=self.offsets, xs=self.xs, ys=self.ys, vals=self.vals)
+    np.savez(
+      path,
+      offsets=self.offsets,
+      xs=self.xs,
+      ys=self.ys,
+      vals=self.vals,
+      incident_energy=self.incident_energy,
+      phi=self.phi,
+      total=self.total
+    )
 
   @classmethod
   def load(cls, path):
@@ -333,7 +342,10 @@ cdef class IndexedSparseImages:
       offsets=a['offsets'],
       xs=a['xs'],
       ys=a['ys'],
-      vals=a['vals']
+      vals=a['vals'],
+      incident_energy=a['incident_energy'] if 'incident_energy' in a else None,
+      phi=a['phi'] if 'phi' in a else None,
+      total=a['total'] if 'total' in a else None,
     )
 
   def bounding_box(self):
