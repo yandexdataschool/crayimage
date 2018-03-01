@@ -1,4 +1,6 @@
 import numpy as np
+import array
+from ..datautils import locate_resourse
 
 __all__ = [
   'get_total_flux',
@@ -37,3 +39,37 @@ def get_priors():
   fluxes = get_fluxes()
   s = np.sum(fluxes.values())
   return dict([ (k, v / s) for k, v in fluxes.items() ])
+
+def get_spectra(particle):
+  import ROOT as r
+  path = locate_resourse('./data/diff_spectra/', particle + '.dat')
+  datfile = np.loadtxt(path)
+
+  bins = 10.0 ** (np.arange(datfile.shape[0] + 1) / 10.0)
+  # ROOT is picky and wants python array.array for TH1F constructor
+  binsx = array.array('d', bins)
+  h = r.TH1F("particleEnergy", particle_name, len(binsx)-1, binsx)
+  for i, rate in enumerate(datfile[:, 1]):
+      h.Fill(
+        (binsx[i] + binsx[i + 1]) / 2,
+        rate * (binsx[i + 1] - binsx[i])
+      )
+
+  return h
+
+def get_diff_spectra_as_if_intergal(particle):
+  import warnings
+  warnings.warn('This is (probably) not the function you are looking for!')
+
+  import ROOT as r
+
+  path = locate_resourse('./data/diff_spectra/', particle + '.dat')
+
+  datfile = np.loadtxt(path)
+  # ROOT is picky and wants python array.array for TH1F constructor
+  binsx = array.array('d', datfile[:,0])
+  h = r.TH1F("particleEnergy", particle_name, len(binsx)-1, binsx)
+  for xbin,rate in datfile:
+      h.Fill(xbin,rate)
+
+  return h

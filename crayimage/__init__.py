@@ -10,6 +10,8 @@ from __future__ import unicode_literals
 
 import warnings
 
+from . import datautils
+
 try:
   from .runutils import Run
 except ImportError as e:

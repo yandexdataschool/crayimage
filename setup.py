@@ -117,7 +117,8 @@ setup(
   package_data = {
     'crayimage' : [
       'index_files/*.json',
-      'data/background_spectra/*.root'
+      'data/background_spectra/*',
+      'data/diff_spectra/*',
     ]
   },
 
