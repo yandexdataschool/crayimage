@@ -5,7 +5,18 @@ from ..datautils import locate_resourse
 __all__ = [
   'get_total_flux',
   'get_fluxes',
-  'get_priors'
+  'get_priors',
+  'get_spectra',
+  'particles'
+]
+
+particles = [
+  'e-',
+  'e+',
+  'gamma',
+  'proton',
+  'mu-',
+  'mu+',
 ]
 
 def get_total_flux(path):
@@ -42,17 +53,25 @@ def get_priors():
 
 def get_spectra(particle):
   import ROOT as r
-  path = locate_resourse('./data/diff_spectra/', particle + '.dat')
-  datfile = np.loadtxt(path)
 
-  bins = 10.0 ** (np.arange(datfile.shape[0] + 1) / 10.0)
+  try:
+    path = locate_resourse('./data/diff_spectra/', particle + '.dat')
+    datfile = np.loadtxt(path)
+  except:
+    datfile = np.loadtxt(particle)
+
+  ns = np.arange(datfile.shape[0] + 1)
+  bins = 10.0 ** (ns / 10.0 - 2)
+  ### crayfis-sim wants KeV, data provided in MeV
+  bins *= 1000.0
+
   # ROOT is picky and wants python array.array for TH1F constructor
   binsx = array.array('d', bins)
-  h = r.TH1F("particleEnergy", particle_name, len(binsx)-1, binsx)
+  h = r.TH1F("particleEnergy", particle, len(binsx)-1, binsx)
   for i, rate in enumerate(datfile[:, 1]):
       h.Fill(
         (binsx[i] + binsx[i + 1]) / 2,
-        rate * (binsx[i + 1] - binsx[i])
+        rate * (binsx[i + 1] - binsx[i]) / 1000.0
       )
 
   return h

@@ -7,4 +7,8 @@ def locate_resourse(*args):
   """
 
   package_root = osp.dirname(__file__)
-  return osp.join(package_root, *args)
+  path = osp.join(package_root, *args)
+
+  assert osp.exists(path)
+
+  return path
