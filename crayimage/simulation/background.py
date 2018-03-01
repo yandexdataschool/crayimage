@@ -62,9 +62,10 @@ def get_spectra(particle):
 
   ns = np.arange(datfile.shape[0] + 1)
   bins = 10.0 ** (ns / 10.0 - 2)
+  assert np.allclose(datfile[:, 0], (bins[1:] + bins[:-1]) / 2.0, rtol=1.0e-2, atol=0.0)
+
   ### crayfis-sim wants KeV, data provided in MeV
   bins *= 1000.0
-
   # ROOT is picky and wants python array.array for TH1F constructor
   binsx = array.array('d', bins)
   h = r.TH1F("particleEnergy", particle, len(binsx)-1, binsx)
