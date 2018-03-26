@@ -122,7 +122,8 @@ setup(
     Extension(
       target_module, [target_file],
       include_dirs=[np.get_include()],
-      extra_compile_args=extra_compile_args
+      extra_compile_args=extra_compile_args,
+      language='c++'
     )
 
     for target_file, target_module in [
