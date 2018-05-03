@@ -103,10 +103,7 @@ setup(
     'pillow',
     'joblib',
     'matplotlib',
-    'theano',
-    'lasagne',
     'cython',
-    'scikit-learn',
     'pydot',
     'future',
     'six'

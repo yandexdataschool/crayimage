@@ -100,3 +100,4 @@ ENV/
 tests/nn/*
 data-test/
 .pytest_cache/
+*.cpp

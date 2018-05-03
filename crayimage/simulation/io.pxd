@@ -4,7 +4,8 @@ import numpy as np
 
 ctypedef npc.float64_t float64
 ctypedef npc.float32_t float32
-ctypedef npc.int8_t int8
+
+ctypedef npc.uint8_t uint8
 ctypedef npc.int16_t int16
 ctypedef npc.int32_t int32
 ctypedef npc.int64_t int64
@@ -28,6 +29,8 @@ cdef class IndexedSparseImages:
 
   ### well, ...
   cdef readonly float32[:] incident_energy
+
+  cdef readonly int16[:] particle_type
 
   ### Phi angle of the track
   cdef readonly float32[:] phi

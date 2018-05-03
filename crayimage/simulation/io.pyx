@@ -6,7 +6,9 @@ import numpy as np
 import six
 from glob import iglob
 
-from particles import *
+from .particles import *
+
+from crayimage.simulation.particles import deduce_particle_type
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
@@ -206,7 +208,7 @@ cdef class IndexedSparseImages:
 
   def __init__(self,
     offsets, xs, ys, vals,
-    incident_energy=None, phi=None, total=None
+    incident_energy=None, particle_type=None, phi=None, total=None
   ):
     self.offsets = offsets
     self.xs = xs
@@ -216,12 +218,17 @@ cdef class IndexedSparseImages:
     if incident_energy is None:
       self.incident_energy = np.zeros(shape=self.size(), dtype='float32')
     else:
-      self.incident_energy = incident_energy
+      self.incident_energy = np.array(incident_energy, dtype='float32')
 
     if phi is None:
       self.phi = np.zeros(shape=self.size(), dtype='float32')
     else:
-      self.phi = phi
+      self.phi = np.array(phi, dtype='float32')
+
+    if particle_type is None:
+      self.particle_type = np.ones(shape=self.size(), dtype='int16') * UNKNOWN_PARTICLE
+    else:
+      self.particle_type = np.array(particle_type, dtype='int16')
 
     if total is None:
       self.total = -1
@@ -243,11 +250,11 @@ cdef class IndexedSparseImages:
       root_files = iglob(root_files)
     else:
       ### assuming iterable
-      root_files = ( path for item in root_files for g in iglob(item) )
-
+      root_files = ( g for item in root_files for g in iglob(item) )
 
     import ROOT as r
     cdef list energies = []
+    cdef list particle_types = []
     cdef list phi = []
     cdef list images = []
     cdef int64 total = 0
@@ -256,6 +263,8 @@ cdef class IndexedSparseImages:
     cdef int i
 
     for path in root_files:
+      particle_type = deduce_particle_type(path)
+
       try:
         f = r.TFile(path)
         cuts = f.Get('cuts')
@@ -270,12 +279,15 @@ cdef class IndexedSparseImages:
           t.GetEntry(i)
           energies.append(t.energy)
           phi.append(t.phi)
+          particle_types.append(particle_type)
 
           images.append((
             np.array(t.pix_x, dtype='int16'),
             np.array(t.pix_y, dtype='int16'),
             np.array(t.pix_val, dtype='float32'),
           ))
+
+        f.Close()
       except Exception as e:
         import warnings
         warnings.warn('Error while processing %s [%s]!' % (path, str(e)))
@@ -284,9 +296,10 @@ cdef class IndexedSparseImages:
 
     return IndexedSparseImages(
       offsets, xs, ys, vals,
-      np.array(energies, dtype='float32'),
-      np.array(phi, dtype='float32'),
-      total
+      incident_energy=np.array(energies, dtype='float32'),
+      phi=np.array(phi, dtype='float32'),
+      particle_type=np.array(particle_types, dtype='int16'),
+      total=total
     )
 
 
