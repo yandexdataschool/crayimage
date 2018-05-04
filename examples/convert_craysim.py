@@ -8,7 +8,7 @@ if __name__ == '__main__':
   if len(argv) > 1:
     path = argv[1]
 
-    isi = IndexedSparseImages.from_root(path)
+    isi = IndexedSparseImages.from_root(path, verbose=True)
     print(np.array(isi.particle_type))
   else:
     print('Usage:\n  %s <path to root files>' % argv[0])

@@ -238,7 +238,7 @@ cdef class IndexedSparseImages:
   @classmethod
   @cython.wraparound(False)
   @cython.boundscheck(False)
-  def from_root(cls, root_files):
+  def from_root(cls, root_files, verbose=False):
     """
       Reads a collection of ROOT file specified by `root_files`.
       Particle type is deduced from the file name.
@@ -247,10 +247,10 @@ cdef class IndexedSparseImages:
     """
 
     if isinstance(root_files, six.string_types):
-      root_files = iglob(root_files)
+      root_files = list(iglob(root_files))
     else:
       ### assuming iterable
-      root_files = ( g for item in root_files for g in iglob(item) )
+      root_files = [ g for item in root_files for g in iglob(item) ]
 
     import ROOT as r
     cdef list energies = []
@@ -262,7 +262,10 @@ cdef class IndexedSparseImages:
     cdef int n_images
     cdef int i
 
-    for path in root_files:
+    for i, path in enumerate(root_files):
+      if verbose:
+        print('Processing %s [%d/%d]' % (path, i + 1, len(root_files)))
+
       particle_type = deduce_particle_type(path)
 
       try:
@@ -343,6 +346,7 @@ cdef class IndexedSparseImages:
       xs=self.xs,
       ys=self.ys,
       vals=self.vals,
+      particle_type=self.particle_type,
       incident_energy=self.incident_energy,
       phi=self.phi,
       total=self.total
@@ -357,6 +361,7 @@ cdef class IndexedSparseImages:
       ys=a['ys'],
       vals=a['vals'],
       incident_energy=a['incident_energy'] if 'incident_energy' in a else None,
+      particle_type=a['particle_type'] if 'particle_type' in a else None,
       phi=a['phi'] if 'phi' in a else None,
       total=a['total'] if 'total' in a else None,
     )
